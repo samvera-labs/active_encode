@@ -4,22 +4,30 @@ module ActiveEncode
 
     included do
       # Encode Identifier
-      attr_accessor :encode_id
+      attr_reader :encode_id
 
       # Encode input
-      attr_accessor :input
+      attr_reader :input
 
       # Encode output(s)
-      attr_accessor :output
+      attr_reader :output
 
       # Encode options
-      attr_accessor :options
+      attr_reader :options
 
       attr_reader :state, :current_operations, :errors, :tech_metadata
     end
 
     module ClassMethods
-      def create(input, output, *options)
+      def default_options
+        {}
+      end
+
+      def default_output
+        {}
+      end
+
+      def create(input, output = default_output, options = default_options)
         run_callbacks :create do
           engine_adapter.create(input, output, options)
         end
