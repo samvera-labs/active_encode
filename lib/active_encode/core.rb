@@ -1,3 +1,5 @@
+require 'active_support'
+
 module ActiveEncode
   module Core
     extend ActiveSupport::Concern

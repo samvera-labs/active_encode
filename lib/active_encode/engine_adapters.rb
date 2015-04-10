@@ -5,11 +5,12 @@ module ActiveEncode
   #
   #
   #
-  module QueueAdapters
+  module EngineAdapters
     extend ActiveSupport::Autoload
 
     autoload :ActiveJobAdapter
     autoload :MatterhornAdapter
+    autoload :InlineAdapter
 
     ADAPTER = 'Adapter'.freeze
     private_constant :ADAPTER
