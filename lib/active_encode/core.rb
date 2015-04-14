@@ -1,4 +1,5 @@
 require 'active_support'
+require 'active_encode/callbacks'
 
 module ActiveEncode
   module Core
@@ -6,18 +7,16 @@ module ActiveEncode
 
     included do
       # Encode Identifier
-      attr_reader :encode_id
+      attr_accessor :encode_id
 
       # Encode input
-      attr_reader :input
+      attr_accessor :input
 
       # Encode output(s)
-      attr_reader :output
+      attr_accessor :output
 
       # Encode options
-      attr_reader :options
-
-      attr_reader :state, :current_operations, :errors, :tech_metadata
+      attr_accessor :options
     end
 
     module ClassMethods
@@ -43,19 +42,7 @@ module ActiveEncode
         engine_adapter.list(filters)
       end
     end
-
-    def cancelled?
-      state == :cancelled
-    end
-
-    def completed?
-      state == :completed
-    end
-
-    def running?
-      state == :running
-    end
-
+  
     def cancel!
       run_callbacks :cancel do
         self.class.engine_adapter.cancel self
