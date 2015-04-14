@@ -29,9 +29,9 @@ module ActiveEncode
       end
 
       def create(input, output = default_output, options = default_options)
-        run_callbacks :create do
-          engine_adapter.create(input, output, options)
-        end
+        object = new(input, output, options)
+        object.create!
+        object
       end 
 
       def find(encode_id)
@@ -42,7 +42,19 @@ module ActiveEncode
         engine_adapter.list(filters)
       end
     end
-  
+
+    def initialize(input, output = default_output, options = default_options)
+      @input = input
+      @output = output
+      @options = options
+    end
+
+    def create!
+      run_callbacks :create do
+        self.class.engine_adapter.create self
+      end
+    end
+
     def cancel!
       run_callbacks :cancel do
         self.class.engine_adapter.cancel self

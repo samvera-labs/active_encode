@@ -1,7 +1,7 @@
 module ActiveEncode
   module EngineAdapters
     class InlineAdapter
-      def create(input, output, *options)
+      def create(encode)
       end
 
       def find(encode_id)

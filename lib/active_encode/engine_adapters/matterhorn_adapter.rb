@@ -1,7 +1,7 @@
 module ActiveEncode
   module EngineAdapters
     class MatterhornAdapter
-      def create(input, output, *options)
+      def create(encode)
       end
 
       def find(encode_id)
