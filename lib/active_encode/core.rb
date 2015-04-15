@@ -7,7 +7,7 @@ module ActiveEncode
 
     included do
       # Encode Identifier
-      attr_accessor :encode_id
+      attr_accessor :id
 
       # Encode input
       attr_accessor :input
@@ -34,8 +34,8 @@ module ActiveEncode
         object
       end 
 
-      def find(encode_id)
-        engine_adapter.find(encode_id)
+      def find(id)
+        engine_adapter.find(id)
       end
 
       def list(*filters)
@@ -59,8 +59,7 @@ module ActiveEncode
       run_callbacks :cancel do
         self.class.engine_adapter.cancel self
       end
-      self.reload
-      self
+      reload
     end
 
     def purge!
@@ -70,8 +69,8 @@ module ActiveEncode
     end
 
     def reload
-      fresh_encode = self.class.engine_adapter.find encode_id
-      @encode_id = fresh_encode.encode_id
+      fresh_encode = self.class.engine_adapter.find(id)
+      @id = fresh_encode.id
       @input = fresh_encode.input
       @output = fresh_encode.output
       @state = fresh_encode.state

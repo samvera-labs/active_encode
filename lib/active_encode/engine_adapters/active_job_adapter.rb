@@ -4,7 +4,7 @@ module ActiveEncode
       def create(encode)
       end
 
-      def find(encode_id)
+      def find(id)
       end
 
       def list(*filters)

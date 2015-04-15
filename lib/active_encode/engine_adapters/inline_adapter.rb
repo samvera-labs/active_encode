@@ -5,14 +5,14 @@ module ActiveEncode
       InlineAdapter.encodes ||= {}
 
       def create(encode)
-        encode.encode_id = SecureRandom.uuid
-        self.class.encodes[encode.encode_id] = encode
+        encode.id = SecureRandom.uuid
+        self.class.encodes[encode.id] = encode
         #start encode
         encode.state = :running
       end
 
-      def find(encode_id)
-        self.class.encodes[encode_id]
+      def find(id)
+        self.class.encodes[id]
       end
 
       def list(*filters)
@@ -26,7 +26,7 @@ module ActiveEncode
       end
 
       def purge(encode)
-        self.class.encodes.delete encode.encode_id
+        self.class.encodes.delete encode.id
       end
     end
   end
