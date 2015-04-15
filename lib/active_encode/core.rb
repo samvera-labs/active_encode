@@ -72,7 +72,7 @@ module ActiveEncode
     end
 
     def reload
-      fresh_encode = self.class.engine_adapter.find self
+      fresh_encode = self.class.engine_adapter.find encode_id
       @encode_id = fresh_encode.encode_id
       @input = fresh_encode.input
       @output = fresh_encode.output

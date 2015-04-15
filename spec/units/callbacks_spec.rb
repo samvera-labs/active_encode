@@ -44,5 +44,24 @@ describe "ActiveEncode::Callbacks" do
   describe 'create callbacks' do
     subject { CallbackEncode.create("sample.mp4").history }
     it { is_expected.to include("CallbackEncode ran before_create") }
+    it { is_expected.to include("CallbackEncode ran after_create") }
+    it { is_expected.to include("CallbackEncode ran around_create_start") }
+    it { is_expected.to include("CallbackEncode ran around_create_stop") }
+  end
+
+  describe 'cancel callbacks' do
+    subject { CallbackEncode.create("sample.mp4").cancel!.history }
+    it { is_expected.to include("CallbackEncode ran before_cancel") }
+    it { is_expected.to include("CallbackEncode ran after_cancel") }
+    it { is_expected.to include("CallbackEncode ran around_cancel_start") }
+    it { is_expected.to include("CallbackEncode ran around_cancel_stop") }
+  end
+
+  describe 'purge callbacks' do
+    subject { CallbackEncode.create("sample.mp4").purge!.history }
+    it { is_expected.to include("CallbackEncode ran before_purge") }
+    it { is_expected.to include("CallbackEncode ran after_purge") }
+    it { is_expected.to include("CallbackEncode ran around_purge_start") }
+    it { is_expected.to include("CallbackEncode ran around_purge_stop") }
   end
 end
