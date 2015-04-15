@@ -67,8 +67,6 @@ module ActiveEncode
       run_callbacks :purge do
         self.class.engine_adapter.purge self
       end
-      self.reload
-      self
     end
 
     def reload

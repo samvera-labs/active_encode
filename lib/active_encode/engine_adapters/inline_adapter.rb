@@ -26,7 +26,7 @@ module ActiveEncode
       end
 
       def purge(encode)
-        self.class.encodes.delete encode
+        self.class.encodes.delete encode.encode_id
       end
     end
   end
