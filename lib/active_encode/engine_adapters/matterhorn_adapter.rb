@@ -94,7 +94,7 @@ module ActiveEncode
       end
 
       def convert_errors(workflow)
-        #TODO
+        workflow.xpath('//errors/error/text()').map(&:to_s)
       end
 
       def convert_options(workflow)
