@@ -24,5 +24,9 @@ module ActiveEncode
     def running?
       state == :running
     end
+
+    def failed?
+      state == :failed
+    end
   end
 end
