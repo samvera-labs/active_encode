@@ -31,7 +31,6 @@ module ActiveEncode
       def create(input, output = default_output, options = default_options)
         object = new(input, output, options)
         object.create!
-        object
       end 
 
       def find(id)
@@ -59,7 +58,6 @@ module ActiveEncode
       run_callbacks :cancel do
         self.class.engine_adapter.cancel self
       end
-      reload
     end
 
     def purge!

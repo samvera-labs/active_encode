@@ -6,8 +6,10 @@ module ActiveEncode
       DEFAULT_ARGS = {'flavor' => 'presenter/source'}
       def create(encode)
         workflow = Rubyhorn.client.addMediaPackageWithUrl(DEFAULT_ARGS.merge({'workflow' => encode.options[:preset], 'url' => encode.input, 'filename' => File.basename(encode.input), 'title' => File.basename(encode.input)}))
-        encode.id = convert_id(workflow.ng_xml.remove_namespaces!)
-        encode.state = convert_state(workflow.ng_xml.remove_namespaces!)
+        #encode.id = convert_id(workflow.ng_xml.remove_namespaces!)
+        #encode.state = convert_state(workflow.ng_xml.remove_namespaces!)
+        #encode
+        encode = build_encode(workflow, encode.class)
         encode
       end
 
@@ -15,6 +17,12 @@ module ActiveEncode
         workflow = begin
           Rubyhorn.client.instance_xml(id)
         rescue Rubyhorn::RestClient::Exceptions::HTTPNotFound
+          nil
+        end
+
+        workflow ||= begin
+          Rubyhorn.client.get_stopped_workflow(id)
+        rescue
           nil
         end
 
@@ -26,11 +34,8 @@ module ActiveEncode
       end
 
       def cancel(encode)
-        #TODO implement suspend in Rubyhorn
-        #workflow = Rubyhorn.client.suspend(encode.id)
-        #build_encode(workflow)
-        encode.state = :cancelled
-        encode
+        workflow = Rubyhorn.client.stop(encode.id)
+        build_encode(workflow, encode.class)
       end
 
       def purge(encode)
@@ -38,23 +43,28 @@ module ActiveEncode
       end
 
       private
-      def build_encode(workflow, cast)
+      def build_encode(workflow_om, cast)
+        return nil if workflow_om.nil?
+        workflow = if workflow_om.ng_xml.is_a? Nokogiri::XML::Document
+          workflow_om.ng_xml.remove_namespaces!.root
+        else
+          workflow_om.ng_xml
+        end
         return nil if workflow.nil?
-        workflow_doc = workflow.ng_xml.remove_namespaces!
-        encode = cast.new(convert_input(workflow_doc), convert_output(workflow_doc), convert_options(workflow_doc))
-        encode.id = convert_id(workflow_doc)
-        encode.state = convert_state(workflow_doc)
-        encode.current_operations = convert_current_operations(workflow_doc)
-        encode.errors = convert_errors(workflow_doc)
+        encode = cast.new(convert_input(workflow), convert_output(workflow), convert_options(workflow))
+        encode.id = convert_id(workflow)
+        encode.state = convert_state(workflow)
+        encode.current_operations = convert_current_operations(workflow)
+        encode.errors = convert_errors(workflow)
         encode
       end
 
-      def convert_id(workflow_doc)
-        workflow_doc.root.attribute('id').to_s
+      def convert_id(workflow)
+        workflow.attribute('id').to_s
       end
 
-      def convert_state(workflow_doc)
-        case workflow_doc.root.attribute('state').to_s
+      def convert_state(workflow)
+        case workflow.attribute('state').to_s
         when "INSTANTIATED", "RUNNING" #Should there be a queued state?
           :running
         when "STOPPED"
@@ -64,30 +74,30 @@ module ActiveEncode
         end
       end
 
-      def convert_input(workflow_doc)
+      def convert_input(workflow)
         #Need to do anything else since this is a MH url?
-        workflow_doc.xpath('workflow/mediapackage/media/track[@type="presenter/source"]/url/text()').to_s
+        workflow.xpath('mediapackage/media/track[@type="presenter/source"]/url/text()').to_s
       end
 
-      def convert_tech_metadata(workflow_doc)
+      def convert_tech_metadata(workflow)
         #TODO
       end
 
-      def convert_output(workflow_doc)
+      def convert_output(workflow)
         #TODO
       end
 
-      def convert_current_operations(workflow_doc)
+      def convert_current_operations(workflow)
         #TODO
       end
 
-      def convert_errors(workflow_doc)
+      def convert_errors(workflow)
         #TODO
       end
 
-      def convert_options(workflow_doc)
+      def convert_options(workflow)
         options = {}
-        options[:preset] = workflow_doc.xpath('workflow/template/text()').to_s
+        options[:preset] = workflow.xpath('template/text()').to_s
         options
       end
 
