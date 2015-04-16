@@ -75,7 +75,7 @@ module ActiveEncode
       end
 
       def convert_input(workflow)
-        #Need to do anything else since this is a MH url?
+        #Need to do anything else since this is a MH url? and this disappears when a workflow is cleaned up
         workflow.xpath('mediapackage/media/track[@type="presenter/source"]/url/text()').to_s
       end
 
@@ -88,7 +88,7 @@ module ActiveEncode
       end
 
       def convert_current_operations(workflow)
-        #TODO
+        workflow.xpath('//operation[@state!="INSTANTIATED"]/@description').last.to_s
       end
 
       def convert_errors(workflow)
