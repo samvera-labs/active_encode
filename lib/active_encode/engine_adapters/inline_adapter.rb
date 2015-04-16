@@ -11,7 +11,7 @@ module ActiveEncode
         encode.state = :running
       end
 
-      def find(id)
+      def find(id, opts = {})
         self.class.encodes[id]
       end
 

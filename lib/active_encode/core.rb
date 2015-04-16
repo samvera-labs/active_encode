@@ -35,7 +35,7 @@ module ActiveEncode
       end 
 
       def find(id)
-        engine_adapter.find(id)
+        engine_adapter.find(id, cast: self)
       end
 
       def list(*filters)
@@ -69,7 +69,7 @@ module ActiveEncode
     end
 
     def reload
-      fresh_encode = self.class.engine_adapter.find(id)
+      fresh_encode = self.class.engine_adapter.find(id, cast: self.class)
       @id = fresh_encode.id
       @input = fresh_encode.input
       @output = fresh_encode.output

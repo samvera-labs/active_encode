@@ -11,14 +11,14 @@ module ActiveEncode
         encode
       end
 
-      def find(id)
+      def find(id, opts = {})
         workflow = begin
           Rubyhorn.client.instance_xml(id)
         rescue Rubyhorn::RestClient::Exceptions::HTTPNotFound
           nil
         end
 
-        build_encode(workflow)
+        build_encode(workflow, opts[:cast])
       end
 
       def list(*filters)
@@ -38,10 +38,10 @@ module ActiveEncode
       end
 
       private
-      def build_encode(workflow)
+      def build_encode(workflow, cast)
         return nil if workflow.nil?
         workflow_doc = workflow.ng_xml.remove_namespaces!
-        encode = ActiveEncode::Base.new(convert_input(workflow_doc), convert_output(workflow_doc), convert_options(workflow_doc))
+        encode = cast.new(convert_input(workflow_doc), convert_output(workflow_doc), convert_options(workflow_doc))
         encode.id = convert_id(workflow_doc)
         encode.state = convert_state(workflow_doc)
         encode.current_operations = convert_current_operations(workflow_doc)
