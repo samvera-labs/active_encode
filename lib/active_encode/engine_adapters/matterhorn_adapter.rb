@@ -69,7 +69,9 @@ module ActiveEncode
           :running
         when "STOPPED"
           :cancelled
-        when "FAILED", "SUCCEEDED", "SKIPPED" #Should there be a errored state?
+        when "FAILED"
+          workflow.xpath('//operation[@state="FAILED"]').empty? ? :cancelled : :failed
+        when "SUCCEEDED", "SKIPPED" #Should there be a errored state?
           :completed
         end
       end
