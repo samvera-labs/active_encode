@@ -5,7 +5,7 @@ module ActiveEncode
     extend ActiveSupport::Concern
 
     included do
-      attr_reader :tech_metadata
+      attr_accessor :tech_metadata
     end
   end
 end
