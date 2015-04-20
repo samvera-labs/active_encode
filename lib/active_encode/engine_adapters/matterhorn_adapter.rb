@@ -5,7 +5,8 @@ module ActiveEncode
     class MatterhornAdapter
       DEFAULT_ARGS = {'flavor' => 'presenter/source'}
       def create(encode)
-        workflow = Rubyhorn.client.addMediaPackageWithUrl(DEFAULT_ARGS.merge({'workflow' => encode.options[:preset], 'url' => encode.input, 'filename' => File.basename(encode.input), 'title' => File.basename(encode.input)}))
+        workflow_id = encode.options[:preset] || "default"
+        workflow = Rubyhorn.client.addMediaPackageWithUrl(DEFAULT_ARGS.merge({'workflow' => workflow_id, 'url' => encode.input, 'filename' => File.basename(encode.input), 'title' => File.basename(encode.input)}))
         #encode.id = convert_id(workflow.ng_xml.remove_namespaces!)
         #encode.state = convert_state(workflow.ng_xml.remove_namespaces!)
         #encode

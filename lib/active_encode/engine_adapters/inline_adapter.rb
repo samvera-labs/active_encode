@@ -9,6 +9,7 @@ module ActiveEncode
         self.class.encodes[encode.id] = encode
         #start encode
         encode.state = :running
+        encode
       end
 
       def find(id, opts = {})
