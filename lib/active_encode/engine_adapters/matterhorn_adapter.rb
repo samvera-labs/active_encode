@@ -5,7 +5,7 @@ module ActiveEncode
     class MatterhornAdapter
       DEFAULT_ARGS = {'flavor' => 'presenter/source'}
       def create(encode)
-        workflow_id = encode.options[:preset] || "default"
+        workflow_id = encode.options[:preset] || "full"
         workflow = Rubyhorn.client.addMediaPackageWithUrl(DEFAULT_ARGS.merge({'workflow' => workflow_id, 'url' => encode.input, 'filename' => File.basename(encode.input), 'title' => File.basename(encode.input)}))
         #encode.id = convert_id(workflow.ng_xml.remove_namespaces!)
         #encode.state = convert_state(workflow.ng_xml.remove_namespaces!)
@@ -122,20 +122,24 @@ module ActiveEncode
       end
 
       def convert_track_metadata(track)
-        return nil if track.nil?
-        {
-          mime_type: track.at("mimetype/text()").to_s,
-          checksum: track.at("checksum/text()").to_s,
-          duration: track.at("duration/text()").to_s,
-          audio_codec: track.at("audio/encoder/@type").to_s,
-          audio_channels: track.at("audio/channels/text()").to_s,
-          audio_bitrate: track.at("audio/bitrate/text()").to_s,
-          video_codec: track.at("video/encoder/@type").to_s,
-          video_bitrate: track.at("video/bitrate/text()").to_s,
-          video_framerate: track.at("video/framerate/text()").to_s,
-          width: track.at("video/resolution/text()").to_s.split('x')[0],
-          height: track.at("video/resolution/text()").to_s.split('x')[1]
-        }
+        return {} if track.nil?
+        metadata = {}
+        metadata[:mime_type] = track.at("mimetype/text()").to_s if track.at('mimetype')
+        metadata[:checksum] = track.at("checksum/text()").to_s if track.at('checksum')
+        metadata[:duration] = track.at("duration/text()").to_s if track.at('duration')
+        if track.at('audio')
+          metadata[:audio_codec] = track.at("audio/encoder/@type").to_s 
+          metadata[:audio_channels] = track.at("audio/channels/text()").to_s
+          metadata[:audio_bitrate] = track.at("audio/bitrate/text()").to_s
+        end
+        if track.at('video')
+          metadata[:video_codec] = track.at("video/encoder/@type").to_s
+          metadata[:video_bitrate] = track.at("video/bitrate/text()").to_s
+          metadata[:video_framerate] = track.at("video/framerate/text()").to_s
+          metadata[:width] = track.at("video/resolution/text()").to_s.split('x')[0]
+          metadata[:height] = track.at("video/resolution/text()").to_s.split('x')[1]
+        end
+        metadata
       end
     end
   end
