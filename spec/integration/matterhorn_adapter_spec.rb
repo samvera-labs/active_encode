@@ -108,6 +108,14 @@ describe "MatterhornAdapter" do
     its(:id) { is_expected.to eq encode.id }
     it { is_expected.to be_cancelled }
     its(:output) { is_expected.to be_empty }
+
+    context "when encode is cancelled" do
+      let(:encode) { ActiveEncode::Base.create(file).cancel! }
+      it { is_expected.to be_a ActiveEncode::Base }
+      its(:id) { is_expected.to eq encode.id }
+      it { is_expected.to be_cancelled }
+      its(:output) { is_expected.to be_empty }
+    end
   end
 
   describe "reload" do
