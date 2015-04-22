@@ -23,7 +23,7 @@ describe "MatterhornAdapter" do
     it { is_expected.to be_running }
     its(:output) { is_expected.to be_empty }
     its(:options) { is_expected.to include(preset: 'full') }
-    its(:current_operations) { is_expected.to include("") }
+    its(:current_operations) { is_expected.to be_empty }
     its(:errors) { is_expected.to be_empty }
     its(:tech_metadata) { is_expected.to be_empty }
   end
@@ -87,7 +87,7 @@ describe "MatterhornAdapter" do
       its(:id) { is_expected.to eq 'failed-id' }
       it { is_expected.to be_failed }
       its(:options) { is_expected.to include(preset: 'error') }
-      its(:current_operations) { is_expected.to include("") }
+      its(:current_operations) { is_expected.to include("Cleaning up after failure") }
       its(:errors) { is_expected.to include failed_errors }
       its(:tech_metadata) { is_expected.to include failed_tech_metadata }
     end
