@@ -1,3 +1,12 @@
+require 'coveralls'
+Coveralls.wear!
+
 require 'bundler/setup'
-require 'active-encode'
+Bundler.setup
+
 require 'rspec/its'
+require 'active-encode'
+
+RSpec.configure do |config|
+  
+end
