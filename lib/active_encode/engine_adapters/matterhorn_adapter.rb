@@ -42,15 +42,17 @@ module ActiveEncode
       def purge(encode)
         workflow = Rubyhorn.client.stop(encode.id) rescue nil
         workflow ||= Rubyhorn.client.get_stopped_workflow(encode.id) rescue nil
-        media_package = Rubyhorn.client.get_media_package_from_id(workflow.ng_xml.xpath('//mediapackage/@id').to_s)
-        workflow.ng_xml.xpath('//track[@type="presenter/delivery" and tags/tag[text()="streaming"]]/@id').map(&:to_s).each do |track_id|
-          Rubyhorn.client.delete_track(media_package, track_id) rescue nil
-        end
-        workflow.ng_xml.xpath('//track[@type="presenter/delivery" and tags/tag[text()="streaming"] and tags/tag[text()="hls"]]/@id').map(&:to_s).each do |hls_track_id|
+        media_package = get_media_package(workflow)
+        #FIXME refine these xpaths so delete_track doesn't get called on hls tracks!
+        media_package.xpath('//track[@type="presenter/delivery" and tags/tag[text()="streaming"] and tags/tag[text()="hls"]]/@id').map(&:to_s).each do |hls_track_id|
           Rubyhorn.client.delete_hls_track(media_package, hls_track_id) rescue nil
         end
+        media_package.xpath('//track[@type="presenter/delivery" and tags/tag[text()="streaming"]]/@id').map(&:to_s).each do |track_id|
+          Rubyhorn.client.delete_track(media_package, track_id) rescue nil
+        end
         #Rubyhorn.client.delete_instance(encode.id) #Delete is not working so workflow instances can always be retrieved later!
-        build_encode(workflow, encode.class)
+        purged_workflow = Rubyhorn.client.get_stopped_workflow(encode.id) rescue nil
+        build_encode(purged_workflow, encode.class)
       end
 
       private
@@ -140,6 +142,18 @@ module ActiveEncode
           metadata[:height] = track.at("video/resolution/text()").to_s.split('x')[1]
         end
         metadata
+      end
+
+      def get_media_package(workflow_om)
+        workflow = if workflow_om.ng_xml.is_a? Nokogiri::XML::Document
+          workflow_om.ng_xml.remove_namespaces!
+        else
+          workflow_om.ng_xml
+        end
+        mp = workflow.xpath('//mediapackage')
+        first_node = mp.first
+        first_node['xmlns'] = 'http://mediapackage.opencastproject.org'
+        mp
       end
     end
   end
