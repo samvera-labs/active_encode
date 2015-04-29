@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<workflow xmlns="http://workflow.opencastproject.org" xmlns:ns2="http://org.opencastproject.security" xmlns:ns3="http://mediapackage.opencastproject.org" state="STOPPED" id="6935">
+<workflow xmlns="http://workflow.opencastproject.org" xmlns:ns2="http://org.opencastproject.security" xmlns:ns3="http://mediapackage.opencastproject.org" state="STOPPED" id="stop-completed-id">
   <template>avalon</template>
   <title>Encode, Analyze, and Distribute (Avalon)</title>
   <description>

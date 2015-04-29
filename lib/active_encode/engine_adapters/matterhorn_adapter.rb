@@ -10,7 +10,7 @@ module ActiveEncode
         #encode.id = convert_id(workflow.ng_xml.remove_namespaces!)
         #encode.state = convert_state(workflow.ng_xml.remove_namespaces!)
         #encode
-        encode = build_encode(workflow, encode.class)
+        encode = build_encode(get_workflow(workflow), encode.class)
         encode
       end
 
@@ -27,7 +27,7 @@ module ActiveEncode
           nil
         end
 
-        build_encode(workflow, opts[:cast])
+        build_encode(get_workflow(workflow), opts[:cast])
       end
 
       def list(*filters)
@@ -36,33 +36,29 @@ module ActiveEncode
 
       def cancel(encode)
         workflow = Rubyhorn.client.stop(encode.id)
-        build_encode(workflow, encode.class)
+        build_encode(get_workflow(workflow), encode.class)
       end
 
       def purge(encode)
         workflow = Rubyhorn.client.stop(encode.id) rescue nil
         workflow ||= Rubyhorn.client.get_stopped_workflow(encode.id) rescue nil
-        media_package = get_media_package(workflow)
-        #FIXME refine these xpaths so delete_track doesn't get called on hls tracks!
-        media_package.xpath('//track[@type="presenter/delivery" and tags/tag[text()="streaming"] and tags/tag[text()="hls"]]/@id').map(&:to_s).each do |hls_track_id|
-          Rubyhorn.client.delete_hls_track(media_package, hls_track_id) rescue nil
-        end
-        media_package.xpath('//track[@type="presenter/delivery" and tags/tag[text()="streaming"]]/@id').map(&:to_s).each do |track_id|
-          Rubyhorn.client.delete_track(media_package, track_id) rescue nil
-        end
-        #Rubyhorn.client.delete_instance(encode.id) #Delete is not working so workflow instances can always be retrieved later!
-        purged_workflow = Rubyhorn.client.get_stopped_workflow(encode.id) rescue nil
+        purged_workflow = purge_outputs(workflow)
+       #Rubyhorn.client.delete_instance(encode.id) #Delete is not working so workflow instances can always be retrieved later!
+        #purged_workflow = Rubyhorn.client.get_stopped_workflow(encode.id) rescue nil
         build_encode(purged_workflow, encode.class)
       end
 
       private
-      def build_encode(workflow_om, cast)
+      def get_workflow(workflow_om)
         return nil if workflow_om.nil?
-        workflow = if workflow_om.ng_xml.is_a? Nokogiri::XML::Document
+        if workflow_om.ng_xml.is_a? Nokogiri::XML::Document
           workflow_om.ng_xml.remove_namespaces!.root
         else
           workflow_om.ng_xml
         end
+      end
+
+      def build_encode(workflow, cast)
         return nil if workflow.nil?
         encode = cast.new(convert_input(workflow), convert_output(workflow), convert_options(workflow))
         encode.id = convert_id(workflow)
@@ -101,7 +97,7 @@ module ActiveEncode
 
       def convert_output(workflow)
         output = {}
-        workflow.xpath('//track[@type="presenter/delivery"]').each do |track|
+        workflow.xpath('//track[@type="presenter/delivery" and tags/tag[text()="streaming"]]').each do |track|
           label = track.xpath('tags/tag[starts-with(text(),"quality")]/text()').to_s
           url = track.at("url/text()").to_s
           output[label] = convert_track_metadata(track).merge({url: url})
@@ -144,16 +140,44 @@ module ActiveEncode
         metadata
       end
 
-      def get_media_package(workflow_om)
-        workflow = if workflow_om.ng_xml.is_a? Nokogiri::XML::Document
-          workflow_om.ng_xml.remove_namespaces!
-        else
-          workflow_om.ng_xml
-        end
+      def get_media_package(workflow)
         mp = workflow.xpath('//mediapackage')
         first_node = mp.first
         first_node['xmlns'] = 'http://mediapackage.opencastproject.org'
         mp
+      end
+
+      def purge_outputs(workflow_om)
+        workflow = get_workflow(workflow_om)
+        media_package = get_media_package(workflow)
+        #Delete hls tracks first since the next, more general xpath matches them as well
+        workflow.xpath('//track[@type="presenter/delivery" and tags/tag[text()="streaming"] and tags/tag[text()="hls"]]/@id').map(&:to_s).each do |hls_track_id|
+          purge_output(workflow, media_package, hls_track_id, true) rescue nil
+        end
+        workflow.xpath('//track[@type="presenter/delivery" and tags/tag[text()="streaming"]]/@id').map(&:to_s).each do |track_id|
+          purge_output(workflow, media_package, track_id) rescue nil
+        end
+        #update workflow in MH with track removed or error!
+        Rubyhorn.client.update_instance(workflow.to_xml(save_with: Nokogiri::XML::Node::SaveOptions::AS_XML | Nokogiri::XML::Node::SaveOptions::NO_EMPTY_TAGS).strip)
+
+        workflow
+      end 
+
+
+      def purge_output(workflow, media_package, track_id, hls=false)
+        job_url = if hls
+          Rubyhorn.client.delete_hls_track(media_package, track_id)
+        else
+          Rubyhorn.client.delete_track(media_package, track_id)
+        end
+        sleep(0.1)
+        job_status = Nokogiri::XML(Rubyhorn.client.get(URI(job_url).path)).root.attribute("status").value()
+        case job_status
+        when "FINISHED"
+          workflow.at_xpath("//track[@id=\"#{track_id}\"]").remove
+        when "FAILED"
+          workflow.at_xpath('//errors').add_child("<error>Output not purged: #{mp.at_xpath("//*[@id=\"#{track_id}\"]/tags/tag[starts-with(text(),\"quality\")]/text()").to_s}</error>")
+        end
       end
     end
   end

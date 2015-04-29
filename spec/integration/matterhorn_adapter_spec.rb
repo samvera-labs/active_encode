@@ -106,40 +106,46 @@ describe "MatterhornAdapter" do
     it { is_expected.to be_cancelled }
   end
 
-  #FIXME These tests and possibly the underlying code need to be fixed
-  xdescribe "#purge!" do
+  describe "#purge!" do
     context "when encode is running" do
       before do
         allow(Rubyhorn.client).to receive(:stop).and_return(Rubyhorn::Workflow.from_xml(File.open('spec/fixtures/matterhorn/stop_running_response.xml')))
-        expect(Rubyhorn.client).to receive(:delete_track).exactly(3).times
-        allow(Rubyhorn.client).to receive(:get_stopped_workflow).and_return(Rubyhorn::Workflow.from_xml(File.open('spec/fixtures/matterhorn/purged_response.xml')))
+        allow(Rubyhorn.client).to receive(:delete_track).and_return('http://localhost:8080/services/job/1234.xml')
+        allow(Rubyhorn.client).to receive(:get).with('/services/job/1234.xml').and_return(File.open('spec/fixtures/matterhorn/delete_track_response.xml'), File.open('spec/fixtures/matterhorn/delete_track_response.xml'), File.open('spec/fixtures/matterhorn/delete_track_response.xml'))
+        expect(Rubyhorn.client).to receive(:update_instance).once
       end
       let(:encode) { ActiveEncode::Base.create(file) }
       subject { encode.purge! }
       it { is_expected.to be_a ActiveEncode::Base }
-      its(:id) { is_expected.to eq 'purged-id' }
+      its(:id) { is_expected.to eq 'stopped-running-id' }
       it { is_expected.to be_cancelled }
       its(:output) { is_expected.to be_empty }
     end
 
     context "when encode is cancelled" do
       before do
-        allow(Rubyhorn.client).to receive(:get_stopped_workflow).and_return(Rubyhorn::Workflow.from_xml(File.open('spec/fixtures/matterhorn/cancelled_response.xml'), Rubyhorn::Workflow.from_xml(File.open('spec/fixtures/matterhorn/purged_response.xml'))))
+        allow(Rubyhorn.client).to receive(:stop).and_return(Rubyhorn::Workflow.from_xml(File.open('spec/fixtures/matterhorn/cancelled_response.xml')))
+#        allow(Rubyhorn.client).to receive(:get_stopped_workflow).and_return(Rubyhorn::Workflow.from_xml(File.open('spec/fixtures/matterhorn/cancelled_response.xml')))
+        expect(Rubyhorn.client).to receive(:update_instance).once
       end
       let(:encode) { ActiveEncode::Base.create(file).cancel! }
+      subject { encode.purge! }
       it { is_expected.to be_a ActiveEncode::Base }
-      its(:id) { is_expected.to eq 'purged-id' }
+      its(:id) { is_expected.to eq 'cancelled-id' }
       it { is_expected.to be_cancelled }
       its(:output) { is_expected.to be_empty }
     end 
     context "when encode is completed" do
       before do
         allow(Rubyhorn.client).to receive(:stop).and_return(Rubyhorn::Workflow.from_xml(File.open('spec/fixtures/matterhorn/stop_completed_response.xml')))
-        allow(Rubyhorn.client).to receive(:get_stopped_workflow).and_return(Rubyhorn::Workflow.from_xml(File.open('spec/fixtures/matterhorn/purged_response.xml')))
+        allow(Rubyhorn.client).to receive(:delete_track).and_return('http://localhost:8080/services/job/1234.xml')
+        allow(Rubyhorn.client).to receive(:get).with('/services/job/1234.xml').and_return(File.open('spec/fixtures/matterhorn/delete_track_response.xml'), File.open('spec/fixtures/matterhorn/delete_track_response.xml'), File.open('spec/fixtures/matterhorn/delete_track_response.xml'))
+        expect(Rubyhorn.client).to receive(:update_instance).once
       end
       let(:encode) { ActiveEncode::Base.create(file).cancel! }
+      subject { encode.purge! }
       it { is_expected.to be_a ActiveEncode::Base }
-      its(:id) { is_expected.to eq 'purged-id' }
+      its(:id) { is_expected.to eq 'stop-completed-id' }
       it { is_expected.to be_cancelled }
       its(:output) { is_expected.to be_empty }
     end
