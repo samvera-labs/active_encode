@@ -6,8 +6,8 @@ require 'active_encode/version'
 Gem::Specification.new do |spec|
   spec.name          = "active-encode"
   spec.version       = ActiveEncode::VERSION
-  spec.authors       = ["Michael Klein"]
-  spec.email         = ["mbklein@gmail.com"]
+  spec.authors       = ["Michael Klein, Chris Colvard"]
+  spec.email         = ["mbklein@gmail.com, chris.colvard@gmail.com"]
   spec.summary       = %q{TODO: Write a short summary. Required.}
   spec.description   = %q{TODO: Write a longer description. Optional.}
   spec.homepage      = ""
