@@ -20,15 +20,15 @@ module ActiveEncode
     end
 
     module ClassMethods
-      def default_options
+      def default_options(input)
         {}
       end
 
-      def default_output
+      def default_output(input)
         {}
       end
 
-      def create(input, output = default_output, options = default_options)
+      def create(input, output = nil, options = nil)
         object = new(input, output, options)
         object.create!
       end 
@@ -42,10 +42,10 @@ module ActiveEncode
       end
     end
 
-    def initialize(input, output = default_output, options = default_options)
+    def initialize(input, output = nil, options = nil)
       @input = input
-      @output = output
-      @options = options
+      @output = output || self.class.default_output(input)
+      @options = options || self.class.default_options(input)
     end
 
     def create!
