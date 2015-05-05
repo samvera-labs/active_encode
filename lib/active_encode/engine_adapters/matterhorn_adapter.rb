@@ -106,7 +106,7 @@ module ActiveEncode
       end
 
       def convert_current_operations(workflow)
-        workflow.xpath('//operation[@state!="INSTANTIATED"]/@description').last.to_s
+        [workflow.xpath('//operation[@state!="INSTANTIATED"]/@description').last.to_s]
       end
 
       def convert_errors(workflow)
