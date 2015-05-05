@@ -13,6 +13,10 @@ module ActiveEncode
       attr_accessor :errors
     end
 
+    def created?
+      !id.nil?
+    end
+
     def cancelled?
       state == :cancelled
     end
