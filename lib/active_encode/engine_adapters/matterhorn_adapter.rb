@@ -100,13 +100,15 @@ module ActiveEncode
         workflow.xpath('//track[@type="presenter/delivery" and tags/tag[text()="streaming"]]').each do |track|
           label = track.xpath('tags/tag[starts-with(text(),"quality")]/text()').to_s
           url = track.at("url/text()").to_s
-          output[label] = convert_track_metadata(track).merge({url: url})
+          track_id = track.at("@id").to_s
+          output[track_id] = convert_track_metadata(track).merge({url: url, label: label})
         end
         output
       end
 
       def convert_current_operations(workflow)
-        [workflow.xpath('//operation[@state!="INSTANTIATED"]/@description').last.to_s]
+        current_op = workflow.xpath('//operation[@state!="INSTANTIATED"]/@description').last.to_s
+        current_op.present? ? [current_op] : []
       end
 
       def convert_errors(workflow)
