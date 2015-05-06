@@ -116,6 +116,7 @@ module ActiveEncode
       def convert_options(workflow)
         options = {}
         options[:preset] = workflow.xpath('template/text()').to_s
+        options[:stream_base] = workflow.xpath('//properties/property[@key="avalon.stream_base"]/text()').to_s if workflow.xpath('//properties/property[@key="avalon.stream_base"]/text()').present? #this is avalon-felix specific
         options
       end
 
