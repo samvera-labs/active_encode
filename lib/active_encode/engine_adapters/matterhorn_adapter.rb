@@ -60,10 +60,11 @@ module ActiveEncode
 
       def build_encode(workflow, cast)
         return nil if workflow.nil?
-        encode = cast.new(convert_input(workflow), convert_output(workflow), convert_options(workflow))
+        encode = cast.new(convert_input(workflow), convert_options(workflow))
         encode.id = convert_id(workflow)
         encode.state = convert_state(workflow)
         encode.current_operations = convert_current_operations(workflow)
+        encode.output = convert_output(workflow)
         encode.errors = convert_errors(workflow)
         encode.tech_metadata = convert_tech_metadata(workflow)
         encode

@@ -24,12 +24,8 @@ module ActiveEncode
         {}
       end
 
-      def default_output(input)
-        {}
-      end
-
-      def create(input, output = nil, options = nil)
-        object = new(input, output, options)
+      def create(input, options = nil)
+        object = new(input, options)
         object.create!
       end 
 
@@ -42,9 +38,8 @@ module ActiveEncode
       end
     end
 
-    def initialize(input, output = nil, options = nil)
+    def initialize(input, options = nil)
       @input = input
-      @output = output || self.class.default_output(input)
       @options = options || self.class.default_options(input)
     end
 
