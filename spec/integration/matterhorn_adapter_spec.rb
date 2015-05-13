@@ -26,6 +26,7 @@ describe "MatterhornAdapter" do
     its(:output) { is_expected.to be_empty }
     its(:options) { is_expected.to include(preset: 'full') }
     its(:current_operations) { is_expected.to be_empty }
+    its(:percent_complete) { is_expected.to eq 0 }
     its(:errors) { is_expected.to be_empty }
     its(:tech_metadata) { is_expected.to be_empty }
   end
@@ -43,6 +44,7 @@ describe "MatterhornAdapter" do
       its(:output) { is_expected.to be_empty }
       its(:options) { is_expected.to include(preset: 'full') }
       its(:current_operations) { is_expected.to include("Hold for workflow selection") }
+      its(:percent_complete) { is_expected.to eq 0.43478260869565216 }  
       its(:errors) { is_expected.to be_empty }
       its(:tech_metadata) { is_expected.to be_empty }
     end
@@ -57,6 +59,7 @@ describe "MatterhornAdapter" do
       it { is_expected.to be_cancelled }
       its(:options) { is_expected.to include(preset: 'full') }
       its(:current_operations) { is_expected.to include("Tagging dublin core catalogs for publishing") }
+      its(:percent_complete) { is_expected.to eq 1.7391304347826086 }  
       its(:errors) { is_expected.to be_empty }
       its(:tech_metadata) { is_expected.to be_empty }
     end
@@ -74,6 +77,7 @@ describe "MatterhornAdapter" do
       its(:output) { is_expected.to include completed_output }
       its(:options) { is_expected.to include(preset: 'avalon') }
       its(:current_operations) { is_expected.to include("Cleaning up") }
+      its(:percent_complete) { is_expected.to eq 100 }
       its(:errors) { is_expected.to be_empty }
       its(:tech_metadata) { is_expected.to be_empty }
     end
@@ -90,6 +94,7 @@ describe "MatterhornAdapter" do
       it { is_expected.to be_failed }
       its(:options) { is_expected.to include(preset: 'error') }
       its(:current_operations) { is_expected.to include("Cleaning up after failure") }
+      its(:percent_complete) { is_expected.to eq 56.666666666666664 }
       its(:errors) { is_expected.to include failed_errors }
       its(:tech_metadata) { is_expected.to include failed_tech_metadata }
     end
@@ -163,6 +168,7 @@ describe "MatterhornAdapter" do
     its(:output) { is_expected.to be_empty }
     its(:options) { is_expected.to include(preset: 'full') }
     its(:current_operations) { is_expected.to include("Hold for workflow selection") }
+    its(:percent_complete) { is_expected.to eq 0.43478260869565216 }  
     its(:errors) { is_expected.to be_empty }
     its(:tech_metadata) { is_expected.to be_empty }
   end

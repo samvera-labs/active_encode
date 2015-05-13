@@ -64,6 +64,7 @@ module ActiveEncode
         encode.id = convert_id(workflow)
         encode.state = convert_state(workflow)
         encode.current_operations = convert_current_operations(workflow)
+        encode.percent_complete = calculate_percent_complete(workflow)
         encode.output = convert_output(workflow)
         encode.errors = convert_errors(workflow)
         encode.tech_metadata = convert_tech_metadata(workflow)
@@ -167,7 +168,6 @@ module ActiveEncode
         workflow
       end 
 
-
       def purge_output(workflow, media_package, track_id, hls=false)
         job_url = if hls
           Rubyhorn.client.delete_hls_track(media_package, track_id)
@@ -182,6 +182,28 @@ module ActiveEncode
         when "FAILED"
           workflow.at_xpath('//errors').add_child("<error>Output not purged: #{mp.at_xpath("//*[@id=\"#{track_id}\"]/tags/tag[starts-with(text(),\"quality\")]/text()").to_s}</error>")
         end
+      end
+
+      def calculate_percent_complete workflow
+        totals = {
+          :transcode => 70,
+          :distribution => 20,
+          :other => 10
+        }
+
+        completed_transcode_operations = workflow.xpath('//operation[@id="compose" and (@state="SUCCEEDED" or @state="SKIPPED")]').size
+        total_transcode_operations = workflow.xpath('//operation[@id="compose"]').size
+        total_transcode_operations = 1 if total_transcode_operations == 0
+        completed_distribution_operations = workflow.xpath('//operation[starts-with(@id,"distribute") and (@state="SUCCEEDED" or @state="SKIPPED")]').size
+        total_distribution_operations = workflow.xpath('//operation[starts-with(@id,"distribute")]').size
+        total_distribution_operations = 1 if total_distribution_operations == 0
+        completed_other_operations = workflow.xpath('//operation[@id!="compose" and not(starts-with(@id,"distribute")) and (@state="SUCCEEDED" or @state="SKIPPED")]').size 
+        total_other_operations = workflow.xpath('//operation[@id!="compose" and not(starts-with(@id,"distribute"))]').size
+        total_other_operations = 1 if total_other_operations == 0
+
+        ((totals[:transcode].to_f / total_transcode_operations) * completed_transcode_operations) +
+        ((totals[:distribution].to_f / total_distribution_operations) * completed_distribution_operations) +
+        ((totals[:other].to_f / total_other_operations) * completed_other_operations)
       end
     end
   end
