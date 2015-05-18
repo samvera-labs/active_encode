@@ -21,13 +21,21 @@ module ActiveEncode
       end
 
       def cancel(encode)
-        encode.state = :cancelled
+        inline_encode = self.class.encodes[encode.id]
+        return if inline_encode.nil?
+        inline_encode.state = :cancelled
         #cancel encode
-        encode
+        inline_encode
       end
 
       def purge(encode)
         self.class.encodes.delete encode.id
+      end
+
+      def remove_output(encode, output_id)
+        inline_encode = self.class.encodes[encode.id]
+        return if inline_encode.nil?
+        inline_encode.outputs.delete output_id
       end
     end
   end

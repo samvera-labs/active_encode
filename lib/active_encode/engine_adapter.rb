@@ -41,7 +41,7 @@ module ActiveEncode
         end
       end
 
-      ENGINE_ADAPTER_METHODS = [:create, :find, :list, :cancel, :purge].freeze
+      ENGINE_ADAPTER_METHODS = [:create, :find, :list, :cancel, :purge, :remove_output].freeze
 
       def engine_adapter?(object)
         ENGINE_ADAPTER_METHODS.all? { |meth| object.respond_to?(meth) }

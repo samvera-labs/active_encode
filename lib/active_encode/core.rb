@@ -61,6 +61,10 @@ module ActiveEncode
       end
     end
 
+    def remove_output! output_id
+      self.class.engine_adapter.remove_output self, output_id
+    end
+
     def reload
       fresh_encode = self.class.engine_adapter.find(id, cast: self.class)
       @id = fresh_encode.id

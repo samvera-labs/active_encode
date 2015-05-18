@@ -70,7 +70,6 @@ describe "MatterhornAdapter" do
       let(:completed_output) {{"track-7" => {:mime_type => "video/mp4", :checksum => "77de9765545ef63d2c21f7557ead6176", :duration => "6337", :audio_codec => "AAC", :audio_channels => "2", :audio_bitrate => "76502.0", :video_codec => "AVC", :video_bitrate => "2000000.0", :video_framerate => "30.0", :width => "1308", :height => "720", :url => "rtmp://localhost/vod/mp4:f564d9de-9c35-4b74-95f0-f3013f32cc1a/b09c765f-b64e-4725-a863-736af66b688c/videoshort", :label => "quality-high"}, "track-8" => {:mime_type => "video/mp4", :checksum => "10e13cf51bf8a973011eec6a17ea47ff", :duration => "6337", :audio_codec => "AAC", :audio_channels => "2", :audio_bitrate => "76502.0", :video_codec => "AVC", :video_bitrate => "500000.0", :video_framerate => "30.0", :width => "654", :height => "360", :url => "rtmp://localhost/vod/mp4:f564d9de-9c35-4b74-95f0-f3013f32cc1a/8d5cd8a9-ad0e-484a-96f0-05e26a84a8f0/videoshort", :label => "quality-low"}, "track-9" => {:mime_type => "video/mp4", :checksum => "f2b16a2606dc76cb53c7017f0e166204", :duration => "6337", :audio_codec => "AAC", :audio_channels => "2", :audio_bitrate => "76502.0", :video_codec => "AVC", :video_bitrate => "1000000.0", :video_framerate => "30.0", :width => "872", :height => "480", :url => "rtmp://localhost/vod/mp4:f564d9de-9c35-4b74-95f0-f3013f32cc1a/0f81d426-0e26-4496-8f58-c675c86e6f4e/videoshort", :label => "quality-medium"}}}
 
       subject { ActiveEncode::Base.find('completed-id') }
-      let(:output) {}
       it { is_expected.to be_a ActiveEncode::Base }
       its(:id) { is_expected.to eq 'completed-id' }
       it { is_expected.to be_completed }
@@ -171,5 +170,21 @@ describe "MatterhornAdapter" do
     its(:percent_complete) { is_expected.to eq 0.43478260869565216 }  
     its(:errors) { is_expected.to be_empty }
     its(:tech_metadata) { is_expected.to be_empty }
+  end
+
+  describe "remove_output" do
+    before do
+      allow(Rubyhorn.client).to receive(:instance_xml).with('completed-id').and_return(Rubyhorn::Workflow.from_xml(File.open('spec/fixtures/matterhorn/completed_response.xml')))
+      allow(Rubyhorn.client).to receive(:delete_track).and_return('http://localhost:8080/services/job/1234.xml')
+      allow(Rubyhorn.client).to receive(:get).with('/services/job/1234.xml').and_return(File.open('spec/fixtures/matterhorn/delete_track_response.xml'), File.open('spec/fixtures/matterhorn/delete_track_response.xml'), File.open('spec/fixtures/matterhorn/delete_track_response.xml'))
+      expect(Rubyhorn.client).to receive(:update_instance).once
+    end
+    let(:encode) { ActiveEncode::Base.find('completed-id') }
+    subject { encode.remove_output! 'track-7' }
+    it { is_expected.to be_a Hash }
+    it 'should remove the output' do
+      encode.remove_output!('track-7')
+      expect(ActiveEncode::Base.find(encode.id).output['track-7']).to be_nil
+    end
   end
 end

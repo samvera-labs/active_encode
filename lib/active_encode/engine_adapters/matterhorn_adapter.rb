@@ -6,28 +6,12 @@ module ActiveEncode
       DEFAULT_ARGS = {'flavor' => 'presenter/source'}
       def create(encode)
         workflow_id = encode.options[:preset] || "full"
-        workflow = Rubyhorn.client.addMediaPackageWithUrl(DEFAULT_ARGS.merge({'workflow' => workflow_id, 'url' => encode.input, 'filename' => File.basename(encode.input), 'title' => File.basename(encode.input)}))
-        #encode.id = convert_id(workflow.ng_xml.remove_namespaces!)
-        #encode.state = convert_state(workflow.ng_xml.remove_namespaces!)
-        #encode
-        encode = build_encode(get_workflow(workflow), encode.class)
-        encode
+        workflow_om = Rubyhorn.client.addMediaPackageWithUrl(DEFAULT_ARGS.merge({'workflow' => workflow_id, 'url' => encode.input, 'filename' => File.basename(encode.input), 'title' => File.basename(encode.input)}))
+        build_encode(get_workflow(workflow_om), encode.class)
       end
 
       def find(id, opts = {})
-        workflow = begin
-          Rubyhorn.client.instance_xml(id)
-        rescue Rubyhorn::RestClient::Exceptions::HTTPNotFound
-          nil
-        end
-
-        workflow ||= begin
-          Rubyhorn.client.get_stopped_workflow(id)
-        rescue
-          nil
-        end
-
-        build_encode(get_workflow(workflow), opts[:cast])
+        build_encode(fetch_workflow(id), opts[:cast])
       end
 
       def list(*filters)
@@ -35,20 +19,44 @@ module ActiveEncode
       end
 
       def cancel(encode)
-        workflow = Rubyhorn.client.stop(encode.id)
-        build_encode(get_workflow(workflow), encode.class)
+        workflow_om = Rubyhorn.client.stop(encode.id)
+        build_encode(get_workflow(workflow_om), encode.class)
       end
 
       def purge(encode)
-        workflow = Rubyhorn.client.stop(encode.id) rescue nil
-        workflow ||= Rubyhorn.client.get_stopped_workflow(encode.id) rescue nil
-        purged_workflow = purge_outputs(workflow)
+        workflow_om = Rubyhorn.client.stop(encode.id) rescue nil
+        workflow_om ||= Rubyhorn.client.get_stopped_workflow(encode.id) rescue nil
+        purged_workflow = purge_outputs(get_workflow(workflow_om))
        #Rubyhorn.client.delete_instance(encode.id) #Delete is not working so workflow instances can always be retrieved later!
-        #purged_workflow = Rubyhorn.client.get_stopped_workflow(encode.id) rescue nil
         build_encode(purged_workflow, encode.class)
       end
 
+      def remove_output(encode, output_id)
+        workflow = fetch_workflow(encode.id)
+        output = encode.output[output_id]
+        return if output.nil?
+        purge_output(workflow, output_id)
+        update_workflow!(workflow)
+        output
+      end
+
       private
+      def fetch_workflow(id)
+        workflow_om = begin
+          Rubyhorn.client.instance_xml(id)
+        rescue Rubyhorn::RestClient::Exceptions::HTTPNotFound
+          nil
+        end
+
+        workflow_om ||= begin
+          Rubyhorn.client.get_stopped_workflow(id)
+        rescue
+          nil
+        end
+
+        get_workflow(workflow_om)
+      end
+
       def get_workflow(workflow_om)
         return nil if workflow_om.nil?
         if workflow_om.ng_xml.is_a? Nokogiri::XML::Document
@@ -152,23 +160,23 @@ module ActiveEncode
         mp
       end
 
-      def purge_outputs(workflow_om)
-        workflow = get_workflow(workflow_om)
-        media_package = get_media_package(workflow)
+      def purge_outputs(workflow)
         #Delete hls tracks first since the next, more general xpath matches them as well
         workflow.xpath('//track[@type="presenter/delivery" and tags/tag[text()="streaming"] and tags/tag[text()="hls"]]/@id').map(&:to_s).each do |hls_track_id|
-          purge_output(workflow, media_package, hls_track_id, true) rescue nil
+          purge_output(workflow, hls_track_id) rescue nil
         end
         workflow.xpath('//track[@type="presenter/delivery" and tags/tag[text()="streaming"]]/@id').map(&:to_s).each do |track_id|
-          purge_output(workflow, media_package, track_id) rescue nil
+          purge_output(workflow, track_id) rescue nil
         end
         #update workflow in MH with track removed or error!
-        Rubyhorn.client.update_instance(workflow.to_xml(save_with: Nokogiri::XML::Node::SaveOptions::AS_XML | Nokogiri::XML::Node::SaveOptions::NO_EMPTY_TAGS).strip)
+        update_workflow!(workflow)
 
         workflow
       end 
 
-      def purge_output(workflow, media_package, track_id, hls=false)
+      def purge_output(workflow, track_id)
+        media_package = get_media_package(workflow)
+        hls = workflow.xpath("//track[@id='#{track_id}']/tags/tag[text()='hls']").present?
         job_url = if hls
           Rubyhorn.client.delete_hls_track(media_package, track_id)
         else
@@ -176,12 +184,18 @@ module ActiveEncode
         end
         sleep(0.1)
         job_status = Nokogiri::XML(Rubyhorn.client.get(URI(job_url).path)).root.attribute("status").value()
+        #FIXME have this return a boolean based upon result of operation
         case job_status
         when "FINISHED"
           workflow.at_xpath("//track[@id=\"#{track_id}\"]").remove
         when "FAILED"
           workflow.at_xpath('//errors').add_child("<error>Output not purged: #{mp.at_xpath("//*[@id=\"#{track_id}\"]/tags/tag[starts-with(text(),\"quality\")]/text()").to_s}</error>")
         end
+      end
+
+      def update_workflow! workflow
+        #FIXME have this return a boolean based upon result of operation
+        Rubyhorn.client.update_instance(workflow.to_xml(save_with: Nokogiri::XML::Node::SaveOptions::AS_XML | Nokogiri::XML::Node::SaveOptions::NO_EMPTY_TAGS).strip)
       end
 
       def calculate_percent_complete workflow

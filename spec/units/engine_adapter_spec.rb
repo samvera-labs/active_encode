@@ -10,6 +10,7 @@ describe "ActiveEncode::EngineAdapter" do
 	  def list(*filters); end
 	  def cancel(encode); end
 	  def purge(encode); end
+	  def remove_output(encode, output_id); end
 	end
 
 	class StubTwoAdapter
@@ -18,6 +19,7 @@ describe "ActiveEncode::EngineAdapter" do
 	  def list(*filters); end
 	  def cancel(encode); end
 	  def purge(encode); end
+	  def remove_output(encode, output_id); end
 	end
       end
     end

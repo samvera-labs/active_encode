@@ -15,6 +15,9 @@ module ActiveEncode
 
       def purge(encode)
       end
+
+      def remove_output(encode, output_id)
+      end
     end
   end
 end
