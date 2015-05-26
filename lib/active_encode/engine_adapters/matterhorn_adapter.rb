@@ -4,9 +4,14 @@ module ActiveEncode
   module EngineAdapters
     class MatterhornAdapter
       DEFAULT_ARGS = {'flavor' => 'presenter/source'}
+
       def create(encode)
         workflow_id = encode.options[:preset] || "full"
-        workflow_om = Rubyhorn.client.addMediaPackageWithUrl(DEFAULT_ARGS.merge({'workflow' => workflow_id, 'url' => encode.input, 'filename' => File.basename(encode.input), 'title' => File.basename(encode.input)}))
+        workflow_om = if encode.input.is_a? Hash
+          createMultipleFiles(encode.input, workflow_id)
+        else
+          Rubyhorn.client.addMediaPackageWithUrl(DEFAULT_ARGS.merge({'workflow' => workflow_id, 'url' => encode.input, 'filename' => File.basename(encode.input), 'title' => File.basename(encode.input)}))
+        end
         build_encode(get_workflow(workflow_om), encode.class)
       end
 
@@ -218,6 +223,29 @@ module ActiveEncode
         ((totals[:transcode].to_f / total_transcode_operations) * completed_transcode_operations) +
         ((totals[:distribution].to_f / total_distribution_operations) * completed_distribution_operations) +
         ((totals[:other].to_f / total_other_operations) * completed_other_operations)
+      end
+
+      def createMultipleFiles(input, workflow_id)
+	#Create empty media package xml document
+	mp = Rubyhorn.client.createMediaPackage
+
+	#Next line associates workflow title to avalon via masterfile pid
+        title = File.basename(input.values.first)
+	dc = Nokogiri::XML('<dublincore xmlns="http://www.opencastproject.org/xsd/1.0/dublincore/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dcterms:title>' + title + '</dcterms:title></dublincore>')
+	mp = Rubyhorn.client.addDCCatalog({'mediaPackage' => mp.to_xml, 'dublinCore' => dc.to_xml, 'flavor' => 'dublincore/episode'})
+
+	#Add quality levels - repeated for each supplied file url
+	input.each_pair do |quality, url|
+	  mp = Rubyhorn.client.addTrack({'mediaPackage' => mp.to_xml, 'url' => url, 'flavor' => DEFAULT_ARGS['flavor']})
+	  #Rewrite track to include quality tag
+	  #Get the empty tags element under the newly added track
+	  tags = mp.xpath('//xmlns:track/xmlns:tags[not(node())]', 'xmlns' => 'http://mediapackage.opencastproject.org').first
+	  qualityTag = Nokogiri::XML::Node.new 'tag', mp
+	  qualityTag.content = quality
+	  tags.add_child qualityTag
+	end
+	#Finally ingest the media package
+	Rubyhorn.client.start({"definitionId" => workflow_id, "mediapackage" => mp.to_xml})
       end
     end
   end
