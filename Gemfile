@@ -4,3 +4,4 @@ source 'https://rubygems.org'
 gemspec
 
 gem 'rubyhorn', git: "https://github.com/avalonmediasystem/rubyhorn.git"
+gem 'zencoder'

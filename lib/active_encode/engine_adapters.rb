@@ -11,6 +11,7 @@ module ActiveEncode
     autoload :ActiveJobAdapter
     autoload :MatterhornAdapter
     autoload :InlineAdapter
+    autoload :ZencoderAdapter
 
     ADAPTER = 'Adapter'.freeze
     private_constant :ADAPTER
