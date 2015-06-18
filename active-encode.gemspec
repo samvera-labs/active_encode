@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.version       = ActiveEncode::VERSION
   spec.authors       = ["Michael Klein, Chris Colvard"]
   spec.email         = ["mbklein@gmail.com, chris.colvard@gmail.com"]
-  spec.summary       = %q{TODO: Write a short summary. Required.}
+  spec.summary       = %q{Declare encode job classes that can be run by a variety of encoding services}
   spec.description   = %q{TODO: Write a longer description. Optional.}
   spec.homepage      = ""
   spec.license       = "MIT"
