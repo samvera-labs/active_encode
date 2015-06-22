@@ -78,7 +78,7 @@ module ActiveEncode
         encode.state = convert_state(workflow)
         encode.current_operations = convert_current_operations(workflow)
         encode.percent_complete = calculate_percent_complete(workflow)
-        encode.output = convert_output(workflow)
+        encode.output = convert_output(workflow, encode.options)
         encode.errors = convert_errors(workflow)
         encode.tech_metadata = convert_tech_metadata(workflow)
         encode
@@ -110,11 +110,14 @@ module ActiveEncode
         convert_track_metadata(workflow.xpath('//track[@type="presenter/source"]').first)
       end
 
-      def convert_output(workflow)
+      def convert_output(workflow, options)
         output = {}
         workflow.xpath('//track[@type="presenter/delivery" and tags/tag[text()="streaming"]]').each do |track|
           label = track.xpath('tags/tag[starts-with(text(),"quality")]/text()').to_s
           url = track.at("url/text()").to_s
+          if url.start_with? "rtmp"
+            url = File.join(options[:stream_base], MatterhornRtmpUrl.parse(url).to_path) if options[:stream_base]
+          end
           track_id = track.at("@id").to_s
           output[track_id] = convert_track_metadata(track).merge({url: url, label: label})
         end
@@ -246,6 +249,39 @@ module ActiveEncode
 	end
 	#Finally ingest the media package
 	Rubyhorn.client.start({"definitionId" => workflow_id, "mediapackage" => mp.to_xml})
+      end
+    end
+
+    class MatterhornRtmpUrl < Struct.new(:application, :prefix, :media_id, :stream_id, :filename, :extension)
+
+      REGEX = %r{^
+	/(?<application>.+)        # application (avalon)
+	/(?:(?<prefix>.+):)?       # prefix      (mp4:)
+	(?<media_id>[^\/]+)        # media_id    (98285a5b-603a-4a14-acc0-20e37a3514bb)
+	/(?<stream_id>[^\/]+)      # stream_id   (b3d5663d-53f1-4f7d-b7be-b52fd5ca50a3)
+	/(?<filename>.+?)          # filename    (MVI_0057)
+	(?:\.(?<extension>.+))?$   # extension   (mp4)
+      }x
+
+      def initialize(hash)
+	super(*members.map {|member| hash[member]})
+      end
+
+      def self.parse(url_string)
+	# Example input: /avalon/mp4:98285a5b-603a-4a14-acc0-20e37a3514bb/b3d5663d-53f1-4f7d-b7be-b52fd5ca50a3/MVI_0057.mp4
+
+	uri = URI.parse(url_string)
+	match_data = REGEX.match(uri.path)
+	MatterhornRtmpUrl.new match_data
+      end
+
+      alias_method :'_binding', :'binding'
+      def binding
+	_binding
+      end
+
+      def to_path
+	File.join(media_id, stream_id, "#{filename}.#{extension||prefix}")
       end
     end
   end
