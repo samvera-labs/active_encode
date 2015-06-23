@@ -35,7 +35,7 @@ module ActiveEncode
       def remove_output(encode, output_id)
         inline_encode = self.class.encodes[encode.id]
         return if inline_encode.nil?
-        inline_encode.outputs.delete output_id
+        inline_encode.output.delete(inline_encode.output.find {|o| o[:id] == output_id})
       end
     end
   end

@@ -91,12 +91,12 @@ module ActiveEncode
       end
 
       def convert_output(job_details)
-        output = {}
+        output = []
         job_details.body["job"]["output_media_files"].each do |o|
           track_id = o["id"].to_s
           label = o["label"]
           url = o["url"]
-          output[track_id] = convert_tech_metadata(o).merge({url: url, label: label})
+          output << convert_tech_metadata(o).merge({id: track_id, url: url, label: label})
         end
         output
       end

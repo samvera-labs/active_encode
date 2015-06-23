@@ -38,7 +38,7 @@ module ActiveEncode
 
       def remove_output(encode, output_id)
         workflow = fetch_workflow(encode.id)
-        output = encode.output[output_id]
+        output = encode.output.find {|o| o[:id] == output_id}
         return if output.nil?
         purge_output(workflow, output_id)
         update_workflow!(workflow)
@@ -111,7 +111,7 @@ module ActiveEncode
       end
 
       def convert_output(workflow, options)
-        output = {}
+        output = []
         workflow.xpath('//track[@type="presenter/delivery" and tags/tag[text()="streaming"]]').each do |track|
           label = track.xpath('tags/tag[starts-with(text(),"quality")]/text()').to_s
           url = track.at("url/text()").to_s
@@ -119,7 +119,7 @@ module ActiveEncode
             url = File.join(options[:stream_base], MatterhornRtmpUrl.parse(url).to_path) if options[:stream_base]
           end
           track_id = track.at("@id").to_s
-          output[track_id] = convert_track_metadata(track).merge({url: url, label: label})
+          output << convert_track_metadata(track).merge({id: track_id, url: url, label: label})
         end
         output
       end

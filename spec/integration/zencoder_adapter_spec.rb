@@ -26,7 +26,7 @@ describe "ZencoderAdapter" do
 
     let(:details_response) { Zencoder::Response.new(body: JSON.parse(File.read('spec/fixtures/zencoder/job_details_create.json'))) }
     let(:progress_response) { Zencoder::Response.new(body: JSON.parse(File.read('spec/fixtures/zencoder/job_progress_create.json'))) }
-    let(:create_output) { {"511404522"=>{:url=>"https://zencoder-temp-storage-us-east-1.s3.amazonaws.com/o/20150610/c09b61e4d130ddf923f0653418a80b9c/399ae101c3f99b4f318635e78a4e587a.mp4?AWSAccessKeyId=AKIAI456JQ76GBU7FECA&Signature=GY/9LMkQAiDOrMQwS5BkmOE200s%3D&Expires=1434033527", :label=>nil}} }
+    let(:create_output) { [{:id => "511404522", :url=>"https://zencoder-temp-storage-us-east-1.s3.amazonaws.com/o/20150610/c09b61e4d130ddf923f0653418a80b9c/399ae101c3f99b4f318635e78a4e587a.mp4?AWSAccessKeyId=AKIAI456JQ76GBU7FECA&Signature=GY/9LMkQAiDOrMQwS5BkmOE200s%3D&Expires=1434033527", :label=>nil}] }
 
     subject { ActiveEncode::Base.create(file) }
     it { is_expected.to be_a ActiveEncode::Base }
@@ -48,7 +48,7 @@ describe "ZencoderAdapter" do
     context "a running encode" do
       let(:details_response) { Zencoder::Response.new(body: JSON.parse(File.read('spec/fixtures/zencoder/job_details_running.json'))) }
       let(:progress_response) { Zencoder::Response.new(body: JSON.parse(File.read('spec/fixtures/zencoder/job_progress_running.json'))) }
-      let(:running_output) { {"510582971"=>{:url=>"https://zencoder-temp-storage-us-east-1.s3.amazonaws.com/o/20150609/48a6907086c012f68b9ca43461280515/1726d7ec3e24f2171bd07b2abb807b6c.mp4?AWSAccessKeyId=AKIAI456JQ76GBU7FECA&Signature=vSvlxU94wlQLEbpG3Zs8ibp4MoY%3D&Expires=1433953106", :label => nil}} }
+      let(:running_output) { [{:id => "510582971", :url=>"https://zencoder-temp-storage-us-east-1.s3.amazonaws.com/o/20150609/48a6907086c012f68b9ca43461280515/1726d7ec3e24f2171bd07b2abb807b6c.mp4?AWSAccessKeyId=AKIAI456JQ76GBU7FECA&Signature=vSvlxU94wlQLEbpG3Zs8ibp4MoY%3D&Expires=1433953106", :label => nil}] }
       let(:running_tech_metadata) { {:audio_bitrate=>"52", :audio_codec=>"aac", :audio_channels=>"2", :duration=>"57992", :mime_type=>"mpeg4", :video_framerate=>"29.97", :height=>"240", :video_bitrate=>"535", :video_codec=>"h264", :width=>"320"} }
 
       subject { ActiveEncode::Base.find('166019107') }
@@ -79,7 +79,7 @@ describe "ZencoderAdapter" do
     context "a completed encode" do
       let(:details_response) { Zencoder::Response.new(body: JSON.parse(File.read('spec/fixtures/zencoder/job_details_completed.json'))) }
       let(:progress_response) { Zencoder::Response.new(body: JSON.parse(File.read('spec/fixtures/zencoder/job_progress_completed.json'))) }
-      let(:completed_output) { {"509856876" => {:audio_bitrate => "53", :audio_codec => "aac", :audio_channels => "2", :duration => "5000", :mime_type => "mpeg4", :video_framerate => "29.97", :height => "240", :video_bitrate => "549", :video_codec => "h264", :width => "320", :url => "https://zencoder-temp-storage-us-east-1.s3.amazonaws.com/o/20150608/ebbe865f8ef1b960d7c2bb0663b88a12/0f1948dcb2fd701fba30ff21908fe460.mp4?AWSAccessKeyId=AKIAI456JQ76GBU7FECA&Signature=1LgIyl/el9E7zeyPxzd/%2BNwez6Y%3D&Expires=1433873646", :label => nil}} }  
+      let(:completed_output) { {:id => "509856876", :audio_bitrate => "53", :audio_codec => "aac", :audio_channels => "2", :duration => "5000", :mime_type => "mpeg4", :video_framerate => "29.97", :height => "240", :video_bitrate => "549", :video_codec => "h264", :width => "320", :url => "https://zencoder-temp-storage-us-east-1.s3.amazonaws.com/o/20150608/ebbe865f8ef1b960d7c2bb0663b88a12/0f1948dcb2fd701fba30ff21908fe460.mp4?AWSAccessKeyId=AKIAI456JQ76GBU7FECA&Signature=1LgIyl/el9E7zeyPxzd/%2BNwez6Y%3D&Expires=1433873646", :label => nil} }  
       let(:completed_tech_metadata) { {:audio_bitrate=>"52", :audio_codec=>"aac", :audio_channels=>"2", :duration=>"57992", :mime_type=>"mpeg4", :video_framerate=>"29.97", :height=>"240", :video_bitrate=>"535", :video_codec=>"h264", :width=>"320"} }
 
       subject { ActiveEncode::Base.find('165839139') }
@@ -136,7 +136,7 @@ describe "ZencoderAdapter" do
 
     let(:details_response) { Zencoder::Response.new(body: JSON.parse(File.read('spec/fixtures/zencoder/job_details_running.json'))) }
     let(:progress_response) { Zencoder::Response.new(body: JSON.parse(File.read('spec/fixtures/zencoder/job_progress_running.json'))) }
-    let(:reload_output) {{'510582971' => {:url=>"https://zencoder-temp-storage-us-east-1.s3.amazonaws.com/o/20150609/48a6907086c012f68b9ca43461280515/1726d7ec3e24f2171bd07b2abb807b6c.mp4?AWSAccessKeyId=AKIAI456JQ76GBU7FECA&Signature=vSvlxU94wlQLEbpG3Zs8ibp4MoY%3D&Expires=1433953106", :label => nil}}}
+    let(:reload_output) { [{:id => "510582971", :url=>"https://zencoder-temp-storage-us-east-1.s3.amazonaws.com/o/20150609/48a6907086c012f68b9ca43461280515/1726d7ec3e24f2171bd07b2abb807b6c.mp4?AWSAccessKeyId=AKIAI456JQ76GBU7FECA&Signature=vSvlxU94wlQLEbpG3Zs8ibp4MoY%3D&Expires=1433953106", :label => nil}] }
     let(:reload_tech_metadata) { {:audio_bitrate=>"52", :audio_codec=>"aac", :audio_channels=>"2", :duration=>"57992", :mime_type=>"mpeg4", :video_framerate=>"29.97", :height=>"240", :video_bitrate=>"535", :video_codec=>"h264", :width=>"320"} }
 
     subject { ActiveEncode::Base.find('166019107').reload }
