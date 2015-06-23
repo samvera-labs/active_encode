@@ -41,7 +41,6 @@ module ActiveEncode
         output = encode.output.find {|o| o[:id] == output_id}
         return if output.nil?
         purge_output(workflow, output_id)
-        update_workflow!(workflow)
         output
       end
 
@@ -176,8 +175,6 @@ module ActiveEncode
         workflow.xpath('//track[@type="presenter/delivery" and tags/tag[text()="streaming"]]/@id').map(&:to_s).each do |track_id|
           purge_output(workflow, track_id) rescue nil
         end
-        #update workflow in MH with track removed or error!
-        update_workflow!(workflow)
 
         workflow
       end 
@@ -199,11 +196,6 @@ module ActiveEncode
         when "FAILED"
           workflow.at_xpath('//errors').add_child("<error>Output not purged: #{mp.at_xpath("//*[@id=\"#{track_id}\"]/tags/tag[starts-with(text(),\"quality\")]/text()").to_s}</error>")
         end
-      end
-
-      def update_workflow! workflow
-        #FIXME have this return a boolean based upon result of operation
-        Rubyhorn.client.update_instance(workflow.to_xml(save_with: Nokogiri::XML::Node::SaveOptions::AS_XML | Nokogiri::XML::Node::SaveOptions::NO_EMPTY_TAGS).strip)
       end
 
       def calculate_percent_complete workflow

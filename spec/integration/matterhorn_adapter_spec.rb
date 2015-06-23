@@ -116,7 +116,6 @@ describe "MatterhornAdapter" do
         allow(Rubyhorn.client).to receive(:stop).and_return(Rubyhorn::Workflow.from_xml(File.open('spec/fixtures/matterhorn/stop_running_response.xml')))
         allow(Rubyhorn.client).to receive(:delete_track).and_return('http://localhost:8080/services/job/1234.xml')
         allow(Rubyhorn.client).to receive(:get).with('/services/job/1234.xml').and_return(File.open('spec/fixtures/matterhorn/delete_track_response.xml'), File.open('spec/fixtures/matterhorn/delete_track_response.xml'), File.open('spec/fixtures/matterhorn/delete_track_response.xml'))
-        expect(Rubyhorn.client).to receive(:update_instance).once
       end
       let(:encode) { ActiveEncode::Base.create(file) }
       subject { encode.purge! }
@@ -130,7 +129,6 @@ describe "MatterhornAdapter" do
       before do
         allow(Rubyhorn.client).to receive(:stop).and_return(Rubyhorn::Workflow.from_xml(File.open('spec/fixtures/matterhorn/cancelled_response.xml')))
 #        allow(Rubyhorn.client).to receive(:get_stopped_workflow).and_return(Rubyhorn::Workflow.from_xml(File.open('spec/fixtures/matterhorn/cancelled_response.xml')))
-        expect(Rubyhorn.client).to receive(:update_instance).once
       end
       let(:encode) { ActiveEncode::Base.create(file).cancel! }
       subject { encode.purge! }
@@ -144,7 +142,6 @@ describe "MatterhornAdapter" do
         allow(Rubyhorn.client).to receive(:stop).and_return(Rubyhorn::Workflow.from_xml(File.open('spec/fixtures/matterhorn/stop_completed_response.xml')))
         allow(Rubyhorn.client).to receive(:delete_track).and_return('http://localhost:8080/services/job/1234.xml')
         allow(Rubyhorn.client).to receive(:get).with('/services/job/1234.xml').and_return(File.open('spec/fixtures/matterhorn/delete_track_response.xml'), File.open('spec/fixtures/matterhorn/delete_track_response.xml'), File.open('spec/fixtures/matterhorn/delete_track_response.xml'))
-        expect(Rubyhorn.client).to receive(:update_instance).once
       end
       let(:encode) { ActiveEncode::Base.create(file).cancel! }
       subject { encode.purge! }
@@ -177,7 +174,6 @@ describe "MatterhornAdapter" do
       allow(Rubyhorn.client).to receive(:instance_xml).with('completed-id').and_return(Rubyhorn::Workflow.from_xml(File.open('spec/fixtures/matterhorn/completed_response.xml')))
       allow(Rubyhorn.client).to receive(:delete_track).and_return('http://localhost:8080/services/job/1234.xml')
       allow(Rubyhorn.client).to receive(:get).with('/services/job/1234.xml').and_return(File.open('spec/fixtures/matterhorn/delete_track_response.xml'), File.open('spec/fixtures/matterhorn/delete_track_response.xml'), File.open('spec/fixtures/matterhorn/delete_track_response.xml'))
-      expect(Rubyhorn.client).to receive(:update_instance).once
     end
     let(:encode) { ActiveEncode::Base.find('completed-id') }
     subject { encode.remove_output! 'track-7' }
