@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Michael Klein, Chris Colvard"]
   spec.email         = ["mbklein@gmail.com, chris.colvard@gmail.com"]
   spec.summary       = %q{Declare encode job classes that can be run by a variety of encoding services}
-  spec.description   = %q{This gem serves as the basis for the interface between a Ruby (Rails) application and a provider of transcoding services such as Opencast Matterhorn, Zencoder, Amazon Elastic Transcoder, and Kaltura.}
+  spec.description   = %q{This gem serves as the basis for the interface between a Ruby (Rails) application and a provider of transcoding services such as Opencast Matterhorn, Zencoder, and Amazon Elastic Transcoder.}
   spec.homepage      = ""
   spec.license       = "MIT"
 
