@@ -1,6 +1,6 @@
 # ActiveEncode
 
-This gem serves as the basis for the interface between a Ruby (Rails) application and a provider of transcoding services such as [Opencast Matterhorn](http://opencast.org), [Zencoder](http://zencoder.com), [Amazon Elastic Transcoder](http://aws.amazon.com/elastictranscoder/), and [Kaltura](http://www.kaltura.org/).
+This gem serves as the basis for the interface between a Ruby (Rails) application and a provider of transcoding services such as [Opencast Matterhorn](http://opencast.org), [Zencoder](http://zencoder.com), and [Amazon Elastic Transcoder](http://aws.amazon.com/elastictranscoder/).
 
 ## Installation
 
