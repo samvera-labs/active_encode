@@ -240,7 +240,13 @@ module ActiveEncode
 	  tags.add_child qualityTag
 	end
 	#Finally ingest the media package
-	Rubyhorn.client.start({"definitionId" => workflow_id, "mediapackage" => mp.to_xml})
+	begin
+	  Rubyhorn.client.start({"definitionId" => workflow_id, "mediapackage" => mp.to_xml})
+        rescue Rubyhorn::RestClient::Exceptions::HTTPNotFound
+	  #make this two calls...one to get the workflow definition xml and then the second to submit it along with the mediapackage to start...due to unsolved issue with some MH installs
+          workflow_definition_xml = Rubyhorn.client.definition_xml(workflow_id)
+	  Rubyhorn.client.start({"definition" => workflow_definition_xml, "mediapackage" => mp.to_xml})
+        end
       end
     end
 
