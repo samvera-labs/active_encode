@@ -12,12 +12,12 @@ module ActiveEncode
         encode
       end
 
-      def find(id, opts = {})
-        return @encodes[id]
+      def find(id, _opts = {})
+        @encodes[id]
       end
 
-      def list(*filters)
-        raise NotImplementedError
+      def list(*_filters)
+        fail NotImplementedError
       end
 
       def cancel(encode)
@@ -30,8 +30,8 @@ module ActiveEncode
         @encodes.delete(encode.id)
       end
 
-      def remove_output(encode, output_id)
-        raise NotImplementedError
+      def remove_output(_encode, _output_id)
+        fail NotImplementedError
       end
     end
   end

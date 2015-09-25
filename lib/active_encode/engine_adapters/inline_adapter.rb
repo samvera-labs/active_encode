@@ -7,24 +7,24 @@ module ActiveEncode
       def create(encode)
         encode.id = SecureRandom.uuid
         self.class.encodes[encode.id] = encode
-        #start encode
+        # start encode
         encode.state = :running
         encode
       end
 
-      def find(id, opts = {})
+      def find(id, _opts = {})
         self.class.encodes[id]
       end
 
-      def list(*filters)
-        raise NotImplementedError
+      def list(*_filters)
+        fail NotImplementedError
       end
 
       def cancel(encode)
         inline_encode = self.class.encodes[encode.id]
         return if inline_encode.nil?
         inline_encode.state = :cancelled
-        #cancel encode
+        # cancel encode
         inline_encode
       end
 
@@ -35,7 +35,7 @@ module ActiveEncode
       def remove_output(encode, output_id)
         inline_encode = self.class.encodes[encode.id]
         return if inline_encode.nil?
-        inline_encode.output.delete(inline_encode.output.find {|o| o[:id] == output_id})
+        inline_encode.output.delete(inline_encode.output.find { |o| o[:id] == output_id })
       end
     end
   end

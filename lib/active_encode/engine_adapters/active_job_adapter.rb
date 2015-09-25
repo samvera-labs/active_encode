@@ -1,22 +1,22 @@
 module ActiveEncode
   module EngineAdapters
     class ActiveJobAdapter
-      def create(encode)
+      def create(_encode)
       end
 
-      def find(id, opts = {})
+      def find(_id, _opts = {})
       end
 
-      def list(*filters)
+      def list(*_filters)
       end
 
-      def cancel(encode)
+      def cancel(_encode)
       end
 
-      def purge(encode)
+      def purge(_encode)
       end
 
-      def remove_output(encode, output_id)
+      def remove_output(_encode, _output_id)
       end
     end
   end

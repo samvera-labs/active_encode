@@ -28,25 +28,24 @@ module ActiveEncode
 
       private
 
-      def interpret_adapter(name_or_adapter_or_class)
-        case name_or_adapter_or_class
-        when Symbol, String
-          ActiveEncode::EngineAdapters.lookup(name_or_adapter_or_class).new
-        else
-          if engine_adapter?(name_or_adapter_or_class)
-            name_or_adapter_or_class
+        def interpret_adapter(name_or_adapter_or_class)
+          case name_or_adapter_or_class
+          when Symbol, String
+            ActiveEncode::EngineAdapters.lookup(name_or_adapter_or_class).new
           else
-            raise ArgumentError
+            if engine_adapter?(name_or_adapter_or_class)
+              name_or_adapter_or_class
+            else
+              fail ArgumentError
+            end
           end
         end
-      end
 
-      ENGINE_ADAPTER_METHODS = [:create, :find, :list, :cancel, :purge, :remove_output].freeze
+        ENGINE_ADAPTER_METHODS = [:create, :find, :list, :cancel, :purge, :remove_output].freeze
 
-      def engine_adapter?(object)
-        ENGINE_ADAPTER_METHODS.all? { |meth| object.respond_to?(meth) }
-      end
-
+        def engine_adapter?(object)
+          ENGINE_ADAPTER_METHODS.all? { |meth| object.respond_to?(meth) }
+        end
     end
   end
 end

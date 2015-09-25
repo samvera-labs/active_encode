@@ -20,22 +20,20 @@ module ActiveEncode
     end
 
     module ClassMethods
-      def default_options(input)
+      def default_options(_input)
         {}
       end
 
       def create(input, options = nil)
         object = new(input, options)
         object.create!
-      end 
+      end
 
       def find(id)
         engine_adapter.find(id, cast: self)
       end
 
-      def list(*filters)
-        engine_adapter.list(filters)
-      end
+      delegate :list, to: :engine_adapter
     end
 
     def initialize(input, options = nil)
@@ -61,7 +59,7 @@ module ActiveEncode
       end
     end
 
-    def remove_output! output_id
+    def remove_output!(output_id)
       self.class.engine_adapter.remove_output self, output_id
     end
 
