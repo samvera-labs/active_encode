@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'active_encode/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "active-encode"
+  spec.name          = "active_encode"
   spec.version       = ActiveEncode::VERSION
   spec.authors       = ["Michael Klein, Chris Colvard"]
   spec.email         = ["mbklein@gmail.com, chris.colvard@gmail.com"]
