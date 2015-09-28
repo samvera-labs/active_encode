@@ -1,6 +1,6 @@
 # ActiveEncode
 
-This gem serves as the basis for the interface between a Ruby (Rails) application and a provider of transcoding services such as [Opencast Matterhorn](http://opencast.org), [Zencoder](http://zencoder.com), and [Amazon Elastic Transcoder](http://aws.amazon.com/elastictranscoder/).
+This gem serves as the basis for the interface between a Ruby (Rails) application and a provider of transcoding services such as [Opencast Matterhorn](http://opencast.org), [Zencoder](http://zencoder.com), [Shingoncoder](http://github.com/jcoyne/shingoncoder), and [Amazon Elastic Transcoder](http://aws.amazon.com/elastictranscoder/).
 
 ## Installation
 
@@ -85,16 +85,16 @@ end
 
 Engine adapters are shims between ActiveEncode and the back end encoding service.  Each service has its own API and idiosyncracies so consult the table below to see what features are supported by each adapter.  Add an additional engines by creating an engine adapter class that implements :create, :find, :list, :cancel, :purge, and :remove_output.
 
-| Feature | Matterhorn Adapter | Zencoder Adapter (prototype) | Inline Adapter (In progress) | Test Adapter |
+| Feature | Matterhorn Adapter | Zencoder Adapter (prototype) | Shingoncoder | Inline Adapter (In progress) | Test Adapter |
 | --- | --- | --- | --- | --- |
-| Create | X | X | X | X |
-| Find | X | X | X	| X	|
-| List	| |	| | |
-| Cancel | X | X | | X |
-| Purge	| X	| | | X	|
-| Remove output	| X	| | | |
-| Preset | X | | | |
-| Multiple outputs | X (via preset)	| |	| |
+| Create | X | X | X | X | X |
+| Find | X | X | X | X	| X	|
+| List	| |	| | | |
+| Cancel | X | X | | | X |
+| Purge	| X	| |  | | X	|
+| Remove output	| X	| | | | |
+| Preset | X | | | | |
+| Multiple outputs | X (via preset)	| | |	| |
 
 
 ## Contributing
