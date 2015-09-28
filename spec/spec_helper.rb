@@ -6,7 +6,7 @@ Bundler.setup
 
 require 'byebug'
 require 'rspec/its'
-require 'active-encode'
+require 'active_encode'
 
 RSpec.configure do |_config|
 end

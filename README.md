@@ -7,7 +7,7 @@ This gem serves as the basis for the interface between a Ruby (Rails) applicatio
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'active-encode'
+gem 'active_encode'
 ```
 
 And then execute:
@@ -16,7 +16,7 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install active-encode
+    $ gem install active_encode
 
 ## Usage
 
@@ -99,7 +99,7 @@ Engine adapters are shims between ActiveEncode and the back end encoding service
 
 ## Contributing
 
-1. Fork it ( https://github.com/[my-github-username]/active-encode/fork )
+1. Fork it ( https://github.com/projecthydra-labs/active_encode/fork )
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
