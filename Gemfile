@@ -8,3 +8,4 @@ gem 'rubocop', require: false
 gem 'rubocop-rspec', require: false
 gem 'rubyhorn', git: "https://github.com/avalonmediasystem/rubyhorn.git"
 gem 'zencoder'
+gem 'shingoncoder'

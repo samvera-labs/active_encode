@@ -16,16 +16,19 @@ Metrics/MethodLength:
   Exclude:
     - 'lib/active_encode/engine_adapters/matterhorn_adapter.rb'
     - 'lib/active_encode/engine_adapters/zencoder_adapter.rb'
+    - 'lib/active_encode/engine_adapters/shingoncoder_adapter.rb'
 
 Metrics/ClassLength:
   Exclude:
     - 'lib/active_encode/engine_adapters/matterhorn_adapter.rb'
     - 'lib/active_encode/engine_adapters/zencoder_adapter.rb'
+    - 'lib/active_encode/engine_adapters/shingoncoder_adapter.rb'
 
 Metrics/CyclomaticComplexity:
   Exclude:
     - 'lib/active_encode/engine_adapters/matterhorn_adapter.rb'
     - 'lib/active_encode/engine_adapters/zencoder_adapter.rb'
+    - 'lib/active_encode/engine_adapters/shingoncoder_adapter.rb'
 
 Style/FileName:
   Exclude:

@@ -12,6 +12,7 @@ module ActiveEncode
     autoload :MatterhornAdapter
     autoload :InlineAdapter
     autoload :ZencoderAdapter
+    autoload :ShingoncoderAdapter
     autoload :TestAdapter
 
     ADAPTER = 'Adapter'.freeze
