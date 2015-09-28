@@ -1,26 +1,36 @@
 require 'spec_helper'
 
-describe "ActiveEncode::EngineAdapter" do
+describe ActiveEncode::EngineAdapter do
   before do
     module ActiveEncode
       module EngineAdapters
-	class StubOneAdapter
-	  def create(encode); end
-	  def find(id, opts = {}); end
-	  def list(*filters); end
-	  def cancel(encode); end
-	  def purge(encode); end
-	  def remove_output(encode, output_id); end
-	end
+        class StubOneAdapter
+          def create(_); end
 
-	class StubTwoAdapter
-	  def create(encode); end
-	  def find(id, opts = {}); end
-	  def list(*filters); end
-	  def cancel(encode); end
-	  def purge(encode); end
-	  def remove_output(encode, output_id); end
-	end
+          def find(_, _ = {}); end
+
+          def list(*); end
+
+          def cancel(_encode); end
+
+          def purge(_encode); end
+
+          def remove_output(_encode, _output_id); end
+        end
+
+        class StubTwoAdapter
+          def create(_encode); end
+
+          def find(_id, _opts = {}); end
+
+          def list(*); end
+
+          def cancel(_encode); end
+
+          def purge(_encode); end
+
+          def remove_output(_encode, _output_id); end
+        end
       end
     end
   end
@@ -30,18 +40,18 @@ describe "ActiveEncode::EngineAdapter" do
     ActiveEncode::EngineAdapters.send(:remove_const, :StubTwoAdapter)
   end
 
-  it 'should not allow classes as arguments' do
+  it 'does not allow classes as arguments' do
     expect { ActiveEncode::Base.engine_adapter = ActiveEncode::EngineAdapters::StubOneAdapter }.to raise_error(ArgumentError)
   end
 
-  it 'should not allow arguments that are not engine adapters' do
+  it 'does not allow arguments that are not engine adapters' do
     expect { ActiveEncode::Base.engine_adapter = Mutex.new }.to raise_error(ArgumentError)
   end
 
   context 'overriding' do
     let(:base_engine_adapter) { ActiveEncode::Base.engine_adapter }
-      
-    it 'should not affect the parent' do
+
+    it 'does not affect the parent' do
       child_encode_one = Class.new(ActiveEncode::Base)
       child_encode_one.engine_adapter = :stub_one
 
@@ -50,7 +60,7 @@ describe "ActiveEncode::EngineAdapter" do
       expect(ActiveEncode::Base.engine_adapter).to eq base_engine_adapter
     end
 
-    it 'should not affect its sibling' do
+    it 'does not affect its sibling' do
       child_encode_one = Class.new(ActiveEncode::Base)
       child_encode_one.engine_adapter = :stub_one
       child_encode_two = Class.new(ActiveEncode::Base)
@@ -58,10 +68,10 @@ describe "ActiveEncode::EngineAdapter" do
 
       expect(child_encode_two.engine_adapter).not_to eq base_engine_adapter
       expect(child_encode_two.engine_adapter).to be_kind_of ActiveEncode::EngineAdapters::StubTwoAdapter
-      #child_encode_one's engine adapter should remain unchanged
+      # child_encode_one's engine adapter should remain unchanged
       expect(child_encode_one.engine_adapter).to be_kind_of ActiveEncode::EngineAdapters::StubOneAdapter
       expect(ActiveEncode::Base.engine_adapter).to eq base_engine_adapter
-      #new encodes should not be affected
+      # new encodes should not be affected
       expect(Class.new(ActiveEncode::Base).engine_adapter).to eq base_engine_adapter
     end
   end

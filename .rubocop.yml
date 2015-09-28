@@ -1,0 +1,73 @@
+require: rubocop-rspec
+
+AllCops:
+  RunRailsCops: true
+  DisplayCopNames: true
+  Include:
+    - '**/Rakefile'
+
+Metrics/LineLength:
+  Enabled: false
+
+Metrics/AbcSize:
+  Enabled: false
+
+Metrics/MethodLength:
+  Exclude:
+    - 'lib/active_encode/engine_adapters/matterhorn_adapter.rb'
+    - 'lib/active_encode/engine_adapters/zencoder_adapter.rb'
+
+Metrics/ClassLength:
+  Exclude:
+    - 'lib/active_encode/engine_adapters/matterhorn_adapter.rb'
+    - 'lib/active_encode/engine_adapters/zencoder_adapter.rb'
+
+Metrics/CyclomaticComplexity:
+  Exclude:
+    - 'lib/active_encode/engine_adapters/matterhorn_adapter.rb'
+    - 'lib/active_encode/engine_adapters/zencoder_adapter.rb'
+
+Style/FileName:
+  Exclude:
+    - 'lib/active-encode.rb' # Remove this when https://github.com/projecthydra-labs/active-encode/issues/1 is fixed
+
+Style/IndentationConsistency:
+  EnforcedStyle: rails
+
+Style/CollectionMethods:
+  PreferredMethods:
+    collect: 'map'
+    collect!: 'map!'
+    inject: 'reduce'
+    detect: 'find'
+    find_all: 'select'
+
+Style/WordArray:
+  Enabled: false
+
+Style/RegexpLiteral:
+  Enabled: false
+
+Style/StringLiterals:
+  Enabled: false
+
+Style/ClassAndModuleChildren:
+  Enabled: false
+
+Style/Documentation:
+  Enabled: false
+
+RSpec/ExampleWording:
+  CustomTransform:
+    be: is
+    have: has
+    not: does not
+    NOT: does NOT
+  IgnoredWords:
+    - only
+
+RSpec/FilePath:
+  Enabled: false
+
+RSpec/InstanceVariable:
+  Enabled: false

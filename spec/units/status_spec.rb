@@ -1,11 +1,10 @@
 require 'spec_helper'
 
-describe 'ActiveEncode::Status' do
-
+describe ActiveEncode::Status do
   subject { ActiveEncode::Base.new(nil) }
 
   context 'new object' do
-    subject {ActiveEncode::Base.new(nil)}
+    subject { ActiveEncode::Base.new(nil) }
     it { is_expected.not_to be_created }
     it { is_expected.not_to be_running }
     it { is_expected.not_to be_cancelled }
@@ -60,5 +59,4 @@ describe 'ActiveEncode::Status' do
     it { is_expected.not_to be_completed }
     it { is_expected.to be_failed }
   end
-
 end

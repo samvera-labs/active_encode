@@ -17,7 +17,7 @@ module ActiveEncode
   # * <tt>after_purge</tt>
   #
   module Callbacks
-    extend  ActiveSupport::Concern
+    extend ActiveSupport::Concern
     include ActiveSupport::Callbacks
 
     included do
@@ -32,7 +32,7 @@ module ActiveEncode
       def before_create(*filters, &blk)
         set_callback(:create, :before, *filters, &blk)
       end
-      
+
       def after_create(*filters, &blk)
         set_callback(:create, :after, *filters, &blk)
       end
@@ -44,7 +44,7 @@ module ActiveEncode
       def before_cancel(*filters, &blk)
         set_callback(:cancel, :before, *filters, &blk)
       end
-      
+
       def after_cancel(*filters, &blk)
         set_callback(:cancel, :after, *filters, &blk)
       end
@@ -56,7 +56,7 @@ module ActiveEncode
       def before_purge(*filters, &blk)
         set_callback(:purge, :before, *filters, &blk)
       end
-      
+
       def after_purge(*filters, &blk)
         set_callback(:purge, :after, *filters, &blk)
       end
