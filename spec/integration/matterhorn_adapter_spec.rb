@@ -28,6 +28,9 @@ describe ActiveEncode::EngineAdapters::MatterhornAdapter do
     its(:current_operations) { is_expected.to be_empty }
     its(:percent_complete) { is_expected.to eq 0 }
     its(:errors) { is_expected.to be_empty }
+    its(:created_at) { is_expected.to eq '2015-04-24T15:44:47Z' }
+    its(:updated_at) { is_expected.to be_nil }
+    its(:finished_at) { is_expected.to be_nil }
     its(:tech_metadata) { is_expected.to be_empty }
   end
 
@@ -46,6 +49,9 @@ describe ActiveEncode::EngineAdapters::MatterhornAdapter do
       its(:current_operations) { is_expected.to include("Hold for workflow selection") }
       its(:percent_complete) { is_expected.to eq 0.43478260869565216 }
       its(:errors) { is_expected.to be_empty }
+      its(:created_at) { is_expected.to eq '2015-04-20T17:58:43Z' }
+      its(:updated_at) { is_expected.to eq '2015-04-21T18:38:50Z' }
+      its(:finished_at) { is_expected.to be_nil }
       its(:tech_metadata) { is_expected.to be_empty }
     end
     context "a cancelled encode" do
@@ -61,6 +67,9 @@ describe ActiveEncode::EngineAdapters::MatterhornAdapter do
       its(:current_operations) { is_expected.to include("Tagging dublin core catalogs for publishing") }
       its(:percent_complete) { is_expected.to eq 1.7391304347826086 }
       its(:errors) { is_expected.to be_empty }
+      its(:created_at) { is_expected.to eq '2015-04-20T18:01:57Z' }
+      its(:updated_at) { is_expected.to eq '2015-04-21T18:46:05Z' }
+      its(:finished_at) { is_expected.to eq '2015-04-21T18:46:05Z' }
       its(:tech_metadata) { is_expected.to be_empty }
     end
     context "a completed encode" do
@@ -78,6 +87,9 @@ describe ActiveEncode::EngineAdapters::MatterhornAdapter do
       its(:current_operations) { is_expected.to include("Cleaning up") }
       its(:percent_complete) { is_expected.to eq 100 }
       its(:errors) { is_expected.to be_empty }
+      its(:created_at) { is_expected.to eq '2015-04-21T18:08:00Z' }
+      its(:updated_at) { is_expected.to eq '2015-04-21T18:14:18Z' }
+      its(:finished_at) { is_expected.to eq '2015-04-21T18:14:18Z' }
       its(:tech_metadata) { is_expected.to be_empty }
     end
     context "a failed encode" do
@@ -95,6 +107,9 @@ describe ActiveEncode::EngineAdapters::MatterhornAdapter do
       its(:current_operations) { is_expected.to include("Cleaning up after failure") }
       its(:percent_complete) { is_expected.to eq 56.666666666666664 }
       its(:errors) { is_expected.to include failed_errors }
+      its(:created_at) { is_expected.to eq '2015-04-09T16:12:00Z' }
+      its(:updated_at) { is_expected.to eq '2015-04-09T16:14:06Z' }
+      its(:finished_at) { is_expected.to eq '2015-04-09T16:14:06Z' }
       its(:tech_metadata) { is_expected.to include failed_tech_metadata }
     end
   end
@@ -166,6 +181,9 @@ describe ActiveEncode::EngineAdapters::MatterhornAdapter do
     its(:current_operations) { is_expected.to include("Hold for workflow selection") }
     its(:percent_complete) { is_expected.to eq 0.43478260869565216 }
     its(:errors) { is_expected.to be_empty }
+    its(:created_at) { is_expected.to eq '2015-04-20T17:58:43Z' }
+    its(:updated_at) { is_expected.to eq '2015-04-21T18:38:50Z' }
+    its(:finished_at) { is_expected.to be_nil }
     its(:tech_metadata) { is_expected.to be_empty }
   end
 

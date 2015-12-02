@@ -46,6 +46,9 @@ module ActiveEncode
           job_progress = get_job_progress(encode.id)
           encode.current_operations = convert_current_operations(job_progress)
           encode.percent_complete = convert_percent_complete(job_progress, job_details)
+          encode.created_at = job_details.body["job"]["created_at"]
+          encode.updated_at = job_details.body["job"]["updated_at"]
+          encode.finished_at = job_details.body["job"]["finished_at"]
           encode.output = convert_output(job_details)
           encode.errors = convert_errors(job_details)
           encode.tech_metadata = convert_tech_metadata(job_details.body["job"]["input_media_file"])

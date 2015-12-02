@@ -86,6 +86,9 @@ module ActiveEncode
           encode.state = convert_state(workflow)
           encode.current_operations = convert_current_operations(workflow)
           encode.percent_complete = calculate_percent_complete(workflow)
+          encode.created_at = convert_created_at(workflow)
+          encode.updated_at = convert_updated_at(workflow)
+          encode.finished_at = convert_finished_at(workflow) unless encode.running?
           encode.output = convert_output(workflow, encode.options)
           encode.errors = convert_errors(workflow)
           encode.tech_metadata = convert_tech_metadata(workflow)
@@ -139,6 +142,21 @@ module ActiveEncode
 
         def convert_errors(workflow)
           workflow.xpath('//errors/error/text()').map(&:to_s)
+        end
+
+        def convert_created_at(workflow)
+          created_at = workflow.xpath('mediapackage/@start').last.to_s
+          created_at.present? ? Time.parse(created_at).iso8601 : nil
+        end
+
+        def convert_updated_at(workflow)
+          updated_at = workflow.xpath('//operation[@state!="INSTANTIATED"]/completed/text()').last.to_s
+          updated_at.present? ? Time.strptime(updated_at, "%Q").utc.iso8601 : nil
+        end
+
+        def convert_finished_at(workflow)
+          finished_at = workflow.xpath('//operation[@state!="INSTANTIATED"]/completed/text()').last.to_s
+          finished_at.present? ? Time.strptime(finished_at, "%Q").utc.iso8601 : nil
         end
 
         def convert_options(workflow)
