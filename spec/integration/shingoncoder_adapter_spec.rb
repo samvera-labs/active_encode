@@ -36,6 +36,9 @@ describe ActiveEncode::EngineAdapters::ShingoncoderAdapter do
     its(:current_operations) { is_expected.to be_empty }
     its(:percent_complete) { is_expected.to eq 0 }
     its(:errors) { is_expected.to be_empty }
+    its(:created_at) { is_expected.to eq '2015-06-10T14:38:47Z' }
+    its(:updated_at) { is_expected.to eq '2015-06-10T14:38:47Z' }
+    its(:finished_at) { is_expected.to be_nil }
     its(:tech_metadata) { is_expected.to be_empty }
   end
 
@@ -59,6 +62,9 @@ describe ActiveEncode::EngineAdapters::ShingoncoderAdapter do
       its(:current_operations) { is_expected.to be_empty }
       its(:percent_complete) { is_expected.to eq 30.0 }
       its(:errors) { is_expected.to be_empty }
+      its(:created_at) { is_expected.to eq '2015-06-09T16:18:26Z' }
+      its(:updated_at) { is_expected.to eq '2015-06-09T16:18:28Z' }
+      its(:finished_at) { is_expected.to be_nil }
       its(:tech_metadata) { is_expected.to eq running_tech_metadata }
     end
 
@@ -73,6 +79,9 @@ describe ActiveEncode::EngineAdapters::ShingoncoderAdapter do
       its(:current_operations) { is_expected.to be_empty }
       its(:percent_complete) { is_expected.to eq 0 }
       its(:errors) { is_expected.to be_empty }
+      its(:created_at) { is_expected.to eq '2015-06-08T20:43:23Z' }
+      its(:updated_at) { is_expected.to eq '2015-06-08T20:43:26Z' }
+      its(:finished_at) { is_expected.to eq '2015-06-08T20:43:26Z' }
       its(:tech_metadata) { is_expected.to be_empty }
     end
 
@@ -90,6 +99,9 @@ describe ActiveEncode::EngineAdapters::ShingoncoderAdapter do
       its(:current_operations) { is_expected.to be_empty }
       its(:percent_complete) { is_expected.to eq 100 }
       its(:errors) { is_expected.to be_empty }
+      its(:created_at) { is_expected.to eq '2015-06-08T18:13:53Z' }
+      its(:updated_at) { is_expected.to eq '2015-06-08T18:14:06Z' }
+      its(:finished_at) { is_expected.to eq '2015-06-08T18:14:06Z' }
       its(:tech_metadata) { is_expected.to eq completed_tech_metadata }
     end
 
@@ -106,6 +118,9 @@ describe ActiveEncode::EngineAdapters::ShingoncoderAdapter do
       its(:current_operations) { is_expected.to be_empty }
       its(:percent_complete) { is_expected.to eq 0 }
       its(:errors) { is_expected.to include failed_errors }
+      its(:created_at) { is_expected.to eq '2015-06-09T20:52:57Z' }
+      its(:updated_at) { is_expected.to eq '2015-06-09T20:53:00Z' }
+      its(:finished_at) { is_expected.to eq '2015-06-09T20:53:00Z' }
       its(:tech_metadata) { is_expected.to be_empty }
     end
   end
@@ -147,6 +162,9 @@ describe ActiveEncode::EngineAdapters::ShingoncoderAdapter do
     its(:current_operations) { is_expected.to be_empty }
     its(:percent_complete) { is_expected.to eq 30.0 }
     its(:errors) { is_expected.to be_empty }
+    its(:created_at) { is_expected.to eq '2015-06-09T16:18:26Z' }
+    its(:updated_at) { is_expected.to eq '2015-06-09T16:18:28Z' }
+    its(:finished_at) { is_expected.to be_nil }
     its(:tech_metadata) { is_expected.to eq reload_tech_metadata }
   end
 end
