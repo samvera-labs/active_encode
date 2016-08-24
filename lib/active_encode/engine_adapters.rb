@@ -13,6 +13,7 @@ module ActiveEncode
     autoload :InlineAdapter
     autoload :ZencoderAdapter
     autoload :ShingoncoderAdapter
+    autoload :ElasticTranscoderAdapter
     autoload :TestAdapter
 
     ADAPTER = 'Adapter'.freeze
