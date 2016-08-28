@@ -7,7 +7,8 @@ module ActiveEncode
           input: {key: encode.input},
           pipeline_id: encode.options[:pipeline_id],
           output_key_prefix: encode.options[:output_key_prefix],
-          outputs: encode.options[:outputs]).job
+          outputs: encode.options[:outputs],
+          user_metadata: encode.options[:user_metadata]).job
 
         build_encode(get_job_details(job.id), encode.class)
       end
@@ -109,7 +110,10 @@ module ActiveEncode
         def convert_output(job)
           output = []
           job.outputs.each do |o|
-            output << convert_tech_metadata(o).merge(id: o.id, url: o.key, label: nil)
+            # It is assumed that the first part of the output key can be used to label the  output
+            # e.g. "quality-medium/somepath/filename.flv"
+            label = o.key.split("/", 2).first
+            output << convert_tech_metadata(o).merge(id: o.id, url: o.key, label: label)
           end
           output
         end
@@ -128,7 +132,7 @@ module ActiveEncode
             when "file_size"
               metadata[:file_size] = value
             when "duration_millis"
-              metadata[:duration] = value
+              metadata[:duration] = value.to_s
             when "frame_rate"
               metadata[:video_framerate] = value
             when "segment_duration"
