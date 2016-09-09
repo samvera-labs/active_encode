@@ -27,7 +27,7 @@ describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
 
   describe "#create" do
     let(:job) { job_created }
-    let(:create_output) { [{id: "2", :url=>"hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a", :label=>"hls0400k", :segment_duration=>"2.0"}] }
+    let(:create_output) { [{id: "2", url: "elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a", hls_url: "elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a.m3u8", label: "hls0400k", segment_duration: "2.0"}] }
 
     subject { ActiveEncode::Base.create(
       "somefile.mp4",
@@ -62,7 +62,7 @@ describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
         j
       end
 
-      let(:running_output) { [{id: "2", url: "hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a", label: "hls0400k", :segment_duration=>"2.0"}] }
+      let(:running_output) { [{id: "2", url: "elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a", hls_url: "elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a.m3u8", label: "hls0400k", :segment_duration=>"2.0"}] }
       let(:running_tech_metadata) { {:width=>1280, :height=>720, :video_framerate=>"25", :file_size=>21069678, :duration=>"117312"} }
 
       subject { ActiveEncode::Base.find('1471963629141-kmcocm') }
@@ -107,7 +107,7 @@ describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
         j.outputs = [ Aws::ElasticTranscoder::Types::JobOutput.new(JSON.parse(File.read('spec/fixtures/elastic_transcoder/output_completed.json')))]
         j
       end
-      let(:completed_output) { [{id: "2", url: "hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a", label: "hls0400k", :width=>400, :height=>224, :video_framerate=>"25", :file_size=>6901104, :duration=>"117353", :segment_duration=> "2.0"}] }
+      let(:completed_output) { [{id: "2", url: "elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a", hls_url: "elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a.m3u8", label: "hls0400k", :width=>400, :height=>224, :video_framerate=>"25", :file_size=>6901104, :duration=>"117353", :segment_duration=> "2.0"}] }
       let(:completed_tech_metadata) { {:width=>1280, :height=>720, :video_framerate=>"25", :file_size=>21069678, :duration=>"117312"} }
 
       subject { ActiveEncode::Base.find('1471963629141-kmcocm') }

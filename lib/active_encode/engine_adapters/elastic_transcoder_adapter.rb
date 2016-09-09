@@ -113,7 +113,10 @@ module ActiveEncode
             # It is assumed that the first part of the output key can be used to label the  output
             # e.g. "quality-medium/somepath/filename.flv"
             label = o.key.split("/", 2).first
-            output << convert_tech_metadata(o).merge(id: o.id, url: job.output_key_prefix + o.key, label: label)
+            url = job.output_key_prefix + o.key
+            extras = { id: o.id, url: url, label: label }
+            extras.merge!(hls_url: url + ".m3u8") if url.include?("/hls/") # TODO: find a better way to signal hls
+            output << convert_tech_metadata(o).merge(extras)
           end
           output
         end
