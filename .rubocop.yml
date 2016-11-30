@@ -1,10 +1,12 @@
 require: rubocop-rspec
 
 AllCops:
-  RunRailsCops: true
   DisplayCopNames: true
   Include:
     - '**/Rakefile'
+
+Rails:
+  Enabled: True
 
 Metrics/LineLength:
   Enabled: false
