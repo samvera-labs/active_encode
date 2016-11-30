@@ -3,7 +3,7 @@ module ActiveEncode
     class ZencoderAdapter
       # TODO: add a stub for an input helper (supplied by an initializer) that transforms encode.input into a zencoder accepted url
       def create(encode)
-        response = Zencoder::Job.create(input: "#{encode.input}")
+        response = Zencoder::Job.create(input: encode.input.to_s)
         build_encode(get_job_details(response.body["id"]), encode.class)
       end
 
@@ -12,7 +12,7 @@ module ActiveEncode
       end
 
       def list(*_filters)
-        fail NotImplementedError
+        raise NotImplementedError
       end
 
       def cancel(encode)
@@ -21,11 +21,11 @@ module ActiveEncode
       end
 
       def purge(_encode)
-        fail NotImplementedError
+        raise NotImplementedError
       end
 
       def remove_output(_encode, _output_id)
-        fail NotImplementedError
+        raise NotImplementedError
       end
 
       private

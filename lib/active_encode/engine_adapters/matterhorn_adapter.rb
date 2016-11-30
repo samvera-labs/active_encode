@@ -3,7 +3,7 @@ require 'rubyhorn'
 module ActiveEncode
   module EngineAdapters
     class MatterhornAdapter
-      DEFAULT_ARGS = { 'flavor' => 'presenter/source' }
+      DEFAULT_ARGS = { 'flavor' => 'presenter/source' }.freeze
 
       def create(encode)
         workflow_id = encode.options[:preset] || "full"
@@ -20,7 +20,7 @@ module ActiveEncode
       end
 
       def list(*_filters)
-        fail NotImplementedError # TODO: implement this
+        raise NotImplementedError # TODO: implement this
       end
 
       def cancel(encode)
@@ -242,13 +242,13 @@ module ActiveEncode
 
           completed_transcode_operations = workflow.xpath('//operation[@id="compose" and (@state="SUCCEEDED" or @state="SKIPPED")]').size
           total_transcode_operations = workflow.xpath('//operation[@id="compose"]').size
-          total_transcode_operations = 1 if total_transcode_operations == 0
+          total_transcode_operations = 1 if total_transcode_operations.zero?
           completed_distribution_operations = workflow.xpath('//operation[starts-with(@id,"distribute") and (@state="SUCCEEDED" or @state="SKIPPED")]').size
           total_distribution_operations = workflow.xpath('//operation[starts-with(@id,"distribute")]').size
-          total_distribution_operations = 1 if total_distribution_operations == 0
+          total_distribution_operations = 1 if total_distribution_operations.zero?
           completed_other_operations = workflow.xpath('//operation[@id!="compose" and not(starts-with(@id,"distribute")) and (@state="SUCCEEDED" or @state="SKIPPED")]').size
           total_other_operations = workflow.xpath('//operation[@id!="compose" and not(starts-with(@id,"distribute"))]').size
-          total_other_operations = 1 if total_other_operations == 0
+          total_other_operations = 1 if total_other_operations.zero?
 
           ((totals[:transcode].to_f / total_transcode_operations) * completed_transcode_operations) +
             ((totals[:distribution].to_f / total_distribution_operations) * completed_distribution_operations) +
@@ -317,7 +317,7 @@ module ActiveEncode
         MatterhornRtmpUrl.new match_data
       end
 
-      alias_method :_binding, :binding
+      alias _binding binding
       def binding
         _binding
       end
