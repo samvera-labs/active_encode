@@ -3,7 +3,7 @@ require 'rubyhorn'
 module ActiveEncode
   module EngineAdapters
     class MatterhornAdapter
-      DEFAULT_ARGS = { 'flavor' => 'presenter/source' }
+      DEFAULT_ARGS = { 'flavor' => 'presenter/source' }.freeze
 
       def create(encode)
         workflow_id = encode.options[:preset] || "full"

@@ -17,7 +17,7 @@ module ActiveEncode
       end
 
       def list(*_filters)
-        fail NotImplementedError
+        raise NotImplementedError
       end
 
       def cancel(encode)

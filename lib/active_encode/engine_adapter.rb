@@ -33,10 +33,8 @@ module ActiveEncode
           when Symbol, String
             ActiveEncode::EngineAdapters.lookup(name_or_adapter_or_class).new
           else
-            if engine_adapter?(name_or_adapter_or_class)
-              name_or_adapter_or_class
-            else
-              fail ArgumentError
+            name_or_adapter_or_class if engine_adapter?(name_or_adapter_or_class)
+            raise ArgumentError unless engine_adapter?(name_or_adapter_or_class)
             end
           end
         end
