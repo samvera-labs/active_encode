@@ -17,7 +17,7 @@ module ActiveEncode
       end
 
       def list(*_filters)
-        fail NotImplementedError
+        raise NotImplementedError
       end
 
       def cancel(encode)
@@ -31,7 +31,7 @@ module ActiveEncode
       end
 
       def remove_output(_encode, _output_id)
-        fail NotImplementedError
+        raise NotImplementedError
       end
     end
   end

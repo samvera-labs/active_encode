@@ -4,6 +4,8 @@ AllCops:
   DisplayCopNames: true
   Include:
     - '**/Rakefile'
+  Exclude:
+    - 'spec/**/*'
 
 Rails:
   Enabled: True

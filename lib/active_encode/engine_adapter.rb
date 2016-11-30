@@ -35,7 +35,6 @@ module ActiveEncode
           else
             name_or_adapter_or_class if engine_adapter?(name_or_adapter_or_class)
             raise ArgumentError unless engine_adapter?(name_or_adapter_or_class)
-            end
           end
         end
 
