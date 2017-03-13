@@ -9,3 +9,4 @@ gem 'rubocop-rspec', require: false
 gem 'rubyhorn', git: "https://github.com/avalonmediasystem/rubyhorn.git"
 gem 'zencoder'
 gem 'shingoncoder'
+gem 'aws-sdk'
