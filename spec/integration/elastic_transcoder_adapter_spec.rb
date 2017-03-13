@@ -47,7 +47,7 @@ describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
     its(:current_operations) { is_expected.to be_empty }
     its(:percent_complete) { is_expected.to eq 10 }
     its(:errors) { is_expected.to be_empty }
-    its(:created_at) { is_expected.to eq '2016-08-23T10:47:09-04:00' }
+    its(:created_at) { is_expected.to be_the_same_time_as '2016-08-23T10:47:09-04:00' }
     its(:updated_at) { is_expected.to be_nil }
     its(:finished_at) { is_expected.to be_nil }
     its(:tech_metadata) { is_expected.to be_empty }
@@ -73,8 +73,8 @@ describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
       its(:current_operations) { is_expected.to be_empty }
       its(:percent_complete) { is_expected.to eq 50 }
       its(:errors) { is_expected.to be_empty }
-      its(:created_at) { is_expected.to eq '2016-08-23T10:47:09-04:00' }
-      its(:updated_at) { is_expected.to eq '2016-08-23T13:59:29-04:00' }
+      its(:created_at) { is_expected.to be_the_same_time_as '2016-08-23T10:47:09-04:00' }
+      its(:updated_at) { is_expected.to be_the_same_time_as '2016-08-23T13:59:29-04:00' }
       its(:finished_at) { is_expected.to be_nil }
       its(:tech_metadata) { is_expected.to eq running_tech_metadata }
     end
@@ -94,9 +94,9 @@ describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
       its(:current_operations) { is_expected.to be_empty }
       its(:percent_complete) { is_expected.to eq 0 }
       its(:errors) { is_expected.to be_empty }
-      its(:created_at) { is_expected.to eq '2016-08-23T10:47:09-04:00' }
+      its(:created_at) { is_expected.to be_the_same_time_as '2016-08-23T10:47:09-04:00' }
       its(:updated_at) { is_expected.to be_nil }
-      its(:finished_at) { is_expected.to eq '2016-08-23T13:59:45-04:00' }
+      its(:finished_at) { is_expected.to be_the_same_time_as '2016-08-23T13:59:45-04:00' }
       its(:tech_metadata) { is_expected.to be_empty }
     end
 
@@ -118,9 +118,9 @@ describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
       its(:current_operations) { is_expected.to be_empty }
       its(:percent_complete) { is_expected.to eq 100 }
       its(:errors) { is_expected.to be_empty }
-      its(:created_at) { is_expected.to eq '2016-08-23T10:47:09-04:00' }
-      its(:updated_at) { is_expected.to eq '2016-08-23T13:59:29-04:00' }
-      its(:finished_at) { is_expected.to eq '2016-08-23T13:59:45-04:00' }
+      its(:created_at) { is_expected.to be_the_same_time_as '2016-08-23T10:47:09-04:00' }
+      its(:updated_at) { is_expected.to be_the_same_time_as '2016-08-23T13:59:29-04:00' }
+      its(:finished_at) { is_expected.to be_the_same_time_as '2016-08-23T13:59:45-04:00' }
       its(:tech_metadata) { is_expected.to eq completed_tech_metadata }
     end
 
@@ -140,9 +140,9 @@ describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
       its(:current_operations) { is_expected.to be_empty }
       its(:percent_complete) { is_expected.to eq 0 }
       its(:errors) { is_expected.not_to be_empty }
-      its(:created_at) { is_expected.to eq '2016-08-23T10:47:09-04:00' }
-      its(:updated_at) { is_expected.to eq '2016-08-23T13:59:29-04:00' }
-      its(:finished_at) { is_expected.to eq '2016-08-23T13:59:45-04:00' }
+      its(:created_at) { is_expected.to be_the_same_time_as '2016-08-23T10:47:09-04:00' }
+      its(:updated_at) { is_expected.to be_the_same_time_as '2016-08-23T13:59:29-04:00' }
+      its(:finished_at) { is_expected.to be_the_same_time_as '2016-08-23T13:59:45-04:00' }
       its(:tech_metadata) { is_expected.to be_empty }
     end
   end
