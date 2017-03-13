@@ -4,11 +4,12 @@ module ActiveEncode
       # TODO: add a stub for an input helper (supplied by an initializer) that transforms encode.input into a zencoder accepted url
       def create(encode)
         job = client.create_job(
-          input: {key: encode.input},
+          input: { key: encode.input },
           pipeline_id: encode.options[:pipeline_id],
           output_key_prefix: encode.options[:output_key_prefix],
           outputs: encode.options[:outputs],
-          user_metadata: encode.options[:user_metadata]).job
+          user_metadata: encode.options[:user_metadata]
+        ).job
 
         build_encode(get_job_details(job.id), encode.class)
       end
@@ -19,7 +20,7 @@ module ActiveEncode
 
       # TODO: implement list_jobs_by_pipeline and list_jobs_by_status
       def list(*_filters)
-        fail NotImplementedError
+        raise NotImplementedError
       end
 
       # Can only cancel jobs with status = "Submitted"
@@ -29,11 +30,11 @@ module ActiveEncode
       end
 
       def purge(_encode)
-        fail NotImplementedError
+        raise NotImplementedError
       end
 
       def remove_output(_encode, _output_id)
-        fail NotImplementedError
+        raise NotImplementedError
       end
 
       private
@@ -65,7 +66,7 @@ module ActiveEncode
 
         def convert_time(time_millis)
           return nil if time_millis.nil?
-          Time.at(time_millis/1000).iso8601
+          Time.at(time_millis / 1000).iso8601
         end
 
         def convert_state(job)
@@ -81,7 +82,7 @@ module ActiveEncode
           end
         end
 
-        def convert_current_operations(job)
+        def convert_current_operations(_job)
           current_ops = []
           current_ops
         end
@@ -115,36 +116,33 @@ module ActiveEncode
             label = o.key.split("/", 2).first
             url = job.output_key_prefix + o.key
             extras = { id: o.id, url: url, label: label }
-            extras.merge!(hls_url: url + ".m3u8") if url.include?("/hls/") # TODO: find a better way to signal hls
+            extras[:hls_url] = url + ".m3u8" if url.include?("/hls/") # TODO: find a better way to signal hls
             output << convert_tech_metadata(o).merge(extras)
           end
           output
         end
 
         def convert_errors(job)
-          job.outputs.select {|o| o.status == "Error" }.collect(&:status_detail).compact
+          job.outputs.select { |o| o.status == "Error" }.collect(&:status_detail).compact
         end
 
         def convert_tech_metadata(props)
           return {} if props.nil? || props.empty?
+          metadata_fields = {
+            file_size: { key: :file_size, method: :itself },
+            duration_millis: { key: :duration, method: :to_s },
+            frame_rate: { key: :video_framerate, method: :itself },
+            segment_duration: { key: :segment_duration, method: :itself },
+            width: { key: :width, method: :itself },
+            height: { key: :height, method: :itself }
+          }
 
           metadata = {}
           props.each_pair do |key, value|
             next if value.nil?
-            case key.to_s
-            when "file_size"
-              metadata[:file_size] = value
-            when "duration_millis"
-              metadata[:duration] = value.to_s
-            when "frame_rate"
-              metadata[:video_framerate] = value
-            when "segment_duration"
-              metadata[:segment_duration] = value
-            when "width"
-              metadata[:width] = value
-            when "height"
-              metadata[:height] = value
-            end
+            conversion = metadata_fields[key.to_sym]
+            next if conversion.nil?
+            metadata[conversion[:key]] = value.send(conversion[:method])
           end
 
           metadata
