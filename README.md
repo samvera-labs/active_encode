@@ -29,14 +29,14 @@ ActiveEncode::Base.create(File.open('spec/fixtures/Bars_512kb.mp4'))
 Create returns an encoding job that has been submitted to the encoding engine for processing.  At this point it will have an id, a state, the input, and any additional information the encoding engine returns.
 
 ```ruby
-#<ActiveEncode::Base:0x00000003f3cd90 @input="http://localhost:8080/files/mediapackage/edcac316-1f98-44b1-88ca-0ce6f80aebc0/ff43c56f-7b8f-4d9c-a846-6e51de2e8cb4/Bars_512kb.mp4", @options={:preset=>"avalon", :stream_base=>"file:///home/cjcolvar/Code/avalon/avalon/red5/webapps/avalon/streams"}, @id="12154", @state=:running, @current_operations=[], @percent_complete=0.0, @output=[], @errors=[], @tech_metadata={}> 
+#<ActiveEncode::Base:0x00000003f3cd90 @input="http://localhost:8080/files/mediapackage/edcac316-1f98-44b1-88ca-0ce6f80aebc0/ff43c56f-7b8f-4d9c-a846-6e51de2e8cb4/Bars_512kb.mp4", @options={:preset=>"avalon", :stream_base=>"file:///home/cjcolvar/Code/avalon/avalon/red5/webapps/avalon/streams"}, @id="12154", @state=:running, @current_operations=[], @percent_complete=0.0, @output=[], @errors=[], @tech_metadata={}>
 ```
 ```ruby
 encode.id  # "12103"
 encode.state  # :running
 ```
 
-This encode can be looked back up later using #find.  Alternatively, use #reload to refresh an instance with the latest information from the 
+This encode can be looked back up later using #find.  Alternatively, use #reload to refresh an instance with the latest information from the
 
 ```ruby
 encode = ActiveEncode::Base.find("12103")
@@ -85,17 +85,15 @@ end
 
 Engine adapters are shims between ActiveEncode and the back end encoding service.  Each service has its own API and idiosyncracies so consult the table below to see what features are supported by each adapter.  Add an additional engines by creating an engine adapter class that implements :create, :find, :list, :cancel, :purge, and :remove_output.
 
-| Feature | Matterhorn Adapter | Zencoder Adapter (prototype) | Shingoncoder | Inline Adapter (In progress) | Test Adapter |
-| --- | --- | --- | --- | --- |
-| Create | X | X | X | X | X |
-| Find | X | X | X | X	| X	|
-| List	| |	| | | |
-| Cancel | X | X | | | X |
-| Purge	| X	| |  | | X	|
-| Remove output	| X	| | | | |
-| Preset | X | | | | |
-| Multiple outputs | X (via preset)	| | |	| |
-
+| Adapter/Feature          | Create | Find | List | Cancel | Purge | Remove Output | Preset | Multiple Outputs |
+|--------------------------|--------|------|------|--------|-------|---------------|--------|------------------|
+| Matterhorn               |    X   |  X   |      |   X    |   X   |       X       |   X    |         X        |
+| Zencoder                 |    X   |  X   |      |   X    |       |               |        |                  |
+| Shingoncoder (prototype) |    X   |  X   |      |        |       |               |        |                  |
+| Shingoncoder             |    X   |  X   |      |        |       |               |        |                  |
+| AWS Elastic Transcoder   |    X   |  X   |      |   X    |       |               |        |                  |
+| Inline                   |    X   |  X   |      |        |       |               |        |                  |
+| Test                     |    X   |  X   |      |   X    |       |       X       |        |                  |
 
 ## Contributing
 
