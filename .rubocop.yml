@@ -19,25 +19,18 @@ Metrics/AbcSize:
 
 Metrics/MethodLength:
   Exclude:
-    - 'lib/active_encode/engine_adapters/matterhorn_adapter.rb'
-    - 'lib/active_encode/engine_adapters/zencoder_adapter.rb'
-    - 'lib/active_encode/engine_adapters/shingoncoder_adapter.rb'
+    - 'lib/active_encode/engine_adapters/*'
 
 Metrics/ClassLength:
   Exclude:
-    - 'lib/active_encode/engine_adapters/matterhorn_adapter.rb'
-    - 'lib/active_encode/engine_adapters/zencoder_adapter.rb'
-    - 'lib/active_encode/engine_adapters/shingoncoder_adapter.rb'
+    - 'lib/active_encode/engine_adapters/*'
 
 Metrics/CyclomaticComplexity:
   Exclude:
-    - 'lib/active_encode/engine_adapters/matterhorn_adapter.rb'
-    - 'lib/active_encode/engine_adapters/zencoder_adapter.rb'
-    - 'lib/active_encode/engine_adapters/shingoncoder_adapter.rb'
+    - 'lib/active_encode/engine_adapters/*'
 
 Style/FileName:
   Exclude:
-    - 'lib/active-encode.rb' # Remove this when https://github.com/projecthydra-labs/active-encode/issues/1 is fixed
 
 Style/IndentationConsistency:
   EnforcedStyle: rails
