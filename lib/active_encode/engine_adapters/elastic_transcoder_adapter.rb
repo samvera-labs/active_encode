@@ -127,7 +127,7 @@ module ActiveEncode
         end
 
         def convert_tech_metadata(props)
-          return {} if props.nil? || props.empty?
+          return {} if props.blank?
           metadata_fields = {
             file_size: { key: :file_size, method: :itself },
             duration_millis: { key: :duration, method: :to_s },
