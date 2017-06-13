@@ -13,4 +13,6 @@ module ActiveEncode #:nodoc:
     include EngineAdapter
     include Callbacks
   end
+
+  class NotFound < RuntimeError; end
 end

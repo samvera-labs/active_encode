@@ -1,4 +1,5 @@
 # coding: utf-8
+
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'active_encode/version'
@@ -8,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.version       = ActiveEncode::VERSION
   spec.authors       = ["Michael Klein, Chris Colvard"]
   spec.email         = ["mbklein@gmail.com, chris.colvard@gmail.com"]
-  spec.summary       = %q{Declare encode job classes that can be run by a variety of encoding services}
-  spec.description   = %q{This gem serves as the basis for the interface between a Ruby (Rails) application and a provider of transcoding services such as Opencast Matterhorn, Zencoder, and Amazon Elastic Transcoder.}
+  spec.summary       = 'Declare encode job classes that can be run by a variety of encoding services'
+  spec.description   = 'This gem serves as the basis for the interface between a Ruby (Rails) application and a provider of transcoding services such as Opencast Matterhorn, Zencoder, and Amazon Elastic Transcoder.'
   spec.homepage      = ""
   spec.license       = "MIT"
 

@@ -291,7 +291,7 @@ module ActiveEncode
 
     class MatterhornRtmpUrl
       class_attribute :members
-      self.members = [:application, :prefix, :media_id, :stream_id, :filename, :extension]
+      self.members = %i[application prefix media_id stream_id filename extension]
       attr_accessor(*members)
       REGEX = %r{^
   /(?<application>.+)        # application (avalon)

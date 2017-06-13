@@ -30,6 +30,7 @@ module ActiveEncode
       end
 
       def find(id)
+        raise ArgumentError, 'id cannot be nil' unless id
         engine_adapter.find(id, cast: self)
       end
 

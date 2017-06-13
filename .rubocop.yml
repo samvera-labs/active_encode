@@ -29,9 +29,6 @@ Metrics/CyclomaticComplexity:
   Exclude:
     - 'lib/active_encode/engine_adapters/*'
 
-Style/FileName:
-  Exclude:
-
 Style/IndentationConsistency:
   EnforcedStyle: rails
 
@@ -42,6 +39,10 @@ Style/CollectionMethods:
     inject: 'reduce'
     detect: 'find'
     find_all: 'select'
+
+Style/FileName: # https://github.com/bbatsov/rubocop/issues/2973
+  Exclude:
+    - 'Gemfile'
 
 Style/WordArray:
   Enabled: false

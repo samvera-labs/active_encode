@@ -103,8 +103,8 @@ module ActiveEncode
         def convert_errors(job_details)
           errors = []
           input_error = job_details.body["job"]["input_media_file"]["error_message"]
-          errors << input_error unless input_error.blank?
-          job_details.body["job"]["output_media_files"].each { |o| errors << o["error_message"] unless o["error_message"].blank? }
+          errors << input_error if input_error.present?
+          job_details.body["job"]["output_media_files"].each { |o| errors << o["error_message"] if o["error_message"].present? }
           errors
         end
 
