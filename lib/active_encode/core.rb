@@ -30,6 +30,7 @@ module ActiveEncode
       end
 
       def find(id)
+        raise ActiveEncode::NotFound unless id
         engine_adapter.find(id, cast: self)
       end
 
