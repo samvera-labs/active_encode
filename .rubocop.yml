@@ -29,9 +29,6 @@ Metrics/CyclomaticComplexity:
   Exclude:
     - 'lib/active_encode/engine_adapters/*'
 
-Style/FileName:
-  Exclude:
-
 Style/IndentationConsistency:
   EnforcedStyle: rails
 
