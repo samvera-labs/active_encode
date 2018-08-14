@@ -52,6 +52,8 @@ encode.cancel!
 encode.cancelled?  # true
 ```
 
+> `#purge!` and `#remove_output!` and the following documentation have been deprecated and will be removed in ActiveEncode 0.3.
+
 If the encoding job should be deleted, call purge:
 ```ruby
 encode.purge!
@@ -85,15 +87,15 @@ end
 
 Engine adapters are shims between ActiveEncode and the back end encoding service.  Each service has its own API and idiosyncracies so consult the table below to see what features are supported by each adapter.  Add an additional engines by creating an engine adapter class that implements :create, :find, :list, :cancel, :purge, and :remove_output.
 
-| Adapter/Feature          | Create | Find | List | Cancel | Purge | Remove Output | Preset | Multiple Outputs |
-|--------------------------|--------|------|------|--------|-------|---------------|--------|------------------|
-| Matterhorn               |    X   |  X   |      |   X    |   X   |       X       |   X    |         X        |
-| Zencoder                 |    X   |  X   |      |   X    |       |               |        |                  |
-| Shingoncoder (prototype) |    X   |  X   |      |        |       |               |        |                  |
-| Shingoncoder             |    X   |  X   |      |        |       |               |        |                  |
-| AWS Elastic Transcoder   |    X   |  X   |      |   X    |       |               |        |                  |
-| Inline                   |    X   |  X   |      |        |       |               |        |                  |
-| Test                     |    X   |  X   |      |   X    |       |       X       |        |                  |
+| Adapter/Feature          | Create | Find | List | Cancel | Preset | Multiple Outputs |
+|--------------------------|--------|------|------|--------|--------|------------------|
+| Matterhorn               |    X   |  X   |      |   X    |   X    |         X        |
+| Zencoder                 |    X   |  X   |      |   X    |        |                  |
+| Shingoncoder (prototype) |    X   |  X   |      |        |        |                  |
+| Shingoncoder             |    X   |  X   |      |        |        |                  |
+| AWS Elastic Transcoder   |    X   |  X   |      |   X    |        |                  |
+| Inline                   |    X   |  X   |      |        |        |                  |
+| Test                     |    X   |  X   |      |   X    |        |                  |
 
 ## Contributing
 
