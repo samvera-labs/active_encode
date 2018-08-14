@@ -4,6 +4,10 @@ module ActiveEncode
       class_attribute :encodes, instance_accessor: false, instance_predicate: false
       InlineAdapter.encodes ||= {}
 
+      def initialize
+        ActiveSupport::Deprecation.warn("The InlineAdapter is deprecated and will be removed in ActiveEncode 0.3.")
+      end
+
       def create(encode)
         encode.id = SecureRandom.uuid
         self.class.encodes[encode.id] = encode

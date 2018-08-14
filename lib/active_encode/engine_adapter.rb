@@ -10,7 +10,7 @@ module ActiveEncode
 
     included do
       class_attribute :_engine_adapter, instance_accessor: false, instance_predicate: false
-      self.engine_adapter = :inline
+      self.engine_adapter = :test
     end
 
     # Includes the setter method for changing the active engine adapter.
