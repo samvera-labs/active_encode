@@ -55,12 +55,14 @@ module ActiveEncode
     end
 
     def purge!
+      ActiveSupport::Deprecation.warn("#purge! will be removed without replacement in ActiveEncode 0.3")
       run_callbacks :purge do
         self.class.engine_adapter.purge self
       end
     end
 
     def remove_output!(output_id)
+      ActiveSupport::Deprecation.warn("#remove_output will be removed without replacement in ActiveEncode 0.3")
       self.class.engine_adapter.remove_output self, output_id
     end
 

@@ -54,14 +54,17 @@ module ActiveEncode
       end
 
       def before_purge(*filters, &blk)
+        ActiveSupport::Deprecation.warn("before_purge will be removed without replacement in ActiveEncode 0.3")
         set_callback(:purge, :before, *filters, &blk)
       end
 
       def after_purge(*filters, &blk)
+        ActiveSupport::Deprecation.warn("after_purge will be removed without replacement in ActiveEncode 0.3")
         set_callback(:purge, :after, *filters, &blk)
       end
 
       def around_purge(*filters, &blk)
+        ActiveSupport::Deprecation.warn("around_purge will be removed without replacement in ActiveEncode 0.3")
         set_callback(:purge, :around, *filters, &blk)
       end
     end
