@@ -4,6 +4,10 @@ require 'active_support/core_ext'
 module ActiveEncode
   module EngineAdapters
     class ShingoncoderAdapter < ZencoderAdapter
+      def initialize
+        ActiveSupport::Deprecation.warn("The ShingoncoderAdapter is deprecated and will be removed in ActiveEncode 0.3.")
+      end
+
       # @param [ActiveEncode::Base] encode
       def create(encode)
         response = Shingoncoder::Job.create(input: encode.input)

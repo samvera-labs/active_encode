@@ -7,7 +7,7 @@ describe ActiveEncode::EngineAdapters::ShingoncoderAdapter do
     ActiveEncode::Base.engine_adapter = :shingoncoder
   end
   after(:all) do
-    ActiveEncode::Base.engine_adapter = :inline
+    ActiveEncode::Base.engine_adapter = :test
   end
 
   let(:create_response) { Shingoncoder::Response.new(body: JSON.parse(File.read('spec/fixtures/zencoder/job_create.json'))) }

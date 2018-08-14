@@ -20,7 +20,7 @@ Or install it yourself as:
 
 ## Usage
 
-Set the engine adapter (default: inline), configure it (if neccessary), then submit encoding jobs!
+Set the engine adapter (default: test), configure it (if neccessary), then submit encoding jobs!
 
 ```ruby
 ActiveEncode::Base.engine_adapter = :matterhorn
@@ -89,13 +89,12 @@ Engine adapters are shims between ActiveEncode and the back end encoding service
 
 | Adapter/Feature          | Create | Find | List | Cancel | Preset | Multiple Outputs |
 |--------------------------|--------|------|------|--------|--------|------------------|
-| Matterhorn               |    X   |  X   |      |   X    |   X    |         X        |
-| Zencoder                 |    X   |  X   |      |   X    |        |                  |
-| Shingoncoder (prototype) |    X   |  X   |      |        |        |                  |
-| Shingoncoder             |    X   |  X   |      |        |        |                  |
-| AWS Elastic Transcoder   |    X   |  X   |      |   X    |        |                  |
-| Inline                   |    X   |  X   |      |        |        |                  |
 | Test                     |    X   |  X   |      |   X    |        |                  |
+| AWS Elastic Transcoder   |    X   |  X   |      |   X    |        |                  |
+| Zencoder                 |    X   |  X   |      |   X    |        |                  |
+| Matterhorn               |    X   |  X   |      |   X    |   X    |         X        |
+
+> The Inline and Shingoncoder adapters are deprecated and will be removed in ActiveEncode 0.3.
 
 ## Contributing
 

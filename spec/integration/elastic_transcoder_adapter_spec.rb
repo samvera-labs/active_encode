@@ -7,7 +7,7 @@ describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
     ActiveEncode::Base.engine_adapter = :elastic_transcoder
   end
   after(:all) do
-    ActiveEncode::Base.engine_adapter = :inline
+    ActiveEncode::Base.engine_adapter = :test
   end
 
   let(:client) { double(Aws::ElasticTranscoder::Client) }

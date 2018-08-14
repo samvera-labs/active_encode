@@ -7,7 +7,7 @@ describe ActiveEncode::EngineAdapters::ZencoderAdapter do
     ActiveEncode::Base.engine_adapter = :zencoder
   end
   after(:all) do
-    ActiveEncode::Base.engine_adapter = :inline
+    ActiveEncode::Base.engine_adapter = :test
   end
 
   let(:create_response) { Zencoder::Response.new(body: JSON.parse(File.read('spec/fixtures/zencoder/job_create.json'))) }

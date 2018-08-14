@@ -1,6 +1,10 @@
 module ActiveEncode
   module EngineAdapters
     class ActiveJobAdapter
+      def initialize
+        ActiveSupport::Deprecation.warn("The ActiveJobAdapter is deprecated and will be removed in ActiveEncode 0.3.")
+      end
+
       def create(_encode) end
 
       def find(_id, _opts = {}) end
