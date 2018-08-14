@@ -1,6 +1,7 @@
 require 'spec_helper'
 require 'aws-sdk'
 require 'json'
+require 'shared_specs/engine_adapter_specs'
 
 describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
   before(:all) do
@@ -24,6 +25,8 @@ describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
     j.outputs = [ Aws::ElasticTranscoder::Types::JobOutput.new(JSON.parse(File.read('spec/fixtures/elastic_transcoder/output_submitted.json')))]
     j
   end
+
+  it_behaves_like "an ActiveEncode::EngineAdapter"
 
   describe "#create" do
     let(:job) { job_created }

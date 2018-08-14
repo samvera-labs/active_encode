@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'rubyhorn'
+require 'shared_specs/engine_adapter_specs'
 
 describe ActiveEncode::EngineAdapters::MatterhornAdapter do
   before(:all) do
@@ -17,6 +18,8 @@ describe ActiveEncode::EngineAdapters::MatterhornAdapter do
   end
 
   let(:file) { "file://#{File.absolute_path('spec/fixtures/Bars_512kb.mp4')}" }
+
+  it_behaves_like "an ActiveEncode::EngineAdapter"
 
   describe "#create" do
     subject { ActiveEncode::Base.create(file) }
