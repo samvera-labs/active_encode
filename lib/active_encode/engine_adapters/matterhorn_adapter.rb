@@ -146,17 +146,17 @@ module ActiveEncode
 
         def convert_created_at(workflow)
           created_at = workflow.xpath('mediapackage/@start').last.to_s
-          created_at.present? ? Time.parse(created_at).iso8601 : nil
+          created_at.present? ? Time.parse(created_at) : nil
         end
 
         def convert_updated_at(workflow)
           updated_at = workflow.xpath('//operation[@state!="INSTANTIATED"]/completed/text()').last.to_s
-          updated_at.present? ? Time.strptime(updated_at, "%Q").utc.iso8601 : nil
+          updated_at.present? ? Time.strptime(updated_at, "%Q") : nil
         end
 
         def convert_finished_at(workflow)
           finished_at = workflow.xpath('//operation[@state!="INSTANTIATED"]/completed/text()').last.to_s
-          finished_at.present? ? Time.strptime(finished_at, "%Q").utc.iso8601 : nil
+          finished_at.present? ? Time.strptime(finished_at, "%Q") : nil
         end
 
         def convert_options(workflow)
