@@ -34,7 +34,10 @@ module ActiveEncode
         engine_adapter.find(id, cast: self)
       end
 
-      delegate :list, to: :engine_adapter
+      def list(*args)
+        ActiveSupport::Deprecation.warn("#list will be removed without replacement in ActiveEncode 0.3")
+        engine_adapter.list(args)
+      end
     end
 
     def initialize(input, options = nil)
