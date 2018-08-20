@@ -12,21 +12,21 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
   it { is_expected.to respond_to :find }
   it { is_expected.to respond_to :cancel }
 
-  # describe "#create" do
-  #   subject { created_job }
-  #
-  #   it { is_expected.to be_a ActiveEncode::Base }
-  #   its(:id) { is_expected.not_to be_empty }
-  #   it { is_expected.to be_running }
-  #   # its(:output) { is_expected.to be_empty }
-  #   its(:current_operations) { is_expected.to be_empty }
-  #   its(:percent_complete) { is_expected.to be < 100 }
-  #   its(:errors) { is_expected.to be_empty }
-  #   its(:created_at) { is_expected.to be_kind_of Time }
-  #   its(:updated_at) { is_expected.to be_nil }
-  #   its(:finished_at) { is_expected.to be_nil }
-  #   its(:tech_metadata) { is_expected.to be_empty }
-  # end
+  describe "#create" do
+    subject { created_job }
+
+    it { is_expected.to be_a ActiveEncode::Base }
+    its(:id) { is_expected.not_to be_empty }
+    it { is_expected.to be_running }
+    # its(:output) { is_expected.to be_empty }
+    its(:current_operations) { is_expected.to be_empty }
+    its(:percent_complete) { is_expected.to be < 100 }
+    its(:errors) { is_expected.to be_empty }
+    its(:created_at) { is_expected.to be_kind_of Time }
+    its(:updated_at) { is_expected.to be_nil }
+    its(:finished_at) { is_expected.to be_nil }
+    its(:tech_metadata) { is_expected.to be_empty }
+  end
 
   describe "#find" do
     context "a running encode" do
@@ -50,8 +50,7 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       it { is_expected.to be_a ActiveEncode::Base }
       its(:id) { is_expected.to eq 'cancelled-id' }
       it { is_expected.to be_cancelled }
-      its(:options) { is_expected.to include(preset: 'full') }
-      its(:current_operations) { is_expected.to include("Tagging dublin core catalogs for publishing") }
+      its(:current_operations) { is_expected.not_to be_empty }
       its(:percent_complete) { is_expected.to be > 0 }
       its(:errors) { is_expected.to be_empty }
       its(:created_at) { is_expected.to be_kind_of Time }
@@ -82,7 +81,7 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       its(:id) { is_expected.to eq 'failed-id' }
       it { is_expected.to be_failed }
       its(:percent_complete) { is_expected.to be > 0 }
-      its(:errors) { is_expected.to include failed_errors }
+      its(:errors) { is_expected.not_to be_empty }
       its(:created_at) { is_expected.to be_kind_of Time }
       its(:updated_at) { is_expected.to be > subject.created_at }
       its(:finished_at) { is_expected.to be >= subject.updated_at }
@@ -90,16 +89,16 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
     end
   end
 
-  describe "#cancel!" do
-    before do
-      allow(Rubyhorn.client).to receive(:stop).and_return(Rubyhorn::Workflow.from_xml(File.open('spec/fixtures/matterhorn/cancelled_response.xml')))
-    end
-    let(:encode) { ActiveEncode::Base.create(file) }
-
-    subject { encode.cancel! }
-
-    it { is_expected.to be_a ActiveEncode::Base }
-    its(:id) { is_expected.to eq 'cancelled-id' }
-    it { is_expected.to be_cancelled }
-  end
+  # describe "#cancel!" do
+  #   before do
+  #     allow(Rubyhorn.client).to receive(:stop).and_return(Rubyhorn::Workflow.from_xml(File.open('spec/fixtures/matterhorn/cancelled_response.xml')))
+  #   end
+  #   let(:encode) { ActiveEncode::Base.create(file) }
+  #
+  #   subject { encode.cancel! }
+  #
+  #   it { is_expected.to be_a ActiveEncode::Base }
+  #   its(:id) { is_expected.to eq 'cancelled-id' }
+  #   it { is_expected.to be_cancelled }
+  # end
 end

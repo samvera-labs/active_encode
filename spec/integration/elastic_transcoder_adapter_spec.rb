@@ -12,16 +12,18 @@ describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
     ActiveEncode::Base.engine_adapter = :inline
   end
 
-  let!(:client) { Aws::ElasticTranscoder::Client.new(stub_responses: true) }
+  let(:client) { Aws::ElasticTranscoder::Client.new(stub_responses: true) }
 
   before do
     # allow_any_instance_of(ActiveEncode::EngineAdapters::ElasticTranscoderAdapter).to receive(:client).and_return(client)
     # client.stub_responses(:read_job, Aws::ElasticTranscoder::Types::ReadJobResponse.new(job: job))
     # client.stub_responses(:create_job, Aws::ElasticTranscoder::Types::CreateJobResponse.new(job: job_created))
+    # byebug
+    ActiveEncode::Base.engine_adapter.instance_variable_set(:@client, nil)
     allow(Aws::ElasticTranscoder::Client).to receive(:new).and_return(client)
   end
 
-  let!(:created_job) do
+  let(:created_job) do
     j = Aws::ElasticTranscoder::Types::Job.new JSON.parse(File.read('spec/fixtures/elastic_transcoder/job_created.json'))
     j.input = Aws::ElasticTranscoder::Types::JobInput.new(JSON.parse(File.read('spec/fixtures/elastic_transcoder/input_generic.json')))
     j.outputs = [ Aws::ElasticTranscoder::Types::JobOutput.new(JSON.parse(File.read('spec/fixtures/elastic_transcoder/output_submitted.json')))]
@@ -39,62 +41,69 @@ describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
        }])
   end
 
-  let!(:running_job) do
+  let(:running_job) do
     j = Aws::ElasticTranscoder::Types::Job.new JSON.parse(File.read('spec/fixtures/elastic_transcoder/job_progressing.json'))
     j.input = Aws::ElasticTranscoder::Types::JobInput.new(JSON.parse(File.read('spec/fixtures/elastic_transcoder/input_progressing.json')))
     j.outputs = [ Aws::ElasticTranscoder::Types::JobOutput.new(JSON.parse(File.read('spec/fixtures/elastic_transcoder/output_progressing.json')))]
 
-    # client.stub_responses(:read_job, Aws::ElasticTranscoder::Types::ReadJobResponse.new(job: j))
+    client.stub_responses(:read_job, Aws::ElasticTranscoder::Types::ReadJobResponse.new(job: j))
+
     # client.stub_responses(:read_job, -> (context) {
     #   client.stub_responses(:read_job, Aws::ElasticTranscoder::Types::ReadJobResponse.new(job: j)) if context.params[:id] == 'running-id'
     # })
-    allow(client).to receive(:read_job).with({ id: 'running-id' }).and_return(Aws::ElasticTranscoder::Types::ReadJobResponse.new(job: j))
+    # allow(client).to receive(:read_job).with({ id: 'running-id' }).and_return(Aws::ElasticTranscoder::Types::ReadJobResponse.new(job: j))
     ActiveEncode::Base.find('running-id')
   end
 
-  let!(:canceled_job) do
+  let(:canceled_job) do
     j = Aws::ElasticTranscoder::Types::Job.new JSON.parse(File.read('spec/fixtures/elastic_transcoder/job_canceled.json'))
     j.input = Aws::ElasticTranscoder::Types::JobInput.new(JSON.parse(File.read('spec/fixtures/elastic_transcoder/input_generic.json')))
     j.outputs = [ Aws::ElasticTranscoder::Types::JobOutput.new(JSON.parse(File.read('spec/fixtures/elastic_transcoder/output_canceled.json')))]
+
+    client.stub_responses(:read_job, Aws::ElasticTranscoder::Types::ReadJobResponse.new(job: j))
 
     # client.stub_responses(:read_job, -> (context) {
     #   client.stub_responses(:read_job, Aws::ElasticTranscoder::Types::ReadJobResponse.new(job: j)) if context.params[:id] == 'cancelled-id'
     # })
 
-    allow(client).to receive(:read_job).with({ id: 'cancelled-id' }).and_return(Aws::ElasticTranscoder::Types::ReadJobResponse.new(job: j))
+    # allow(client).to receive(:read_job).with({ id: 'cancelled-id' }).and_return(Aws::ElasticTranscoder::Types::ReadJobResponse.new(job: j))
     # byebug
 
     ActiveEncode::Base.find('cancelled-id')
   end
 
 
-  let!(:completed_job) do
+  let(:completed_job) do
     j = Aws::ElasticTranscoder::Types::Job.new JSON.parse(File.read('spec/fixtures/elastic_transcoder/job_completed.json'))
     j.input = Aws::ElasticTranscoder::Types::JobInput.new(JSON.parse(File.read('spec/fixtures/elastic_transcoder/input_completed.json')))
     j.outputs = [ Aws::ElasticTranscoder::Types::JobOutput.new(JSON.parse(File.read('spec/fixtures/elastic_transcoder/output_completed.json')))]
 
+    client.stub_responses(:read_job, Aws::ElasticTranscoder::Types::ReadJobResponse.new(job: j))
+
     # client.stub_responses(:read_job, -> (context) {
     #   client.stub_responses(:read_job, Aws::ElasticTranscoder::Types::ReadJobResponse.new(job: j)) if context.params[:id] == 'completed-id'
     # })
-    allow(client).to receive(:read_job).with({ id: 'completed-id' }).and_return(Aws::ElasticTranscoder::Types::ReadJobResponse.new(job: j))
+    # allow(client).to receive(:read_job).with({ id: 'completed-id' }).and_return(Aws::ElasticTranscoder::Types::ReadJobResponse.new(job: j))
 
     ActiveEncode::Base.find('completed-id')
-    byebug
   end
 
-  let!(:failed_job) do
+  let(:failed_job) do
     j = Aws::ElasticTranscoder::Types::Job.new JSON.parse(File.read('spec/fixtures/elastic_transcoder/job_failed.json'))
     j.input = Aws::ElasticTranscoder::Types::JobInput.new(JSON.parse(File.read('spec/fixtures/elastic_transcoder/input_generic.json')))
     j.outputs = [ Aws::ElasticTranscoder::Types::JobOutput.new(JSON.parse(File.read('spec/fixtures/elastic_transcoder/output_failed.json')))]
 
+    client.stub_responses(:read_job, Aws::ElasticTranscoder::Types::ReadJobResponse.new(job: j))
+
     # client.stub_responses(:read_job, -> (context) {
     #   client.stub_responses(:read_job, Aws::ElasticTranscoder::Types::ReadJobResponse.new(job: j)) if context.params[:id] == 'failed-id'
     # })
-    allow(client).to receive(:read_job).with({ id: 'failed-id' }).and_return(Aws::ElasticTranscoder::Types::ReadJobResponse.new(job: j))
+    # allow(client).to receive(:read_job).with({ id: 'failed-id' }).and_return(Aws::ElasticTranscoder::Types::ReadJobResponse.new(job: j))
+    # byebug
     ActiveEncode::Base.find('failed-id')
   end
 
-  let!(:completed_output) { [{id: "2", url: "elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a", hls_url: "elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a.m3u8", label: "hls0400k", :width=>400, :height=>224, :video_framerate=>"25", :file_size=>6901104, :duration=>"117353", :segment_duration=> "2.0"}] }
+  let(:completed_output) { [{id: "2", url: "elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a", hls_url: "elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a.m3u8", label: "hls0400k", :width=>400, :height=>224, :video_framerate=>"25", :file_size=>6901104, :duration=>"117353", :segment_duration=> "2.0"}] }
   let(:completed_tech_metadata) { {:width=>1280, :height=>720, :video_framerate=>"25", :file_size=>21069678, :duration=>"117312"} }
   let(:failed_tech_metadata) { {} }
 
