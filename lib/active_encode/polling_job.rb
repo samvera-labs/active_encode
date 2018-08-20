@@ -12,9 +12,9 @@
 #   specific language governing permissions and limitations under the License.
 # ---  END LICENSE_HEADER BLOCK  ---
 
-require 'active_encode'
+# require 'active_encode'
 
-module PollingJob
+class ActiveEncode::PollingJob
   # module Core
   #   def error(master_file, exception)
   #     unless master_file
@@ -66,18 +66,6 @@ module PollingJob
   #     error(mf, e)
   #   end
   # end
-
-  POLLING_WAIT_TIME = 10.seconds
-
-  def create
-    super
-    PollingJob.perform_later(self.id, self.class.name, wait: POLLING_WAIT_TIME)
-    self
-  end
-
-  define_callbacks :status_update
-  define_callbacks :error
-  define_callbacks :complete
 
   def perform(id, encoder_class_name)
     job = encoder_class_name.constantize.find(id)
