@@ -9,13 +9,7 @@ describe ActiveEncode::EngineAdapter do
 
           def find(_, _ = {}); end
 
-          def list(*); end
-
           def cancel(_encode); end
-
-          def purge(_encode); end
-
-          def remove_output(_encode, _output_id); end
         end
 
         class StubTwoAdapter
@@ -23,13 +17,7 @@ describe ActiveEncode::EngineAdapter do
 
           def find(_id, _opts = {}); end
 
-          def list(*); end
-
           def cancel(_encode); end
-
-          def purge(_encode); end
-
-          def remove_output(_encode, _output_id); end
         end
       end
     end

@@ -85,14 +85,14 @@ end
 
 ### Engine Adapters
 
-Engine adapters are shims between ActiveEncode and the back end encoding service.  Each service has its own API and idiosyncracies so consult the table below to see what features are supported by each adapter.  Add an additional engines by creating an engine adapter class that implements :create, :find, :list, and :cancel.
+Engine adapters are shims between ActiveEncode and the back end encoding service.  Each service has its own API and idiosyncracies so consult the table below to see what features are supported by each adapter.  Add an additional engines by creating an engine adapter class that implements :create, :find, and :cancel.
 
-| Adapter/Feature          | Create | Find | List | Cancel | Preset | Multiple Outputs |
-|--------------------------|--------|------|------|--------|--------|------------------|
-| Test                     |    X   |  X   |      |   X    |        |                  |
-| AWS Elastic Transcoder   |    X   |  X   |      |   X    |        |                  |
-| Zencoder                 |    X   |  X   |      |   X    |        |                  |
-| Matterhorn               |    X   |  X   |      |   X    |   X    |         X        |
+| Adapter/Feature          | Create | Find | Cancel | Preset | Multiple Outputs |
+|--------------------------|--------|------|--------|--------|------------------|
+| Test                     |    X   |  X   |   X    |        |                  |
+| AWS Elastic Transcoder   |    X   |  X   |   X    |        |                  |
+| Zencoder                 |    X   |  X   |   X    |        |                  |
+| Matterhorn               |    X   |  X   |   X    |   X    |         X        |
 
 > The Inline and Shingoncoder adapters are deprecated and will be removed in ActiveEncode 0.3.
 
