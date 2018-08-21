@@ -18,7 +18,6 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
     it { is_expected.to be_a ActiveEncode::Base }
     its(:id) { is_expected.not_to be_empty }
     it { is_expected.to be_running }
-    # its(:output) { is_expected.to be_empty }
     its(:current_operations) { is_expected.to be_empty }
     its(:percent_complete) { is_expected.to be < 100 }
     its(:errors) { is_expected.to be_empty }
@@ -35,13 +34,11 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       it { is_expected.to be_a ActiveEncode::Base }
       its(:id) { is_expected.to eq 'running-id' }
       it { is_expected.to be_running }
-      # its(:output) { is_expected.to be_empty }
       its(:percent_complete) { is_expected.to be > 0 }
       its(:errors) { is_expected.to be_empty }
       its(:created_at) { is_expected.to be_kind_of Time }
       its(:updated_at) { is_expected.to be > subject.created_at }
       its(:finished_at) { is_expected.to be_nil }
-      # its(:tech_metadata) { is_expected.to be_empty }
     end
 
     context "a cancelled encode" do
@@ -50,12 +47,10 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       it { is_expected.to be_a ActiveEncode::Base }
       its(:id) { is_expected.to eq 'cancelled-id' }
       it { is_expected.to be_cancelled }
-      its(:current_operations) { is_expected.not_to be_empty }
       its(:percent_complete) { is_expected.to be > 0 }
       its(:errors) { is_expected.to be_empty }
       its(:created_at) { is_expected.to be_kind_of Time }
-      its(:updated_at) { is_expected.to be > subject.created_at }
-      its(:finished_at) { is_expected.to be >= subject.updated_at }
+      its(:finished_at) { is_expected.to be >= subject.created_at }
       its(:tech_metadata) { is_expected.to be_empty }
     end
 
@@ -89,16 +84,24 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
     end
   end
 
-  # describe "#cancel!" do
-  #   before do
-  #     allow(Rubyhorn.client).to receive(:stop).and_return(Rubyhorn::Workflow.from_xml(File.open('spec/fixtures/matterhorn/cancelled_response.xml')))
-  #   end
-  #   let(:encode) { ActiveEncode::Base.create(file) }
-  #
-  #   subject { encode.cancel! }
-  #
-  #   it { is_expected.to be_a ActiveEncode::Base }
-  #   its(:id) { is_expected.to eq 'cancelled-id' }
-  #   it { is_expected.to be_cancelled }
-  # end
+  describe "#cancel!" do
+    subject { canceled_job.cancel! }
+
+    it { is_expected.to be_a ActiveEncode::Base }
+    its(:id) { is_expected.to eq 'cancelled-id' }
+    it { is_expected.to be_cancelled }
+  end
+
+  describe "reload" do
+    subject { running_job.reload }
+
+    it { is_expected.to be_a ActiveEncode::Base }
+    its(:id) { is_expected.to eq 'running-id' }
+    it { is_expected.to be_running }
+    its(:percent_complete) { is_expected.to be > 0 }
+    its(:errors) { is_expected.to be_empty }
+    its(:created_at) { is_expected.to be_kind_of Time }
+    its(:updated_at) { is_expected.to be > subject.created_at }
+    its(:finished_at) { is_expected.to be_nil }
+  end
 end

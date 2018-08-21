@@ -92,7 +92,7 @@ module ActiveEncode
           case job.status
           when "Submitted"
             10
-          when "Progressing"
+          when "Progressing", "Canceled", "Error"
             50
           when "Complete"
             100
