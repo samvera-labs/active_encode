@@ -4,12 +4,11 @@ require 'json'
 require 'shared_specs/engine_adapter_specs'
 
 describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
-  before(:all) do
+  around(:example) do |example|
+    # Setting this before each test works around a stubbing + memoization limitation
     ActiveEncode::Base.engine_adapter = :elastic_transcoder
-    # Aws.config[:stub_responses] = true
-  end
-  after(:all) do
-    ActiveEncode::Base.engine_adapter = :inline
+    example.run
+    ActiveEncode::Base.engine_adapter = :test
   end
 
   let(:client) { Aws::ElasticTranscoder::Client.new(stub_responses: true) }
@@ -19,7 +18,6 @@ describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
     # client.stub_responses(:read_job, Aws::ElasticTranscoder::Types::ReadJobResponse.new(job: job))
     # client.stub_responses(:create_job, Aws::ElasticTranscoder::Types::CreateJobResponse.new(job: job_created))
     # byebug
-    ActiveEncode::Base.engine_adapter.instance_variable_set(:@client, nil)
     allow(Aws::ElasticTranscoder::Client).to receive(:new).and_return(client)
   end
 
