@@ -51,6 +51,20 @@ describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
 
     client.stub_responses(:read_job, Aws::ElasticTranscoder::Types::ReadJobResponse.new(job: j))
 
+    ActiveEncode::Base.find('cancelled-id')
+  end
+
+  let(:cancelling_job) do
+    j1 = Aws::ElasticTranscoder::Types::Job.new JSON.parse(File.read('spec/fixtures/elastic_transcoder/job_progressing.json'))
+    j1.input = Aws::ElasticTranscoder::Types::JobInput.new(JSON.parse(File.read('spec/fixtures/elastic_transcoder/input_progressing.json')))
+    j1.outputs = [ Aws::ElasticTranscoder::Types::JobOutput.new(JSON.parse(File.read('spec/fixtures/elastic_transcoder/output_progressing.json')))]
+
+    j2 = Aws::ElasticTranscoder::Types::Job.new JSON.parse(File.read('spec/fixtures/elastic_transcoder/job_canceled.json'))
+    j2.input = Aws::ElasticTranscoder::Types::JobInput.new(JSON.parse(File.read('spec/fixtures/elastic_transcoder/input_generic.json')))
+    j2.outputs = [ Aws::ElasticTranscoder::Types::JobOutput.new(JSON.parse(File.read('spec/fixtures/elastic_transcoder/output_canceled.json')))]
+
+    client.stub_responses(:read_job, [Aws::ElasticTranscoder::Types::ReadJobResponse.new(job: j1), Aws::ElasticTranscoder::Types::ReadJobResponse.new(job: j2)])
+
     cancel_response = double(Aws::ElasticTranscoder::Types::CancelJobResponse)
     allow(cancel_response).to receive(:successful?).and_return(true)
     allow(client).to receive(:cancel_job).and_return(cancel_response)

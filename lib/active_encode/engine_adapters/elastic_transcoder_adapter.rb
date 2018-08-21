@@ -11,7 +11,6 @@ module ActiveEncode
           user_metadata: encode.options[:user_metadata]
         ).job
 
-        # byebug
         build_encode(job, encode.class)
       end
 

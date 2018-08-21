@@ -85,11 +85,16 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
   end
 
   describe "#cancel!" do
-    subject { canceled_job.cancel! }
+    subject { cancelling_job.cancel! }
 
     it { is_expected.to be_a ActiveEncode::Base }
     its(:id) { is_expected.to eq 'cancelled-id' }
     it { is_expected.to be_cancelled }
+    its(:percent_complete) { is_expected.to be > 0 }
+    its(:errors) { is_expected.to be_empty }
+    its(:created_at) { is_expected.to be_kind_of Time }
+    its(:finished_at) { is_expected.to be >= subject.created_at }
+    its(:tech_metadata) { is_expected.to be_empty }
   end
 
   describe "reload" do

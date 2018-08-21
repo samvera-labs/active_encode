@@ -26,6 +26,7 @@ describe ActiveEncode::EngineAdapters::MatterhornAdapter do
   let(:created_job) { ActiveEncode::Base.create(file) }
   let(:running_job) { ActiveEncode::Base.find('running-id') }
   let(:canceled_job) { ActiveEncode::Base.find('cancelled-id') }
+  let(:cancelling_job) { ActiveEncode::Base.find('running-id')}
   let(:completed_job) { ActiveEncode::Base.find('completed-id') }
   let(:failed_job) { ActiveEncode::Base.find('failed-id') }
 
