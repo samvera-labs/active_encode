@@ -11,7 +11,7 @@ module ActiveEncode
           user_metadata: encode.options[:user_metadata]
         ).job
 
-        build_encode(get_job_details(job.id), encode.class)
+        build_encode(job, encode.class)
       end
 
       def find(id, opts = {})
@@ -66,7 +66,7 @@ module ActiveEncode
 
         def convert_time(time_millis)
           return nil if time_millis.nil?
-          Time.at(time_millis / 1000).iso8601
+          Time.at(time_millis / 1000)
         end
 
         def convert_state(job)
@@ -91,7 +91,7 @@ module ActiveEncode
           case job.status
           when "Submitted"
             10
-          when "Progressing"
+          when "Progressing", "Canceled", "Error"
             50
           when "Complete"
             100
