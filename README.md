@@ -1,6 +1,6 @@
 # ActiveEncode
 
-This gem serves as the basis for the interface between a Ruby (Rails) application and a provider of transcoding services such as [Opencast Matterhorn](http://opencast.org), [Zencoder](http://zencoder.com), [Shingoncoder](http://github.com/jcoyne/shingoncoder), and [Amazon Elastic Transcoder](http://aws.amazon.com/elastictranscoder/).
+This gem serves as the basis for the interface between a Ruby (Rails) application and a provider of transcoding services such as [Opencast Matterhorn](http://opencast.org), [Zencoder](http://zencoder.com), and [Amazon Elastic Transcoder](http://aws.amazon.com/elastictranscoder/).
 
 ## Installation
 
@@ -20,7 +20,7 @@ Or install it yourself as:
 
 ## Usage
 
-Set the engine adapter (default: inline), configure it (if neccessary), then submit encoding jobs!
+Set the engine adapter (default: test), configure it (if neccessary), then submit encoding jobs!
 
 ```ruby
 ActiveEncode::Base.engine_adapter = :matterhorn
@@ -69,7 +69,7 @@ An encoding job is meant to be the record of the work of the encoding engine and
 
 ### Custom jobs
 
-Subclass ActiveEncode::Base to add custom callbacks or default options.  Available callbacks are before, after, and around the create, cancel, and purge actions.
+Subclass ActiveEncode::Base to add custom callbacks or default options.  Available callbacks are before, after, and around the create and cancel actions.
 
 ```ruby
 class CustomEncode < ActiveEncode::Base
@@ -85,17 +85,16 @@ end
 
 ### Engine Adapters
 
-Engine adapters are shims between ActiveEncode and the back end encoding service.  Each service has its own API and idiosyncracies so consult the table below to see what features are supported by each adapter.  Add an additional engines by creating an engine adapter class that implements :create, :find, :list, :cancel, :purge, and :remove_output.
+Engine adapters are shims between ActiveEncode and the back end encoding service.  Each service has its own API and idiosyncracies so consult the table below to see what features are supported by each adapter.  Add an additional engines by creating an engine adapter class that implements :create, :find, and :cancel.
 
-| Adapter/Feature          | Create | Find | List | Cancel | Preset | Multiple Outputs |
-|--------------------------|--------|------|------|--------|--------|------------------|
-| Matterhorn               |    X   |  X   |      |   X    |   X    |         X        |
-| Zencoder                 |    X   |  X   |      |   X    |        |                  |
-| Shingoncoder (prototype) |    X   |  X   |      |        |        |                  |
-| Shingoncoder             |    X   |  X   |      |        |        |                  |
-| AWS Elastic Transcoder   |    X   |  X   |      |   X    |        |                  |
-| Inline                   |    X   |  X   |      |        |        |                  |
-| Test                     |    X   |  X   |      |   X    |        |                  |
+| Adapter/Feature          | Create | Find | Cancel | Preset | Multiple Outputs |
+|--------------------------|--------|------|--------|--------|------------------|
+| Test                     |    X   |  X   |   X    |        |                  |
+| AWS Elastic Transcoder   |    X   |  X   |   X    |        |                  |
+| Zencoder                 |    X   |  X   |   X    |        |                  |
+| Matterhorn               |    X   |  X   |   X    |   X    |         X        |
+
+> The Inline and Shingoncoder adapters are deprecated and will be removed in ActiveEncode 0.3.
 
 ## Contributing
 

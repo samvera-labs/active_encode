@@ -8,7 +8,7 @@ describe ActiveEncode::EngineAdapters::MatterhornAdapter do
     ActiveEncode::Base.engine_adapter = :matterhorn
   end
   after(:all) do
-    ActiveEncode::Base.engine_adapter = :inline
+    ActiveEncode::Base.engine_adapter = :test
   end
 
   before do

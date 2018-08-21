@@ -3,7 +3,7 @@ require 'active_encode/engine_adapter'
 require 'active_encode/status'
 require 'active_encode/technical_metadata'
 require 'active_encode/callbacks'
-# require 'active_encode/logging'
+require 'active_encode/global_id'
 
 module ActiveEncode #:nodoc:
   class Base
@@ -12,6 +12,7 @@ module ActiveEncode #:nodoc:
     include TechnicalMetadata
     include EngineAdapter
     include Callbacks
+    include GlobalID
   end
 
   class NotFound < RuntimeError; end

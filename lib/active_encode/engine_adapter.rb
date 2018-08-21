@@ -10,7 +10,7 @@ module ActiveEncode
 
     included do
       class_attribute :_engine_adapter, instance_accessor: false, instance_predicate: false
-      self.engine_adapter = :inline
+      self.engine_adapter = :test
     end
 
     # Includes the setter method for changing the active engine adapter.
@@ -38,7 +38,7 @@ module ActiveEncode
           end
         end
 
-        ENGINE_ADAPTER_METHODS = %i[create find list cancel].freeze
+        ENGINE_ADAPTER_METHODS = %i[create find cancel].freeze
 
         def engine_adapter?(object)
           ENGINE_ADAPTER_METHODS.all? { |meth| object.respond_to?(meth) }
