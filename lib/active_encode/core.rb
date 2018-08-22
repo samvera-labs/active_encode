@@ -47,13 +47,13 @@ module ActiveEncode
 
     def create!
       run_callbacks :create do
-        self.class.engine_adapter.create self
+        merge!(self.class.engine_adapter.create(self))
       end
     end
 
     def cancel!
       run_callbacks :cancel do
-        self.class.engine_adapter.cancel self
+        merge!(self.class.engine_adapter.cancel(self))
       end
     end
 
@@ -70,16 +70,26 @@ module ActiveEncode
     end
 
     def reload
-      fresh_encode = self.class.engine_adapter.find(id, cast: self.class)
-      @id = fresh_encode.id
-      @input = fresh_encode.input
-      @output = fresh_encode.output
-      @state = fresh_encode.state
-      @current_operations = fresh_encode.current_operations
-      @errors = fresh_encode.errors
-      @tech_metadata = fresh_encode.tech_metadata
-
-      self
+      merge!(self.class.engine_adapter.find(id, cast: self.class))
     end
+
+    private
+
+      def merge!(encode)
+        @id = encode.id
+        @input = encode.input
+        @output = encode.output
+        @state = encode.state
+        @current_operations = encode.current_operations
+        @errors = encode.errors
+        @tech_metadata = encode.tech_metadata
+        @created_at = encode.created_at
+        @finished_at = encode.finished_at
+        @updated_at = encode.updated_at
+        @options = encode.options
+        @percent_complete = encode.percent_complete
+
+        self
+      end
   end
 end
