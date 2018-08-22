@@ -31,7 +31,8 @@ module ActiveEncode
 
       def find(id)
         raise ArgumentError, 'id cannot be nil' unless id
-        engine_adapter.find(id, cast: self)
+        encode = engine_adapter.find(id, cast: self)
+        encode.run_callbacks(:find) { encode }
       end
 
       def list(*args)
@@ -46,6 +47,7 @@ module ActiveEncode
     end
 
     def create!
+      # TODO: Raise ArgumentError if self has an id?
       run_callbacks :create do
         merge!(self.class.engine_adapter.create(self))
       end
@@ -70,7 +72,9 @@ module ActiveEncode
     end
 
     def reload
-      merge!(self.class.engine_adapter.find(id, cast: self.class))
+      run_callbacks :reload do
+        merge!(self.class.engine_adapter.find(id, cast: self.class))
+      end
     end
 
     private

@@ -3,6 +3,10 @@ require 'spec_helper'
 describe ActiveEncode::Callbacks do
   before do
     class CallbackEncode < ActiveEncode::Base
+      after_find ->(encode) { encode.history << "CallbackEncode ran after_find" }
+
+      after_reload ->(encode) { encode.history << "CallbackEncode ran after_reload" }
+
       before_create ->(encode) { encode.history << "CallbackEncode ran before_create" }
       after_create ->(encode) { encode.history << "CallbackEncode ran after_create" }
 
@@ -38,6 +42,18 @@ describe ActiveEncode::Callbacks do
 
   after do
     Object.send(:remove_const, :CallbackEncode)
+  end
+
+  describe 'find callback' do
+    let(:encode) { CallbackEncode.create("sample.mp4") }
+    subject { CallbackEncode.find(encode.id).history }
+    it { is_expected.to include("CallbackEncode ran after_find") }
+  end
+
+  describe 'reload callback' do
+    let(:encode) { CallbackEncode.create("sample.mp4") }
+    subject { encode.reload.history }
+    it { is_expected.to include("CallbackEncode ran after_reload") }
   end
 
   describe 'create callbacks' do
