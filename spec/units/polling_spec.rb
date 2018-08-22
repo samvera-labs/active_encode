@@ -6,7 +6,6 @@ describe ActiveEncode::Polling do
     let(:encode) { encode_class.create(nil) }
 
     it "enqueue PollingJob after polling wait time" do
-      # TODO
       expect(PollingJob).to have_been_enqueued.with(encode.id, {offset:ActiveEncode::Polling::POLLING_WAIT_TIME })
     end
   end
