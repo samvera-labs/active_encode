@@ -1,3 +1,6 @@
+require 'active_support'
+require 'active_encode/callbacks'
+
 class ActiveEncode::PollingJob
   def perform(job)
     run_callbacks(:status_update) { job }
