@@ -19,26 +19,30 @@ describe ActiveEncode::Polling do
   end
 
   describe 'status_update callback' do
+    # TODO how to trigger status_update
     let(:encode) { PollingEncode.create("sample.mp4") }
-    subject { PollingEncode.find(encode.id).history }
+    subject { PollingEncode.reload(encode.id).history }
     it { is_expected.to include("PollingEncode ran after_status_update") }
   end
 
   describe 'error callback' do
-    let(:encode) { PollingEncode.create("sample.mp4") }
-    subject { PollingEncode.find(encode.id).history }
+    # TODO how to trigger error
+    before do
+      allow_any_instance_of(ActiveEncode::Base).to receive(:create!).and_raise(StandardError)
+    end
+    subject { PollingEncode.create("sample.mp4").history }
     it { is_expected.to include("PollingEncode ran after_error") }
   end
 
   describe 'cancelled callback' do
-    let(:encode) { PollingEncode.create("sample.mp4") }
-    subject { PollingEncode.find(encode.id).history }
+    subject { CallbackEncode.create("sample.mp4").cancel!.history }
     it { is_expected.to include("PollingEncode ran after_cancelled") }
   end
 
   describe 'complete callback' do
+    # TODO how to trigger complete
     let(:encode) { PollingEncode.create("sample.mp4") }
-    subject { PollingEncode.find(encode.id).history }
+    subject { PollingEncode.reload(encode.id).history }
     it { is_expected.to include("PollingEncode ran after_complete") }
   end
 
