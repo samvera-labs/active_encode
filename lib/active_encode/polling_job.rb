@@ -1,5 +1,4 @@
-require 'active_support'
-require 'active_encode/callbacks'
+require 'active_job'
 
 class ActiveEncode::PollingJob < ActiveJob::Base
   # TODO do we need the following?
@@ -7,22 +6,22 @@ class ActiveEncode::PollingJob < ActiveJob::Base
   # queue_as :active_encode_update
   # throttle threshold: Settings.encode_throttling.update_jobs_throttle_threshold, period: Settings.encode_throttling.update_jobs_spacing, drop: false
 
-  def perform(job)
-    # TODO need to check job is nil?
-    return unless job
-    run_callbacks(:status_update) { job }
-    case job.state
+  def perform(encode)
+    # TODO need to check encode is nil?
+    return unless encode
+    encode.run_callbacks(:status_update) { encode }
+    case encode.state
     when :error
-      run_callbacks(:error) { job }
+      encode.run_callbacks(:error) { encode }
     when :cancelled
-      run_callbacks(:cancelled) { job }
+      encode.run_callbacks(:cancelled) { encode }
     when :complete
-      run_callbacks(:complete) { job }
+      encode.run_callbacks(:complete) { encode }
     when :running
-      PollingJob.perform_later(self, wait: Polling::POLLING_WAIT_TIME)
+      ActiveEncode::PollingJob.set(wait: ActiveEncode::Polling::POLLING_WAIT_TIME).perform_later(encode)
     else # other states are illegal and ignored
       # TODO throw error?
-      raise(StandardError, "Illegal state #{job.state} in job #{job.id}!")
+      raise(StandardError, "Illegal state #{encode.state} in encode #{encode.id}!")
     end
   end
 end

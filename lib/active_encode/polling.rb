@@ -1,5 +1,6 @@
 require 'active_support'
-require 'active_support/callbacks'
+require 'active_model/callbacks'
+require 'active_encode/polling_job'
 
 module ActiveEncode
   module Polling
@@ -20,7 +21,7 @@ module ActiveEncode
       define_model_callbacks :complete, only: :after
 
       after_create do |encode|
-        PollingJob.perform_later(encode, wait: POLLING_WAIT_TIME)
+        ActiveEncode::PollingJob.set(wait: POLLING_WAIT_TIME).perform_later(encode)
       end
     end
 

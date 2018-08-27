@@ -3,6 +3,7 @@ require 'spec_helper'
 describe ActiveEncode::Polling do
   before do
     class PollingEncode < ActiveEncode::Base
+      include ActiveEncode::Polling
       after_status_update ->(encode) { encode.history << "PollingEncode ran after_status_update" }
       after_error ->(encode) { encode.history << "PollingEncode ran after_error" }
       after_cancelled ->(encode) { encode.history << "PollingEncode ran after_cancelled" }
@@ -51,7 +52,7 @@ describe ActiveEncode::Polling do
     let(:encode) { encode_class.create(nil) }
 
     it "enqueue PollingJob after polling wait time" do
-      expect(PollingJob).to have_been_enqueued.with(encode.id, {offset:ActiveEncode::Polling::POLLING_WAIT_TIME })
+      expect(ActiveEncode::PollingJob).to have_been_enqueued.with(encode.id, {offset:ActiveEncode::Polling::POLLING_WAIT_TIME })
     end
   end
 end
