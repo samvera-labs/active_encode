@@ -6,7 +6,6 @@ require 'active_encode/callbacks'
 require 'active_encode/global_id'
 require 'active_encode/persistence'
 require 'active_encode/polling'
-require 'active_encode/polling_job'
 
 module ActiveEncode #:nodoc:
   class Base

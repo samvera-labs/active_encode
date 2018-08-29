@@ -5,7 +5,11 @@ module ActiveEncode
     extend ActiveSupport::Concern
     include ::GlobalID::Identification
 
-    def to_global_id
+    def ==(other)
+      other.is_a?(ActiveEncode::Base) && to_global_id == other.to_global_id
+    end
+
+    def to_global_id(options = {})
       super(app: 'ActiveEncode')
     end
   end

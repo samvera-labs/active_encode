@@ -1,6 +1,5 @@
 require 'active_support'
 require 'active_model/callbacks'
-require 'active_encode/polling_job'
 
 module ActiveEncode
   module Polling

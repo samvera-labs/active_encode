@@ -64,10 +64,8 @@ describe ActiveEncode::PollingJob do
       end
 
       it "enqueue PollingJob after polling wait time" do
-        # expect(ActiveEncode::PollingJob).to have_been_enqueued
-        # expect(ActiveEncode::PollingJob).to have_been_enqueued.with(encode.id, {offset:ActiveEncode::Polling::POLLING_WAIT_TIME})
-        expect(ActiveEncode::PollingJob).to have_been_enqueued.with(encode.id)
-        expect(ActiveEncode::PollingJob).to have_been_enqueued.at(ActiveEncode::Polling::POLLING_WAIT_TIME.from_now)
+        encode
+        expect(ActiveEncode::PollingJob).to have_been_enqueued.with(encode)
       end
     end
   end
