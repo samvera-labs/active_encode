@@ -1,4 +1,4 @@
-require 'active_support/callbacks'
+require 'active_model/callbacks'
 
 module ActiveEncode
   # = Active Encode Callbacks
@@ -6,6 +6,8 @@ module ActiveEncode
   # Active Encode provides hooks during the life cycle of an encode. Callbacks allow you
   # to trigger logic during the life cycle of an encode. Available callbacks are:
   #
+  # * <tt>after_find</tt>
+  # * <tt>after_reload</tt>
   # * <tt>before_create</tt>
   # * <tt>around_create</tt>
   # * <tt>after_create</tt>
@@ -18,52 +20,30 @@ module ActiveEncode
   #
   module Callbacks
     extend ActiveSupport::Concern
-    include ActiveSupport::Callbacks
+
+    CALLBACKS = [
+      :after_find, :after_reload, :before_create, :around_create,
+      :after_create, :before_cancel, :around_cancel, :after_cancel,
+      :before_purge, :around_purge, :after_purge
+    ].freeze
 
     included do
-      define_callbacks :create
-      define_callbacks :cancel
-      define_callbacks :purge
-    end
+      extend ActiveModel::Callbacks
 
-    # These methods will be included into any Active Encode object, adding
-    # callbacks for +create+, +cancel+, and +purge+ methods.
-    module ClassMethods
-      def before_create(*filters, &blk)
-        set_callback(:create, :before, *filters, &blk)
-      end
+      define_model_callbacks :find, :reload, only: :after
+      define_model_callbacks :create, :cancel, :purge
 
-      def after_create(*filters, &blk)
-        set_callback(:create, :after, *filters, &blk)
-      end
-
-      def around_create(*filters, &blk)
-        set_callback(:create, :around, *filters, &blk)
-      end
-
-      def before_cancel(*filters, &blk)
-        set_callback(:cancel, :before, *filters, &blk)
-      end
-
-      def after_cancel(*filters, &blk)
-        set_callback(:cancel, :after, *filters, &blk)
-      end
-
-      def around_cancel(*filters, &blk)
-        set_callback(:cancel, :around, *filters, &blk)
-      end
-
-      def before_purge(*filters, &blk)
+      def self.before_purge(*filters, &blk)
         ActiveSupport::Deprecation.warn("before_purge will be removed without replacement in ActiveEncode 0.3")
         set_callback(:purge, :before, *filters, &blk)
       end
 
-      def after_purge(*filters, &blk)
+      def self.after_purge(*filters, &blk)
         ActiveSupport::Deprecation.warn("after_purge will be removed without replacement in ActiveEncode 0.3")
         set_callback(:purge, :after, *filters, &blk)
       end
 
-      def around_purge(*filters, &blk)
+      def self.around_purge(*filters, &blk)
         ActiveSupport::Deprecation.warn("around_purge will be removed without replacement in ActiveEncode 0.3")
         set_callback(:purge, :around, *filters, &blk)
       end

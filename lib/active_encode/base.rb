@@ -4,6 +4,7 @@ require 'active_encode/status'
 require 'active_encode/technical_metadata'
 require 'active_encode/callbacks'
 require 'active_encode/global_id'
+require 'active_encode/persistence'
 
 module ActiveEncode #:nodoc:
   class Base

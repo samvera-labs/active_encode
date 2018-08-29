@@ -1,11 +1,14 @@
+# frozen_string_literal: true
+
 require 'rake/clean'
 require 'bundler'
 require 'rubocop/rake_task'
+require 'engine_cart/rake_task'
 
 Bundler::GemHelper.install_tasks
 
 desc "CI build"
-task ci: ["active_encode:adapters:clean", "active_encode:ci"]
+task ci: ["active_encode:ci"]
 desc "Rspec"
 task spec: ["active_encode:ci"]
 
@@ -23,16 +26,8 @@ namespace 'active_encode' do
   end
 
   desc "CI build"
-  task ci: [:rubocop, "active_encode:environment", "active_encode:adapters:start", "active_encode:spec"]
+  task ci: [:rubocop, "active_encode:environment", "engine_cart:generate", "active_encode:spec"]
 
   require 'rspec/core/rake_task'
   RSpec::Core::RakeTask.new(:spec)
-
-  namespace 'adapters' do
-    desc "Clean any local services needed by the adapters"
-    task 'clean' => []
-
-    desc "Start any local services needed by the adapters"
-    task 'start' => []
-  end
 end

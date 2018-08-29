@@ -9,12 +9,18 @@ module ActiveEncode
         new_encode = encode.dup
         new_encode.id = SecureRandom.uuid
         new_encode.state = :running
+        new_encode.created_at = Time.now
+        new_encode.updated_at = Time.now
         @encodes[new_encode.id] = new_encode
         new_encode
       end
 
       def find(id, _opts = {})
-        @encodes[id].dup
+        new_encode = @encodes[id].dup
+        # Update the updated_at time to simulate changes
+        new_encode.updated_at = Time.now
+        @encodes[id] = new_encode
+        new_encode
       end
 
       def list(*_filters)
@@ -24,6 +30,7 @@ module ActiveEncode
       def cancel(encode)
         new_encode = @encodes[encode.id].dup
         new_encode.state = :cancelled
+        new_encode.updated_at = Time.now
         @encodes[encode.id] = new_encode
         new_encode
       end
