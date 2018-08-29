@@ -24,7 +24,9 @@ describe ActiveEncode::Polling do
     let(:encode) { encode_class.create("sample.mp4") }
 
     it "enqueue PollingJob after polling wait time" do
-      expect(ActiveEncode::PollingJob).to have_been_enqueued.with(encode.id, {offset:ActiveEncode::Polling::POLLING_WAIT_TIME })
+      # expect(ActiveEncode::PollingJob).to have_been_enqueued.with(encode.id, {offset:ActiveEncode::Polling::POLLING_WAIT_TIME })
+      expect(ActiveEncode::PollingJob).to have_been_enqueued.with(encode.id)
+      expect(ActiveEncode::PollingJob).to have_been_enqueued.at(ActiveEncode::Polling::POLLING_WAIT_TIME.from_now)
     end
   end
 end
