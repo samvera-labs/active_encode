@@ -23,25 +23,5 @@ module ActiveEncode
         ActiveEncode::PollingJob.set(wait: POLLING_WAIT_TIME).perform_later(encode)
       end
     end
-
-    # These methods will be included into any Active Encode object, adding
-    # callbacks for +create+, +cancel+, and +purge+ methods.
-    module ClassMethods
-      def after_status_update(*filters, &blk)
-        set_callback(:status_update, :after, *filters, &blk)
-      end
-
-      def after_error(*filters, &blk)
-        set_callback(:error, :after, *filters, &blk)
-      end
-
-      def after_cancelled(*filters, &blk)
-        set_callback(:cancelled, :after, *filters, &blk)
-      end
-
-      def after_complete(*filters, &blk)
-        set_callback(:complete, :after, *filters, &blk)
-      end
-    end
   end
 end
