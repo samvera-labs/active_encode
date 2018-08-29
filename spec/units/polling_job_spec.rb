@@ -1,5 +1,4 @@
-require 'spec_helper'
-require 'rspec/rails/matchers/active_job'
+require 'rails_helper'
 
 describe ActiveEncode::PollingJob do
   before do
