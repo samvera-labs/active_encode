@@ -1,6 +1,8 @@
 require 'rails_helper'
 
 describe ActiveEncode::PollingJob do
+  include ActiveJob::TestHelper
+
   before do
     class PollingEncode < ActiveEncode::Base
       include ActiveEncode::Polling
@@ -20,51 +22,63 @@ describe ActiveEncode::PollingJob do
   end
 
   describe '#perform' do
-    let(:encode_class) { PollingEncode }
-    let(:encode) { encode_class.create("sample.mp4") }
+    let(:encode) { PollingEncode.create("sample.mp4").tap { |encode| encode.state = state } }
     let(:poll) { ActiveEncode::PollingJob.new }
-    subject { poll.perform(encode).history }
+    subject { encode.history }
+
+    before do
+      encode
+      clear_enqueued_jobs
+      poll.perform(encode)
+    end
 
     context "with job in error" do
-      before do
-        allow(encode).to receive(:state).and_return(:error)
-      end
+      let(:state) { :error }
 
-      it "run after_error" do
+      it "runs after_error" do
         is_expected.to include("PollingEncode ran after_status_update")
         is_expected.to include("PollingEncode ran after_error")
+      end
+
+      it "does not re-enqueue itself" do
+        expect(ActiveEncode::PollingJob).not_to have_been_enqueued
       end
     end
 
     context "with job cancelled" do
-      before do
-        allow(encode).to receive(:state).and_return(:cancelled)
-      end
+      let(:state) { :cancelled }
 
-      it "run after_cancelled" do
+      it "runs after_cancelled" do
         is_expected.to include("PollingEncode ran after_status_update")
         is_expected.to include("PollingEncode ran after_cancelled")
+      end
+
+      it "does not re-enqueue itself" do
+        expect(ActiveEncode::PollingJob).not_to have_been_enqueued
       end
     end
 
     context "with job complete" do
-      before do
-        allow(encode).to receive(:state).and_return(:complete)
-      end
+      let(:state) { :complete }
 
-      it "run after_complete" do
+      it "runs after_complete" do
         is_expected.to include("PollingEncode ran after_status_update")
         is_expected.to include("PollingEncode ran after_complete")
+      end
+
+      it "does not re-enqueue itself" do
+        expect(ActiveEncode::PollingJob).not_to have_been_enqueued
       end
     end
 
     context "with job running" do
-      before do
-        allow(encode).to receive(:state).and_return(:running)
+      let(:state) { :running }
+
+      it "runs after_status_update" do
+        is_expected.to include("PollingEncode ran after_status_update")
       end
 
-      it "enqueue PollingJob after polling wait time" do
-        encode
+      it "re-enqueues itself" do
         expect(ActiveEncode::PollingJob).to have_been_enqueued.with(encode)
       end
     end

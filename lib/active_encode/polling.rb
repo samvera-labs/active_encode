@@ -14,10 +14,7 @@ module ActiveEncode
     included do
       extend ActiveModel::Callbacks
 
-      define_model_callbacks :status_update, only: :after
-      define_model_callbacks :error, only: :after
-      define_model_callbacks :cancelled, only: :after
-      define_model_callbacks :complete, only: :after
+      define_model_callbacks :status_update, :error, :cancelled, :complete, only: :after
 
       after_create do |encode|
         ActiveEncode::PollingJob.set(wait: POLLING_WAIT_TIME).perform_later(encode)
