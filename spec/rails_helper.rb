@@ -1,6 +1,10 @@
 require 'spec_helper'
+
 require 'engine_cart'
 EngineCart.load_application!
+
+require 'rspec/rails'
+ActiveJob::Base.queue_adapter = :test
 
 require 'database_cleaner'
 
