@@ -10,13 +10,21 @@ module ActiveEncode
       attr_accessor :id
 
       # Encode input
+      # @return ActiveEncode::Input
       attr_accessor :input
 
       # Encode output(s)
+      # @return Array[ActiveEncode::Output]
       attr_accessor :output
 
       # Encode options
       attr_accessor :options
+
+      attr_accessor :current_operations
+      attr_accessor :percent_complete
+
+      # @deprecated
+      attr_accessor :tech_metadata
     end
 
     module ClassMethods
@@ -74,6 +82,19 @@ module ActiveEncode
     def reload
       run_callbacks :reload do
         merge!(self.class.engine_adapter.find(id, cast: self.class))
+      end
+    end
+
+    def created?
+      !id.nil?
+    end
+
+    # @deprecated
+    def tech_metadata
+      metadata = {}
+      [:width, :height, :frame_rate, :duration, :file_size,
+       :audio_codec, :video_codec, :audio_bitrate, :video_bitrate, :checksum].each do |key|
+        metadata[key] = input.send(key)
       end
     end
 

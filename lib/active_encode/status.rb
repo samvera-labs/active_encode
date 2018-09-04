@@ -7,17 +7,13 @@ module ActiveEncode
     included do
       # Current state of the encoding process
       attr_accessor :state
-      attr_accessor :current_operations
-      attr_accessor :percent_complete
       attr_accessor :errors
 
       attr_accessor :created_at
-      attr_accessor :finished_at
       attr_accessor :updated_at
-    end
 
-    def created?
-      !id.nil?
+      # @deprecated
+      attr_accessor :finished_at
     end
 
     def cancelled?
