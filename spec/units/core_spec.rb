@@ -44,7 +44,7 @@ describe ActiveEncode::Core do
       it { is_expected.to be_a encode_class }
       its(:id) { is_expected.to eq id }
 
-      context 'casting', :skip do
+      context 'casting' do
         let(:id) { ActiveEncode::Base.create(nil).id }
 
         it { is_expected.to be_a encode_class }

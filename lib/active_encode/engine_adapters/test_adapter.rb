@@ -6,7 +6,7 @@ module ActiveEncode
       end
 
       def create(encode)
-        new_encode = encode.dup
+        new_encode = ActiveEncode::Base.new(nil).send(:merge!, encode.dup)
         new_encode.id = SecureRandom.uuid
         new_encode.state = :running
         new_encode.created_at = Time.now

@@ -31,7 +31,7 @@ describe ActiveEncode::Persistence, db_clean: true do
     its(:global_id) { is_expected.to eq encode.to_global_id.to_s }
     its(:state) { is_expected.to eq encode.state.to_s }
     its(:adapter) { is_expected.to eq encode.class.engine_adapter.class.name }
-    its(:title) { is_expected.to eq encode.input.to_s }
+    its(:title) { is_expected.to eq encode.input.url.to_s }
     its(:raw_object) { is_expected.to eq encode.to_json }
     its(:created_at) { is_expected.to be_within(1.second).of encode.created_at }
     its(:updated_at) { is_expected.to be_within(1.second).of encode.updated_at }

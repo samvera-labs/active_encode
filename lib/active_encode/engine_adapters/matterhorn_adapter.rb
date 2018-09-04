@@ -7,16 +7,16 @@ module ActiveEncode
 
       def create(encode)
         workflow_id = encode.options[:preset] || "full"
-        workflow_om = if encode.input.is_a? Hash
-                        create_multiple_files(encode.input, workflow_id)
-                      else
-                        Rubyhorn.client.addMediaPackageWithUrl(DEFAULT_ARGS.merge('workflow' => workflow_id, 'url' => encode.input, 'filename' => File.basename(encode.input), 'title' => File.basename(encode.input)))
-                      end
-        build_encode(get_workflow(workflow_om), encode.class)
+        # workflow_om = if encode.input.is_a? Hash
+        #                 create_multiple_files(encode.input, workflow_id)
+        #               else
+                        workflow_om = Rubyhorn.client.addMediaPackageWithUrl(DEFAULT_ARGS.merge('workflow' => workflow_id, 'url' => encode.input.url, 'filename' => File.basename(encode.input.url), 'title' => File.basename(encode.input.url)))
+                      # end
+        build_encode(get_workflow(workflow_om))
       end
 
       def find(id, opts = {})
-        build_encode(fetch_workflow(id), opts[:cast])
+        build_encode(fetch_workflow(id))
       end
 
       def list(*_filters)
@@ -25,7 +25,7 @@ module ActiveEncode
 
       def cancel(encode)
         workflow_om = Rubyhorn.client.stop(encode.id)
-        build_encode(get_workflow(workflow_om), encode.class)
+        build_encode(get_workflow(workflow_om))
       end
 
       def purge(encode)
@@ -41,7 +41,7 @@ module ActiveEncode
                         end
         purged_workflow = purge_outputs(get_workflow(workflow_om))
         # Rubyhorn.client.delete_instance(encode.id) #Delete is not working so workflow instances can always be retrieved later!
-        build_encode(purged_workflow, encode.class)
+        build_encode(purged_workflow)
       end
 
       def remove_output(encode, output_id)
@@ -79,9 +79,9 @@ module ActiveEncode
           end
         end
 
-        def build_encode(workflow, cast)
+        def build_encode(workflow)
           return nil if workflow.nil?
-          encode = cast.new(convert_input(workflow), convert_options(workflow))
+          encode = ActiveEncode::Base.new(convert_input(workflow), convert_options(workflow))
           encode.id = convert_id(workflow)
           encode.state = convert_state(workflow)
           encode.current_operations = convert_current_operations(workflow)

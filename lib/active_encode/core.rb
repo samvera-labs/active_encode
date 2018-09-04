@@ -28,19 +28,21 @@ module ActiveEncode
     end
 
     module ClassMethods
-      def default_options(_input)
+      def default_options(_input_url)
         {}
       end
 
-      def create(input, options = nil)
-        object = new(input, options)
+      def create(input_url, options = nil)
+        object = new(input_url, options)
         object.create!
       end
 
       def find(id)
         raise ArgumentError, 'id cannot be nil' unless id
-        encode = engine_adapter.find(id, cast: self)
-        encode.run_callbacks(:find) { encode }
+        encode = new(nil)
+        encode.run_callbacks :find do
+          encode.send(:merge!, engine_adapter.find(id))
+        end
       end
 
       def list(*args)
@@ -49,14 +51,15 @@ module ActiveEncode
       end
     end
 
-    def initialize(input, options = nil)
-      @input = input
-      @options = options || self.class.default_options(input)
+    def initialize(input_url, options = nil)
+      @input = Input.new.tap{ |input| input.url = input_url }
+      @options = options || self.class.default_options(input_url)
     end
 
     def create!
       # TODO: Raise ArgumentError if self has an id?
       run_callbacks :create do
+        # merge!(self.class.engine_adapter.create(self.input.url, self.options))
         merge!(self.class.engine_adapter.create(self))
       end
     end
@@ -81,7 +84,7 @@ module ActiveEncode
 
     def reload
       run_callbacks :reload do
-        merge!(self.class.engine_adapter.find(id, cast: self.class))
+        merge!(self.class.engine_adapter.find(id))
       end
     end
 
@@ -98,21 +101,23 @@ module ActiveEncode
       end
     end
 
-    private
+    protected
 
       def merge!(encode)
         @id = encode.id
         @input = encode.input
         @output = encode.output
-        @state = encode.state
-        @current_operations = encode.current_operations
-        @errors = encode.errors
-        @tech_metadata = encode.tech_metadata
-        @created_at = encode.created_at
-        @finished_at = encode.finished_at
-        @updated_at = encode.updated_at
         @options = encode.options
+        @state = encode.state
+        @errors = encode.errors
+        @created_at = encode.created_at
+        @updated_at = encode.updated_at
+        @current_operations = encode.current_operations
         @percent_complete = encode.percent_complete
+
+        # deprecated
+        @tech_metadata = encode.tech_metadata
+        @finished_at = encode.finished_at
 
         self
       end
