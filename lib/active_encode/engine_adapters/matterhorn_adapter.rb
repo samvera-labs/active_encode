@@ -23,8 +23,8 @@ module ActiveEncode
         raise NotImplementedError # TODO: implement this
       end
 
-      def cancel(encode)
-        workflow_om = Rubyhorn.client.stop(encode.id)
+      def cancel(id)
+        workflow_om = Rubyhorn.client.stop(id)
         build_encode(get_workflow(workflow_om))
       end
 

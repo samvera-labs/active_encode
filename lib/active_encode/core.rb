@@ -66,7 +66,7 @@ module ActiveEncode
 
     def cancel!
       run_callbacks :cancel do
-        merge!(self.class.engine_adapter.cancel(self))
+        merge!(self.class.engine_adapter.cancel(self.id))
       end
     end
 

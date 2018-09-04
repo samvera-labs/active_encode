@@ -15,9 +15,9 @@ module ActiveEncode
         raise NotImplementedError
       end
 
-      def cancel(encode)
-        response = Zencoder::Job.cancel(encode.id)
-        build_encode(get_job_details(encode.id)) if response.success?
+      def cancel(id)
+        response = Zencoder::Job.cancel(id)
+        build_encode(get_job_details(id)) if response.success?
       end
 
       def purge(_encode)

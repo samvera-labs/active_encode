@@ -24,9 +24,9 @@ module ActiveEncode
       end
 
       # Can only cancel jobs with status = "Submitted"
-      def cancel(encode)
-        response = client.cancel_job(id: encode.id)
-        build_encode(get_job_details(encode.id)) if response.successful?
+      def cancel(id)
+        response = client.cancel_job(id: id)
+        build_encode(get_job_details(id)) if response.successful?
       end
 
       def purge(_encode)

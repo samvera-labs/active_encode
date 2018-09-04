@@ -22,9 +22,9 @@ module ActiveEncode
       end
 
       # @param [ActiveEncode::Base] encode
-      def cancel(encode)
-        response = Shingoncoder::Job.cancel(encode.id)
-        build_encode(job_details(encode.id)) if response.success?
+      def cancel(id)
+        response = Shingoncoder::Job.cancel(id)
+        build_encode(job_details(id)) if response.success?
       end
 
       private

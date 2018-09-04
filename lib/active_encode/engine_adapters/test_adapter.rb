@@ -23,11 +23,11 @@ module ActiveEncode
         new_encode
       end
 
-      def cancel(encode)
-        new_encode = @encodes[encode.id].dup
+      def cancel(id)
+        new_encode = @encodes[id].dup
         new_encode.state = :cancelled
         new_encode.updated_at = Time.now
-        @encodes[encode.id] = new_encode
+        @encodes[id] = new_encode
         new_encode
       end
 
