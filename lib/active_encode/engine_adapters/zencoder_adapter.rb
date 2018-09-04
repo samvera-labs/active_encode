@@ -2,8 +2,8 @@ module ActiveEncode
   module EngineAdapters
     class ZencoderAdapter
       # TODO: add a stub for an input helper (supplied by an initializer) that transforms encode.input.url into a zencoder accepted url
-      def create(encode)
-        response = Zencoder::Job.create(input: encode.input.url.to_s)
+      def create(input_url, options = {})
+        response = Zencoder::Job.create(input: input_url.to_s)
         build_encode(get_job_details(response.body["id"]))
       end
 

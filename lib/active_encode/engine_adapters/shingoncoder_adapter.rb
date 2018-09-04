@@ -9,8 +9,8 @@ module ActiveEncode
       end
 
       # @param [ActiveEncode::Base] encode
-      def create(encode)
-        response = Shingoncoder::Job.create(input: encode.input.url)
+      def create(input_url, options = {})
+        response = Shingoncoder::Job.create(input: input_url)
         build_encode(job_details(response.body["id"]))
       end
 

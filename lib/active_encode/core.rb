@@ -32,7 +32,7 @@ module ActiveEncode
         {}
       end
 
-      def create(input_url, options = nil)
+      def create(input_url, options = {})
         object = new(input_url, options)
         object.create!
       end
@@ -59,8 +59,7 @@ module ActiveEncode
     def create!
       # TODO: Raise ArgumentError if self has an id?
       run_callbacks :create do
-        # merge!(self.class.engine_adapter.create(self.input.url, self.options))
-        merge!(self.class.engine_adapter.create(self))
+        merge!(self.class.engine_adapter.create(self.input.url, self.options))
       end
     end
 

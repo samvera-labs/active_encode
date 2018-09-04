@@ -5,12 +5,12 @@ module ActiveEncode
     class MatterhornAdapter
       DEFAULT_ARGS = { 'flavor' => 'presenter/source' }.freeze
 
-      def create(encode)
-        workflow_id = encode.options[:preset] || "full"
+      def create(input_url, options = {})
+        workflow_id = options[:preset] || "full"
         # workflow_om = if encode.input.is_a? Hash
         #                 create_multiple_files(encode.input, workflow_id)
         #               else
-                        workflow_om = Rubyhorn.client.addMediaPackageWithUrl(DEFAULT_ARGS.merge('workflow' => workflow_id, 'url' => encode.input.url, 'filename' => File.basename(encode.input.url), 'title' => File.basename(encode.input.url)))
+                        workflow_om = Rubyhorn.client.addMediaPackageWithUrl(DEFAULT_ARGS.merge('workflow' => workflow_id, 'url' => input_url, 'filename' => File.basename(input_url), 'title' => File.basename(input_url)))
                       # end
         build_encode(get_workflow(workflow_om))
       end

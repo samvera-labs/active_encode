@@ -2,13 +2,13 @@ module ActiveEncode
   module EngineAdapters
     class ElasticTranscoderAdapter
       # TODO: add a stub for an input helper (supplied by an initializer) that transforms encode.input into a zencoder accepted url
-      def create(encode)
+      def create(input_url, options = {})
         job = client.create_job(
-          input: { key: encode.input.url },
-          pipeline_id: encode.options[:pipeline_id],
-          output_key_prefix: encode.options[:output_key_prefix],
-          outputs: encode.options[:outputs],
-          user_metadata: encode.options[:user_metadata]
+          input: { key: input_url },
+          pipeline_id: options[:pipeline_id],
+          output_key_prefix: options[:output_key_prefix],
+          outputs: options[:outputs],
+          user_metadata: options[:user_metadata]
         ).job
 
         build_encode(job)

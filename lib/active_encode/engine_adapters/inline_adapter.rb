@@ -8,7 +8,8 @@ module ActiveEncode
         ActiveSupport::Deprecation.warn("The InlineAdapter is deprecated and will be removed in ActiveEncode 0.3.")
       end
 
-      def create(encode)
+      def create(input_url, options = {})
+        encode = ActiveEncode::Base.new(input_url, options)
         encode.id = SecureRandom.uuid
         self.class.encodes[encode.id] = encode
         # start encode
