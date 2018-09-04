@@ -32,14 +32,59 @@ describe ActiveEncode::EngineAdapters::ZencoderAdapter do
     it { is_expected.to be_a ActiveEncode::Base }
     its(:id) { is_expected.not_to be_empty }
     it { is_expected.to be_running }
-    its(:output) { is_expected.to eq create_output }
+    # its(:output) { is_expected.to eq create_output }
     its(:current_operations) { is_expected.to be_empty }
     its(:percent_complete) { is_expected.to eq 0 }
     its(:errors) { is_expected.to be_empty }
     its(:created_at) { is_expected.to eq '2015-06-10T14:38:47Z' }
     its(:updated_at) { is_expected.to eq '2015-06-10T14:38:47Z' }
-    its(:finished_at) { is_expected.to be_nil }
-    its(:tech_metadata) { is_expected.to be_empty }
+
+    context 'input' do
+      subject { ActiveEncode::Base.create(file).input }
+
+      it { is_expected.to be_a ActiveEncode::Input }
+      its(:id) { is_expected.to eq "166179248" }
+      its(:url) { is_expected.to eq "https://archive.org/download/LuckyStr1948_2/LuckyStr1948_2_512kb.mp4" }
+      its(:width) { is_expected.to be_blank }
+      its(:height) { is_expected.to be_blank }
+      its(:frame_rate) { is_expected.to be_blank }
+      its(:duration) { is_expected.to be_blank }
+      its(:file_size) { is_expected.to be_blank }
+      its(:checksum) { is_expected.to be_blank }
+      its(:audio_codec) { is_expected.to be_blank }
+      its(:video_codec) { is_expected.to be_blank }
+      its(:audio_bitrate) { is_expected.to be_blank }
+      its(:video_bitrate) { is_expected.to be_blank }
+      its(:state) { is_expected.to eq :running }
+      its(:created_at) { is_expected.to eq "2015-06-10T14:38:47Z" }
+      its(:updated_at) { is_expected.to eq "2015-06-10T14:38:00Z" }
+    end
+
+    context 'output' do
+      let(:output) { ActiveEncode::Base.find('166019107').reload.output }
+      subject { output.first }
+
+      it 'is an array' do
+        expect(output).to be_a Array
+      end
+      it { is_expected.to be_a ActiveEncode::Output }
+      its(:id) { is_expected.to eq "511404522" }
+      its(:url) { is_expected.to eq "https://zencoder-temp-storage-us-east-1.s3.amazonaws.com/o/20150610/c09b61e4d130ddf923f0653418a80b9c/399ae101c3f99b4f318635e78a4e587a.mp4?AWSAccessKeyId=AKIAI456JQ76GBU7FECA&Signature=GY/9LMkQAiDOrMQwS5BkmOE200s%3D&Expires=1434033527" }
+      its(:label) { is_expected.to be_blank }
+      its(:width) { is_expected.to be_blank }
+      its(:height) { is_expected.to be_blank }
+      its(:frame_rate) { is_expected.to be_blank }
+      its(:duration) { is_expected.to be_blank }
+      its(:file_size) { is_expected.to be_blank }
+      its(:checksum) { is_expected.to be_blank }
+      its(:audio_codec) { is_expected.to be_blank }
+      its(:video_codec) { is_expected.to be_blank }
+      its(:audio_bitrate) { is_expected.to be_blank }
+      its(:video_bitrate) { is_expected.to be_blank }
+      its(:state) { is_expected.to eq :running }
+      its(:created_at) { is_expected.to eq "2015-06-10T14:38:47Z" }
+      its(:updated_at) { is_expected.to eq "2015-06-10T14:38:47Z" }
+    end
   end
 
   describe "#find" do
@@ -51,21 +96,67 @@ describe ActiveEncode::EngineAdapters::ZencoderAdapter do
     context "a running encode" do
       let(:details_response) { Zencoder::Response.new(body: JSON.parse(File.read('spec/fixtures/zencoder/job_details_running.json'))) }
       let(:progress_response) { Zencoder::Response.new(body: JSON.parse(File.read('spec/fixtures/zencoder/job_progress_running.json'))) }
-      let(:running_output) { [{ id: "510582971", url: "https://zencoder-temp-storage-us-east-1.s3.amazonaws.com/o/20150609/48a6907086c012f68b9ca43461280515/1726d7ec3e24f2171bd07b2abb807b6c.mp4?AWSAccessKeyId=AKIAI456JQ76GBU7FECA&Signature=vSvlxU94wlQLEbpG3Zs8ibp4MoY%3D&Expires=1433953106", label: nil }] }
-      let(:running_tech_metadata) { { audio_bitrate: "52", audio_codec: "aac", audio_channels: "2", duration: "57992", mime_type: "mpeg4", video_framerate: "29.97", height: "240", video_bitrate: "535", video_codec: "h264", width: "320" } }
+      # let(:running_output) { [{ id: "510582971", url: "https://zencoder-temp-storage-us-east-1.s3.amazonaws.com/o/20150609/48a6907086c012f68b9ca43461280515/1726d7ec3e24f2171bd07b2abb807b6c.mp4?AWSAccessKeyId=AKIAI456JQ76GBU7FECA&Signature=vSvlxU94wlQLEbpG3Zs8ibp4MoY%3D&Expires=1433953106", label: nil }] }
+      # let(:running_tech_metadata) { { audio_bitrate: "52", audio_codec: "aac", audio_channels: "2", duration: "57992", mime_type: "mpeg4", video_framerate: "29.97", height: "240", video_bitrate: "535", video_codec: "h264", width: "320" } }
 
       subject { ActiveEncode::Base.find('166019107') }
       it { is_expected.to be_a ActiveEncode::Base }
       its(:id) { is_expected.to eq '166019107' }
       it { is_expected.to be_running }
-      its(:output) { is_expected.to eq running_output }
+      # its(:output) { is_expected.to eq running_output }
       its(:current_operations) { is_expected.to be_empty }
       its(:percent_complete) { is_expected.to eq 30.0 }
       its(:errors) { is_expected.to be_empty }
       its(:created_at) { is_expected.to eq '2015-06-09T16:18:26Z' }
       its(:updated_at) { is_expected.to eq '2015-06-09T16:18:28Z' }
-      its(:finished_at) { is_expected.to be_nil }
-      its(:tech_metadata) { is_expected.to eq running_tech_metadata }
+
+      # its(:tech_metadata) { is_expected.to eq running_tech_metadata }
+      context 'input' do
+        subject { ActiveEncode::Base.find('166019107').input }
+
+        it { is_expected.to be_a ActiveEncode::Input }
+        its(:id) { is_expected.to eq "165990056" }
+        its(:url) { is_expected.to eq "https://archive.org/download/LuckyStr1948_2/LuckyStr1948_2_512kb.mp4" }
+        its(:width) { is_expected.to eq 320 }
+        its(:height) { is_expected.to eq 240 }
+        its(:frame_rate) { is_expected.to eq 29.97 }
+        its(:duration) { is_expected.to eq 57992 }
+        its(:file_size) { is_expected.to be_blank }
+        its(:checksum) { is_expected.to be_blank }
+        its(:audio_codec) { is_expected.to eq "aac" }
+        its(:video_codec) { is_expected.to eq "h264" }
+        its(:audio_bitrate) { is_expected.to eq 52 }
+        its(:video_bitrate) { is_expected.to eq 535 }
+        its(:state) { is_expected.to eq :completed }
+        its(:created_at) { is_expected.to eq "2015-06-09T16:18:26Z" }
+        its(:updated_at) { is_expected.to eq "2015-06-09T16:18:32Z" }
+      end
+
+      context 'output' do
+        let(:output) { ActiveEncode::Base.find('166019107').output }
+        subject { output.first }
+
+        it 'is an array' do
+          expect(output).to be_a Array
+        end
+        it { is_expected.to be_a ActiveEncode::Output }
+        its(:id) { is_expected.to eq "510582971" }
+        its(:url) { is_expected.to eq "https://zencoder-temp-storage-us-east-1.s3.amazonaws.com/o/20150609/48a6907086c012f68b9ca43461280515/1726d7ec3e24f2171bd07b2abb807b6c.mp4?AWSAccessKeyId=AKIAI456JQ76GBU7FECA&Signature=vSvlxU94wlQLEbpG3Zs8ibp4MoY%3D&Expires=1433953106" }
+        its(:label) { is_expected.to be_blank }
+        its(:width) { is_expected.to be_blank }
+        its(:height) { is_expected.to be_blank }
+        its(:frame_rate) { is_expected.to be_blank }
+        its(:duration) { is_expected.to be_blank }
+        its(:file_size) { is_expected.to be_blank }
+        its(:checksum) { is_expected.to be_blank }
+        its(:audio_codec) { is_expected.to be_blank }
+        its(:video_codec) { is_expected.to be_blank }
+        its(:audio_bitrate) { is_expected.to be_blank }
+        its(:video_bitrate) { is_expected.to be_blank }
+        its(:state) { is_expected.to eq :running }
+        its(:created_at) { is_expected.to eq "2015-06-09T16:18:26Z" }
+        its(:updated_at) { is_expected.to eq "2015-06-09T16:18:32Z" }
+      end
     end
 
     context "a cancelled encode" do
@@ -81,28 +172,92 @@ describe ActiveEncode::EngineAdapters::ZencoderAdapter do
       its(:errors) { is_expected.to be_empty }
       its(:created_at) { is_expected.to eq '2015-06-08T20:43:23Z' }
       its(:updated_at) { is_expected.to eq '2015-06-08T20:43:26Z' }
-      its(:finished_at) { is_expected.to eq '2015-06-08T20:43:26Z' }
-      its(:tech_metadata) { is_expected.to be_empty }
+
+      context 'input' do
+        subject { ActiveEncode::Base.find('165866551').input }
+
+        it { is_expected.to be_a ActiveEncode::Input }
+        its(:id) { is_expected.to eq "165837500" }
+        its(:url) { is_expected.to eq "https://archive.org/download/LuckyStr1948_2/LuckyStr1948_2_512kb.mp4" }
+        its(:width) { is_expected.to be_blank }
+        its(:height) { is_expected.to be_blank }
+        its(:frame_rate) { is_expected.to be_blank }
+        its(:duration) { is_expected.to be_blank }
+        its(:file_size) { is_expected.to be_blank }
+        its(:checksum) { is_expected.to be_blank }
+        its(:audio_codec) { is_expected.to be_blank }
+        its(:video_codec) { is_expected.to be_blank }
+        its(:audio_bitrate) { is_expected.to be_blank }
+        its(:video_bitrate) { is_expected.to be_blank }
+        its(:state) { is_expected.to eq :cancelled }
+        its(:created_at) { is_expected.to eq "2015-06-08T20:43:23Z" }
+        its(:updated_at) { is_expected.to eq "2015-06-08T20:43:26Z" }
+      end
     end
 
     context "a completed encode" do
       let(:details_response) { Zencoder::Response.new(body: JSON.parse(File.read('spec/fixtures/zencoder/job_details_completed.json'))) }
       let(:progress_response) { Zencoder::Response.new(body: JSON.parse(File.read('spec/fixtures/zencoder/job_progress_completed.json'))) }
       let(:completed_output) { { id: "509856876", audio_bitrate: "53", audio_codec: "aac", audio_channels: "2", duration: "5000", mime_type: "mpeg4", video_framerate: "29.97", height: "240", video_bitrate: "549", video_codec: "h264", width: "320", url: "https://zencoder-temp-storage-us-east-1.s3.amazonaws.com/o/20150608/ebbe865f8ef1b960d7c2bb0663b88a12/0f1948dcb2fd701fba30ff21908fe460.mp4?AWSAccessKeyId=AKIAI456JQ76GBU7FECA&Signature=1LgIyl/el9E7zeyPxzd/%2BNwez6Y%3D&Expires=1433873646", label: nil } }
-      let(:completed_tech_metadata) { { audio_bitrate: "52", audio_codec: "aac", audio_channels: "2", duration: "57992", mime_type: "mpeg4", video_framerate: "29.97", height: "240", video_bitrate: "535", video_codec: "h264", width: "320" } }
+      # let(:completed_tech_metadata) { { audio_bitrate: "52", audio_codec: "aac", audio_channels: "2", duration: "57992", mime_type: "mpeg4", video_framerate: "29.97", height: "240", video_bitrate: "535", video_codec: "h264", width: "320" } }
 
       subject { ActiveEncode::Base.find('165839139') }
       it { is_expected.to be_a ActiveEncode::Base }
       its(:id) { is_expected.to eq '165839139' }
       it { is_expected.to be_completed }
-      its(:output) { is_expected.to include completed_output }
+      # its(:output) { is_expected.to include completed_output }
       its(:current_operations) { is_expected.to be_empty }
       its(:percent_complete) { is_expected.to eq 100 }
       its(:errors) { is_expected.to be_empty }
       its(:created_at) { is_expected.to eq '2015-06-08T18:13:53Z' }
       its(:updated_at) { is_expected.to eq '2015-06-08T18:14:06Z' }
-      its(:finished_at) { is_expected.to eq '2015-06-08T18:14:06Z' }
-      its(:tech_metadata) { is_expected.to eq completed_tech_metadata }
+
+      context 'input' do
+        subject { ActiveEncode::Base.find('165839139').input }
+
+        it { is_expected.to be_a ActiveEncode::Input }
+        its(:id) { is_expected.to eq "165810088" }
+        its(:url) { is_expected.to eq "https://archive.org/download/LuckyStr1948_2/LuckyStr1948_2_512kb.mp4" }
+        its(:width) { is_expected.to eq 320 }
+        its(:height) { is_expected.to eq 240 }
+        its(:frame_rate) { is_expected.to eq 29.97 }
+        its(:duration) { is_expected.to eq 57992 }
+        its(:file_size) { is_expected.to be_blank }
+        its(:checksum) { is_expected.to be_blank }
+        its(:audio_codec) { is_expected.to eq "aac" }
+        its(:video_codec) { is_expected.to eq "h264" }
+        its(:audio_bitrate) { is_expected.to eq 52 }
+        its(:video_bitrate) { is_expected.to eq 535 }
+        its(:state) { is_expected.to eq :completed }
+        its(:created_at) { is_expected.to eq "2015-06-08T18:13:53Z" }
+        its(:updated_at) { is_expected.to eq "2015-06-08T18:14:06Z" }
+      end
+
+      context 'output' do
+        let(:output) { ActiveEncode::Base.find('166019107').reload.output }
+        subject { output.first }
+
+        it 'is an array' do
+          expect(output).to be_a Array
+        end
+        it { is_expected.to be_a ActiveEncode::Output }
+        its(:id) { is_expected.to eq "509856876" }
+        its(:url) { is_expected.to eq "https://zencoder-temp-storage-us-east-1.s3.amazonaws.com/o/20150608/ebbe865f8ef1b960d7c2bb0663b88a12/0f1948dcb2fd701fba30ff21908fe460.mp4?AWSAccessKeyId=AKIAI456JQ76GBU7FECA&Signature=1LgIyl/el9E7zeyPxzd/%2BNwez6Y%3D&Expires=1433873646" }
+        its(:label) { is_expected.to be_blank }
+        its(:width) { is_expected.to eq 320 }
+        its(:height) { is_expected.to eq 240 }
+        its(:frame_rate) { is_expected.to eq 29.97 }
+        its(:duration) { is_expected.to eq 5000 }
+        its(:file_size) { is_expected.to be_blank }
+        its(:checksum) { is_expected.to be_blank }
+        its(:audio_codec) { is_expected.to eq "aac" }
+        its(:video_codec) { is_expected.to eq "h264" }
+        its(:audio_bitrate) { is_expected.to eq 53 }
+        its(:video_bitrate) { is_expected.to eq 549 }
+        its(:state) { is_expected.to eq :completed }
+        its(:created_at) { is_expected.to eq "2015-06-08T18:13:53Z" }
+        its(:updated_at) { is_expected.to eq "2015-06-08T18:14:06Z" }
+      end
     end
 
     context "a failed encode" do
@@ -117,11 +272,31 @@ describe ActiveEncode::EngineAdapters::ZencoderAdapter do
       it { is_expected.to be_failed }
       its(:current_operations) { is_expected.to be_empty }
       its(:percent_complete) { is_expected.to eq 0 }
-      its(:errors) { is_expected.to include failed_errors }
+      its(:errors) { is_expected.to be_empty }
       its(:created_at) { is_expected.to eq '2015-06-09T20:52:57Z' }
       its(:updated_at) { is_expected.to eq '2015-06-09T20:53:00Z' }
-      its(:finished_at) { is_expected.to eq '2015-06-09T20:53:00Z' }
-      its(:tech_metadata) { is_expected.to be_empty }
+
+      context 'input' do
+        subject { ActiveEncode::Base.find('165866551').input }
+
+        it { is_expected.to be_a ActiveEncode::Input }
+        its(:id) { is_expected.to eq "166050851" }
+        its(:url) { is_expected.to eq "s3://zencoder-customer-ingest/uploads/2015-06-09/240330/187007/682c2d90-0eea-11e5-84c9-f158f44c3d50.xml" }
+        its(:errors) { is_expected.to include failed_errors }
+        its(:width) { is_expected.to be_blank }
+        its(:height) { is_expected.to be_blank }
+        its(:frame_rate) { is_expected.to be_blank }
+        its(:duration) { is_expected.to be_blank }
+        its(:file_size) { is_expected.to be_blank }
+        its(:checksum) { is_expected.to be_blank }
+        its(:audio_codec) { is_expected.to be_blank }
+        its(:video_codec) { is_expected.to be_blank }
+        its(:audio_bitrate) { is_expected.to be_blank }
+        its(:video_bitrate) { is_expected.to be_blank }
+        its(:state) { is_expected.to eq :failed }
+        its(:created_at) { is_expected.to eq "2015-06-09T20:52:57Z" }
+        its(:updated_at) { is_expected.to eq "2015-06-09T20:53:00Z" }
+      end
     end
   end
 
@@ -151,20 +326,65 @@ describe ActiveEncode::EngineAdapters::ZencoderAdapter do
 
     let(:details_response) { Zencoder::Response.new(body: JSON.parse(File.read('spec/fixtures/zencoder/job_details_running.json'))) }
     let(:progress_response) { Zencoder::Response.new(body: JSON.parse(File.read('spec/fixtures/zencoder/job_progress_running.json'))) }
-    let(:reload_output) { [{ id: "510582971", url: "https://zencoder-temp-storage-us-east-1.s3.amazonaws.com/o/20150609/48a6907086c012f68b9ca43461280515/1726d7ec3e24f2171bd07b2abb807b6c.mp4?AWSAccessKeyId=AKIAI456JQ76GBU7FECA&Signature=vSvlxU94wlQLEbpG3Zs8ibp4MoY%3D&Expires=1433953106", label: nil }] }
-    let(:reload_tech_metadata) { { audio_bitrate: "52", audio_codec: "aac", audio_channels: "2", duration: "57992", mime_type: "mpeg4", video_framerate: "29.97", height: "240", video_bitrate: "535", video_codec: "h264", width: "320" } }
+    # let(:reload_output) { [{ id: "510582971", url: "https://zencoder-temp-storage-us-east-1.s3.amazonaws.com/o/20150609/48a6907086c012f68b9ca43461280515/1726d7ec3e24f2171bd07b2abb807b6c.mp4?AWSAccessKeyId=AKIAI456JQ76GBU7FECA&Signature=vSvlxU94wlQLEbpG3Zs8ibp4MoY%3D&Expires=1433953106", label: nil }] }
+    # let(:reload_tech_metadata) { { audio_bitrate: "52", audio_codec: "aac", audio_channels: "2", duration: "57992", mime_type: "mpeg4", video_framerate: "29.97", height: "240", video_bitrate: "535", video_codec: "h264", width: "320" } }
 
     subject { ActiveEncode::Base.find('166019107').reload }
     it { is_expected.to be_a ActiveEncode::Base }
     its(:id) { is_expected.to eq '166019107' }
     it { is_expected.to be_running }
-    its(:output) { is_expected.to eq reload_output }
+    # its(:output) { is_expected.to eq reload_output }
     its(:current_operations) { is_expected.to be_empty }
     its(:percent_complete) { is_expected.to eq 30.0 }
     its(:errors) { is_expected.to be_empty }
     its(:created_at) { is_expected.to eq '2015-06-09T16:18:26Z' }
     its(:updated_at) { is_expected.to eq '2015-06-09T16:18:28Z' }
-    its(:finished_at) { is_expected.to be_nil }
-    its(:tech_metadata) { is_expected.to eq reload_tech_metadata }
+
+    context 'input' do
+      subject { ActiveEncode::Base.find('166019107').reload.input }
+
+      it { is_expected.to be_a ActiveEncode::Input }
+      its(:id) { is_expected.to eq "165990056" }
+      its(:url) { is_expected.to eq "https://archive.org/download/LuckyStr1948_2/LuckyStr1948_2_512kb.mp4" }
+      its(:width) { is_expected.to eq 320 }
+      its(:height) { is_expected.to eq 240 }
+      its(:frame_rate) { is_expected.to eq 29.97 }
+      its(:duration) { is_expected.to eq 57992 }
+      its(:file_size) { is_expected.to be_blank }
+      its(:checksum) { is_expected.to be_blank }
+      its(:audio_codec) { is_expected.to eq "aac" }
+      its(:video_codec) { is_expected.to eq "h264" }
+      its(:audio_bitrate) { is_expected.to eq 52 }
+      its(:video_bitrate) { is_expected.to eq 535 }
+      its(:state) { is_expected.to eq :completed }
+      its(:created_at) { is_expected.to eq "2015-06-09T16:18:26Z" }
+      its(:updated_at) { is_expected.to eq "2015-06-09T16:18:32Z" }
+    end
+
+    context 'output' do
+      let(:output) { ActiveEncode::Base.find('166019107').reload.output }
+      subject { output.first }
+
+      it 'is an array' do
+        expect(output).to be_a Array
+      end
+      it { is_expected.to be_a ActiveEncode::Output }
+      its(:id) { is_expected.to eq "510582971" }
+      its(:url) { is_expected.to eq "https://zencoder-temp-storage-us-east-1.s3.amazonaws.com/o/20150609/48a6907086c012f68b9ca43461280515/1726d7ec3e24f2171bd07b2abb807b6c.mp4?AWSAccessKeyId=AKIAI456JQ76GBU7FECA&Signature=vSvlxU94wlQLEbpG3Zs8ibp4MoY%3D&Expires=1433953106" }
+      its(:label) { is_expected.to be_blank }
+      its(:width) { is_expected.to be_blank }
+      its(:height) { is_expected.to be_blank }
+      its(:frame_rate) { is_expected.to be_blank }
+      its(:duration) { is_expected.to be_blank }
+      its(:file_size) { is_expected.to be_blank }
+      its(:checksum) { is_expected.to be_blank }
+      its(:audio_codec) { is_expected.to be_blank }
+      its(:video_codec) { is_expected.to be_blank }
+      its(:audio_bitrate) { is_expected.to be_blank }
+      its(:video_bitrate) { is_expected.to be_blank }
+      its(:state) { is_expected.to eq :running }
+      its(:created_at) { is_expected.to eq "2015-06-09T16:18:26Z" }
+      its(:updated_at) { is_expected.to eq "2015-06-09T16:18:32Z" }
+    end
   end
 end

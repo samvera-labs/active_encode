@@ -109,19 +109,27 @@ describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
   describe "#find" do
     context "a running encode" do
       let(:running_output) { [{id: "2", url: "elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a", hls_url: "elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a.m3u8", label: "hls0400k", :segment_duration=>"2.0"}] }
-      let(:running_tech_metadata) { {:width=>1280, :height=>720, :video_framerate=>"25", :file_size=>21069678, :duration=>"117312"} }
+      # let(:running_tech_metadata) { {:width=>1280, :height=>720, :video_framerate=>"25", :file_size=>21069678, :duration=>"117312"} }
 
       subject { running_job }
 
       its(:output) { is_expected.to eq running_output }
       its(:current_operations) { is_expected.to be_empty }
-      its(:tech_metadata) { is_expected.to eq running_tech_metadata }
-    end
 
-    context "a canceled encode" do
-      subject { canceled_job }
+      context 'input' do
+        subject { running_job.input }
 
-      its(:updated_at) { is_expected.to be_nil }
+        its(:width) { is_expected.to eq 1280 }
+        its(:height) { is_expected.to eq 720 }
+        its(:frame_rate) { is_expected.to eq 25 }
+        its(:duration) { is_expected.to eq 117312 }
+        its(:file_size) { is_expected.to eq 21069678 }
+        its(:checksum) { is_expected.to be_blank }
+        its(:audio_codec) { is_expected.to be_blank }
+        its(:video_codec) { is_expected.to be_blank }
+        its(:audio_bitrate) { is_expected.to be_blank }
+        its(:video_bitrate) { is_expected.to be_blank }
+      end
     end
   end
 end

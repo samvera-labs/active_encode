@@ -15,7 +15,9 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
   describe "#create" do
     subject { created_job }
 
-    it { is_expected.to be_a ActiveEncode::Base }
+    it 'returns an ActiveEncode::Base object' do
+      expect(subject.class).to be ActiveEncode::Base
+    end
     its(:id) { is_expected.not_to be_empty }
     it { is_expected.to be_running }
     its(:current_operations) { is_expected.to be_empty }
@@ -23,8 +25,27 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
     its(:errors) { is_expected.to be_empty }
     its(:created_at) { is_expected.to be_kind_of Time }
     its(:updated_at) { is_expected.to be_nil }
-    its(:finished_at) { is_expected.to be_nil }
-    its(:tech_metadata) { is_expected.to be_empty }
+
+    context 'input' do
+      subject { created_job.input }
+
+      its(:width) { is_expected.to be_blank }
+      its(:height) { is_expected.to be_blank }
+      its(:frame_rate) { is_expected.to be_blank }
+      its(:duration) { is_expected.to be_blank }
+      its(:file_size) { is_expected.to be_blank }
+      its(:checksum) { is_expected.to be_blank }
+      its(:audio_codec) { is_expected.to be_blank }
+      its(:video_codec) { is_expected.to be_blank }
+      its(:audio_bitrate) { is_expected.to be_blank }
+      its(:video_bitrate) { is_expected.to be_blank }
+    end
+
+    context 'output' do
+      subject { created_job.output }
+
+      it { is_expected.to be_blank }
+    end
   end
 
   describe "#find" do
@@ -40,7 +61,6 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       its(:errors) { is_expected.to be_empty }
       its(:created_at) { is_expected.to be_kind_of Time }
       its(:updated_at) { is_expected.to be > subject.created_at }
-      its(:finished_at) { is_expected.to be_nil }
     end
 
     context "a cancelled encode" do
@@ -54,8 +74,8 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       its(:percent_complete) { is_expected.to be > 0 }
       its(:errors) { is_expected.to be_empty }
       its(:created_at) { is_expected.to be_kind_of Time }
-      its(:finished_at) { is_expected.to be >= subject.created_at }
-      its(:tech_metadata) { is_expected.to be_empty }
+      its(:updated_at) { is_expected.to be >= subject.created_at }
+      # its(:tech_metadata) { is_expected.to be_empty }
     end
 
     context "a completed encode" do
@@ -71,8 +91,7 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       its(:errors) { is_expected.to be_empty }
       its(:created_at) { is_expected.to be_kind_of Time }
       its(:updated_at) { is_expected.to be > subject.created_at }
-      its(:finished_at) { is_expected.to be >= subject.updated_at }
-      its(:tech_metadata) { is_expected.to include completed_tech_metadata }
+      # its(:tech_metadata) { is_expected.to include completed_tech_metadata }
     end
 
     context "a failed encode" do
@@ -87,8 +106,7 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       its(:errors) { is_expected.not_to be_empty }
       its(:created_at) { is_expected.to be_kind_of Time }
       its(:updated_at) { is_expected.to be > subject.created_at }
-      its(:finished_at) { is_expected.to be >= subject.updated_at }
-      its(:tech_metadata) { is_expected.to include failed_tech_metadata }
+      # its(:tech_metadata) { is_expected.to include failed_tech_metadata }
     end
   end
 
@@ -103,8 +121,8 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
     its(:percent_complete) { is_expected.to be > 0 }
     its(:errors) { is_expected.to be_empty }
     its(:created_at) { is_expected.to be_kind_of Time }
-    its(:finished_at) { is_expected.to be >= subject.created_at }
-    its(:tech_metadata) { is_expected.to be_empty }
+    its(:updated_at) { is_expected.to be >= subject.created_at }
+    # its(:tech_metadata) { is_expected.to be_empty }
   end
 
   describe "reload" do
@@ -119,6 +137,5 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
     its(:errors) { is_expected.to be_empty }
     its(:created_at) { is_expected.to be_kind_of Time }
     its(:updated_at) { is_expected.to be > subject.created_at }
-    its(:finished_at) { is_expected.to be_nil }
   end
 end

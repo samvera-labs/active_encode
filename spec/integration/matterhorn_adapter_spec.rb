@@ -52,7 +52,21 @@ describe ActiveEncode::EngineAdapters::MatterhornAdapter do
       its(:options) { is_expected.to include(preset: 'full') }
       its(:output) { is_expected.to be_empty }
       its(:current_operations) { is_expected.to include("Hold for workflow selection") }
-      its(:tech_metadata) { is_expected.to be_empty }
+
+      context 'input' do
+        subject { running_job.input }
+
+        its(:width) { is_expected.to be_blank }
+        its(:height) { is_expected.to be_blank }
+        its(:frame_rate) { is_expected.to be_blank }
+        its(:duration) { is_expected.to be_blank }
+        its(:file_size) { is_expected.to be_blank }
+        its(:checksum) { is_expected.to be_blank }
+        its(:audio_codec) { is_expected.to be_blank }
+        its(:video_codec) { is_expected.to be_blank }
+        its(:audio_bitrate) { is_expected.to be_blank }
+        its(:video_bitrate) { is_expected.to be_blank }
+      end
     end
     context "a cancelled encode" do
       subject { canceled_job }
@@ -86,48 +100,6 @@ describe ActiveEncode::EngineAdapters::MatterhornAdapter do
     it { is_expected.to be_cancelled }
   end
 
-  describe "#purge!" do
-    context "when encode is running" do
-      before do
-        allow(Rubyhorn.client).to receive(:stop).and_return(Rubyhorn::Workflow.from_xml(File.open('spec/fixtures/matterhorn/stop_running_response.xml')))
-        allow(Rubyhorn.client).to receive(:delete_track).and_return('http://localhost:8080/services/job/1234.xml')
-        allow(Rubyhorn.client).to receive(:get).with('/services/job/1234.xml').and_return(File.open('spec/fixtures/matterhorn/delete_track_response.xml'), File.open('spec/fixtures/matterhorn/delete_track_response.xml'), File.open('spec/fixtures/matterhorn/delete_track_response.xml'))
-      end
-      let(:encode) { ActiveEncode::Base.create(file) }
-      subject { encode.purge! }
-      it { is_expected.to be_a ActiveEncode::Base }
-      its(:id) { is_expected.to eq 'stopped-running-id' }
-      it { is_expected.to be_cancelled }
-      its(:output) { is_expected.to be_empty }
-    end
-
-    context "when encode is cancelled" do
-      before do
-        allow(Rubyhorn.client).to receive(:stop).and_return(Rubyhorn::Workflow.from_xml(File.open('spec/fixtures/matterhorn/cancelled_response.xml')))
-        #        allow(Rubyhorn.client).to receive(:get_stopped_workflow).and_return(Rubyhorn::Workflow.from_xml(File.open('spec/fixtures/matterhorn/cancelled_response.xml')))
-      end
-      let(:encode) { ActiveEncode::Base.create(file).cancel! }
-      subject { encode.purge! }
-      it { is_expected.to be_a ActiveEncode::Base }
-      its(:id) { is_expected.to eq 'cancelled-id' }
-      it { is_expected.to be_cancelled }
-      its(:output) { is_expected.to be_empty }
-    end
-    context "when encode is completed" do
-      before do
-        allow(Rubyhorn.client).to receive(:stop).and_return(Rubyhorn::Workflow.from_xml(File.open('spec/fixtures/matterhorn/stop_completed_response.xml')))
-        allow(Rubyhorn.client).to receive(:delete_track).and_return('http://localhost:8080/services/job/1234.xml')
-        allow(Rubyhorn.client).to receive(:get).with('/services/job/1234.xml').and_return(File.open('spec/fixtures/matterhorn/delete_track_response.xml'), File.open('spec/fixtures/matterhorn/delete_track_response.xml'), File.open('spec/fixtures/matterhorn/delete_track_response.xml'))
-      end
-      let(:encode) { ActiveEncode::Base.create(file).cancel! }
-      subject { encode.purge! }
-      it { is_expected.to be_a ActiveEncode::Base }
-      its(:id) { is_expected.to eq 'stop-completed-id' }
-      it { is_expected.to be_cancelled }
-      its(:output) { is_expected.to be_empty }
-    end
-  end
-
   describe "reload" do
     before do
       expect(Rubyhorn.client).to receive(:instance_xml).twice.with('running-id').and_return(Rubyhorn::Workflow.from_xml(File.open('spec/fixtures/matterhorn/running_response.xml')))
@@ -139,21 +111,20 @@ describe ActiveEncode::EngineAdapters::MatterhornAdapter do
     its(:options) { is_expected.to include(preset: 'full') }
     its(:current_operations) { is_expected.to include("Hold for workflow selection") }
     its(:percent_complete) { is_expected.to eq 0.43478260869565216 }
-    its(:tech_metadata) { is_expected.to be_empty }
-  end
 
-  describe "remove_output" do
-    before do
-      allow(Rubyhorn.client).to receive(:instance_xml).with('completed-id').and_return(Rubyhorn::Workflow.from_xml(File.open('spec/fixtures/matterhorn/completed_response.xml')))
-      allow(Rubyhorn.client).to receive(:delete_track).and_return('http://localhost:8080/services/job/1234.xml')
-      allow(Rubyhorn.client).to receive(:get).with('/services/job/1234.xml').and_return(File.open('spec/fixtures/matterhorn/delete_track_response.xml'), File.open('spec/fixtures/matterhorn/delete_track_response.xml'), File.open('spec/fixtures/matterhorn/delete_track_response.xml'))
-    end
-    let(:encode) { ActiveEncode::Base.find('completed-id') }
-    subject { encode.remove_output! 'track-7' }
-    it { is_expected.to be_a Hash }
-    it 'removes the output' do
-      encode.remove_output!('track-7')
-      expect(ActiveEncode::Base.find(encode.id).output.find { |o| o[:id] == 'track-7' }).to be_nil
+    context 'input' do
+      subject { running_job.reload.input }
+
+      its(:width) { is_expected.to be_blank }
+      its(:height) { is_expected.to be_blank }
+      its(:frame_rate) { is_expected.to be_blank }
+      its(:duration) { is_expected.to be_blank }
+      its(:file_size) { is_expected.to be_blank }
+      its(:checksum) { is_expected.to be_blank }
+      its(:audio_codec) { is_expected.to be_blank }
+      its(:video_codec) { is_expected.to be_blank }
+      its(:audio_bitrate) { is_expected.to be_blank }
+      its(:video_bitrate) { is_expected.to be_blank }
     end
   end
 end

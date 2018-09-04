@@ -28,18 +28,6 @@ module ActiveEncode
         new_encode.updated_at = Time.now
         new_encode
       end
-
-      def list(*_filters)
-        raise NotImplementedError
-      end
-
-      def purge(encode)
-        @encodes.delete(encode.id)
-      end
-
-      def remove_output(_encode, _output_id)
-        raise NotImplementedError
-      end
     end
   end
 end

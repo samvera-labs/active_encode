@@ -19,37 +19,9 @@ module ActiveEncode
         build_encode(fetch_workflow(id))
       end
 
-      def list(*_filters)
-        raise NotImplementedError # TODO: implement this
-      end
-
       def cancel(id)
         workflow_om = Rubyhorn.client.stop(id)
         build_encode(get_workflow(workflow_om))
-      end
-
-      def purge(encode)
-        workflow_om = begin
-                        Rubyhorn.client.stop(encode.id)
-                      rescue
-                        nil
-                      end
-        workflow_om ||= begin
-                          Rubyhorn.client.get_stopped_workflow(encode.id)
-                        rescue
-                          nil
-                        end
-        purged_workflow = purge_outputs(get_workflow(workflow_om))
-        # Rubyhorn.client.delete_instance(encode.id) #Delete is not working so workflow instances can always be retrieved later!
-        build_encode(purged_workflow)
-      end
-
-      def remove_output(encode, output_id)
-        workflow = fetch_workflow(encode.id)
-        output = encode.output.find { |o| o[:id] == output_id }
-        return if output.nil?
-        purge_output(workflow, output_id)
-        output
       end
 
       private
@@ -88,10 +60,15 @@ module ActiveEncode
           encode.percent_complete = calculate_percent_complete(workflow)
           encode.created_at = convert_created_at(workflow)
           encode.updated_at = convert_updated_at(workflow)
-          encode.finished_at = convert_finished_at(workflow) unless encode.running?
           encode.output = convert_output(workflow, encode.options)
           encode.errors = convert_errors(workflow)
-          encode.tech_metadata = convert_tech_metadata(workflow)
+
+          tech_md = convert_tech_metadata(workflow)
+          [:width, :height, :frame_rate, :checksum, :audio_codec, :video_codec,
+           :audio_bitrate, :video_bitrate].each do |field|
+            encode.input.send("#{field}=", tech_md[field])
+          end
+          
           encode
         end
 
@@ -154,11 +131,6 @@ module ActiveEncode
           updated_at.present? ? Time.strptime(updated_at, "%Q") : nil
         end
 
-        def convert_finished_at(workflow)
-          finished_at = workflow.xpath('//operation[@state!="INSTANTIATED"]/completed/text()').last.to_s
-          finished_at.present? ? Time.strptime(finished_at, "%Q") : nil
-        end
-
         def convert_options(workflow)
           options = {}
           options[:preset] = workflow.xpath('template/text()').to_s
@@ -192,45 +164,6 @@ module ActiveEncode
           first_node = mp.first
           first_node['xmlns'] = 'http://mediapackage.opencastproject.org'
           mp
-        end
-
-        def purge_outputs(workflow)
-          # Delete hls tracks first since the next, more general xpath matches them as well
-          workflow.xpath('//track[@type="presenter/delivery" and tags/tag[text()="streaming"] and tags/tag[text()="hls"]]/@id').map(&:to_s).each do |hls_track_id|
-            begin
-              purge_output(workflow, hls_track_id)
-            rescue
-              nil
-            end
-          end
-          workflow.xpath('//track[@type="presenter/delivery" and tags/tag[text()="streaming"]]/@id').map(&:to_s).each do |track_id|
-            begin
-              purge_output(workflow, track_id)
-            rescue
-              nil
-            end
-          end
-
-          workflow
-        end
-
-        def purge_output(workflow, track_id)
-          media_package = get_media_package(workflow)
-          hls = workflow.xpath("//track[@id='#{track_id}']/tags/tag[text()='hls']").present?
-          job_url = if hls
-                      Rubyhorn.client.delete_hls_track(media_package, track_id)
-                    else
-                      Rubyhorn.client.delete_track(media_package, track_id)
-                    end
-          sleep(0.1)
-          job_status = Nokogiri::XML(Rubyhorn.client.get(URI(job_url).path)).root.attribute("status").value
-          # FIXME: have this return a boolean based upon result of operation
-          case job_status
-          when "FINISHED"
-            workflow.at_xpath("//track[@id=\"#{track_id}\"]").remove
-          when "FAILED"
-            workflow.at_xpath('//errors').add_child("<error>Output not purged: #{mp.at_xpath("//*[@id=\"#{track_id}\"]/tags/tag[starts-with(text(),\"quality\")]/text()")}</error>")
-          end
         end
 
         def calculate_percent_complete(workflow)
