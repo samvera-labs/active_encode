@@ -43,15 +43,19 @@ module ActiveEncode
           encode.current_operations = convert_current_operations(job)
           encode.percent_complete = convert_percent_complete(job)
           encode.created_at = convert_time(job.timing["submit_time_millis"])
-          encode.updated_at = convert_time(job.timing["finish_time_millis"] || job.timing["start_time_millis"])
+          encode.updated_at = convert_time(job.timing["finish_time_millis"] || job.timing["start_time_millis"]) || encode.created_at
           encode.output = convert_output(job)
           encode.errors = convert_errors(job)
 
+          encode.input.id = job.input.key
           tech_md = convert_tech_metadata(job.input.detected_properties)
           [:width, :height, :frame_rate, :duration, :checksum, :audio_codec, :video_codec,
            :audio_bitrate, :video_bitrate, :file_size].each do |field|
             encode.input.send("#{field}=", tech_md[field])
           end
+          encode.input.state = encode.state
+          encode.input.created_at = encode.created_at
+          encode.input.updated_at = encode.updated_at
 
           encode
         end
@@ -101,17 +105,26 @@ module ActiveEncode
         end
 
         def convert_output(job)
-          output = []
-          job.outputs.each do |o|
+          job.outputs.collect do |o|
             # It is assumed that the first part of the output key can be used to label the  output
             # e.g. "quality-medium/somepath/filename.flv"
-            label = o.key.split("/", 2).first
-            url = job.output_key_prefix + o.key
-            extras = { id: o.id, url: url, label: label }
-            extras[:hls_url] = url + ".m3u8" if url.include?("/hls/") # TODO: find a better way to signal hls
-            output << convert_tech_metadata(o).merge(extras)
+            output = ActiveEncode::Output.new
+            output.id = o.id
+            output.label = o.key.split("/", 2).first
+            output.url = job.output_key_prefix + o.key
+            # extras = { id: o.id, url: url, label: label }
+            # extras[:hls_url] = url + ".m3u8" if url.include?("/hls/") # TODO: find a better way to signal hls
+            tech_md = convert_tech_metadata(o)
+            [:width, :height, :frame_rate, :duration, :checksum, :audio_codec, :video_codec,
+             :audio_bitrate, :video_bitrate, :file_size].each do |field|
+              output.send("#{field}=", tech_md[field])
+            end
+            output.state = convert_state(o)
+            output.created_at = convert_time(job.timing["submit_time_millis"])
+            output.updated_at = convert_time(job.timing["finish_time_millis"] || job.timing["start_time_millis"]) || output.created_at
+
+            output
           end
-          output
         end
 
         def convert_errors(job)

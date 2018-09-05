@@ -148,7 +148,7 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       end
 
       it 'input has technical metadata' do
-        expect(subject.input.as_json).to include completed_tech_metadata
+        expect(subject.input.as_json.symbolize_keys).to include completed_tech_metadata
       end
 
       it 'output has only valid ActiveEncode::Output objects' do
