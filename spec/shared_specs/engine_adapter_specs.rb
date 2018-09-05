@@ -31,23 +31,14 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
 
     it 'input is a valid ActiveEncode::Input object' do
       expect(subject.input).to be_a ActiveEncode::Input
-      expect(subject.input.id).not_to be_blank
-      expect(subject.input.url).not_to be_blank
-      expect(subject.input.created_at).to be_kind_of Time
-      expect(subject.input.updated_at).to be_kind_of Time
-      expect(subject.input.updated_at).to be >= subject.created_at
+      expect(subject.input).to be_valid
     end
 
     it 'output has only valid ActiveEncode::Output objects' do
       expect(subject.output).to be_a Array
       subject.output.each do |out|
         expect(out).to be_a ActiveEncode::Output
-        expect(out.id).not_to be_blank
-        expect(out.url).not_to be_blank
-        expect(out.label).not_to be_blank
-        expect(out.created_at).to be_kind_of Time
-        expect(out.updated_at).to be_kind_of Time
-        expect(out.updated_at).to be >= subject.created_at
+        expect(out).to be_valid
       end
     end
   end
@@ -68,23 +59,14 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
 
       it 'input is a valid ActiveEncode::Input object' do
         expect(subject.input).to be_a ActiveEncode::Input
-        expect(subject.input.id).not_to be_blank
-        expect(subject.input.url).not_to be_blank
-        expect(subject.input.created_at).to be_kind_of Time
-        expect(subject.input.updated_at).to be_kind_of Time
-        expect(subject.input.updated_at).to be >= subject.created_at
+        expect(subject.input).to be_valid
       end
 
       it 'output has only valid ActiveEncode::Output objects' do
         expect(subject.output).to be_a Array
         subject.output.each do |out|
           expect(out).to be_a ActiveEncode::Output
-          expect(out.id).not_to be_blank
-          expect(out.url).not_to be_blank
-          expect(out.label).not_to be_blank
-          expect(out.created_at).to be_kind_of Time
-          expect(out.updated_at).to be_kind_of Time
-          expect(out.updated_at).to be >= subject.created_at
+          expect(out).to be_valid
         end
       end
     end
@@ -104,23 +86,14 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
 
       it 'input is a valid ActiveEncode::Input object' do
         expect(subject.input).to be_a ActiveEncode::Input
-        expect(subject.input.id).not_to be_blank
-        expect(subject.input.url).not_to be_blank
-        expect(subject.input.created_at).to be_kind_of Time
-        expect(subject.input.updated_at).to be_kind_of Time
-        expect(subject.input.updated_at).to be >= subject.created_at
+        expect(subject.input).to be_valid
       end
 
       it 'output has only valid ActiveEncode::Output objects' do
         expect(subject.output).to be_a Array
         subject.output.each do |out|
           expect(out).to be_a ActiveEncode::Output
-          expect(out.id).not_to be_blank
-          expect(out.url).not_to be_blank
-          expect(out.label).not_to be_blank
-          expect(out.created_at).to be_kind_of Time
-          expect(out.updated_at).to be_kind_of Time
-          expect(out.updated_at).to be >= subject.created_at
+          expect(out).to be_valid
         end
       end
     end
@@ -140,11 +113,7 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
 
       it 'input is a valid ActiveEncode::Input object' do
         expect(subject.input).to be_a ActiveEncode::Input
-        expect(subject.input.id).not_to be_blank
-        expect(subject.input.url).not_to be_blank
-        expect(subject.input.created_at).to be_kind_of Time
-        expect(subject.input.updated_at).to be_kind_of Time
-        expect(subject.input.updated_at).to be >= subject.created_at
+        expect(subject.input).to be_valid
       end
 
       it 'input has technical metadata' do
@@ -155,12 +124,7 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
         expect(subject.output).to be_a Array
         subject.output.each do |out|
           expect(out).to be_a ActiveEncode::Output
-          expect(out.id).not_to be_blank
-          expect(out.url).not_to be_blank
-          expect(out.label).not_to be_blank
-          expect(out.created_at).to be_kind_of Time
-          expect(out.updated_at).to be_kind_of Time
-          expect(out.updated_at).to be >= subject.created_at
+          expect(out).to be_valid
         end
       end
 
@@ -187,11 +151,7 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
 
       it 'input is a valid ActiveEncode::Input object' do
         expect(subject.input).to be_a ActiveEncode::Input
-        expect(subject.input.id).not_to be_blank
-        expect(subject.input.url).not_to be_blank
-        expect(subject.input.created_at).to be_kind_of Time
-        expect(subject.input.updated_at).to be_kind_of Time
-        expect(subject.input.updated_at).to be >= subject.created_at
+        expect(subject.input).to be_valid
       end
 
       it 'input has technical metadata' do
@@ -202,12 +162,7 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
         expect(subject.output).to be_a Array
         subject.output.each do |out|
           expect(out).to be_a ActiveEncode::Output
-          expect(out.id).not_to be_blank
-          expect(out.url).not_to be_blank
-          expect(out.label).not_to be_blank
-          expect(out.created_at).to be_kind_of Time
-          expect(out.updated_at).to be_kind_of Time
-          expect(out.updated_at).to be >= subject.created_at
+          expect(out).to be_valid
         end
       end
     end
@@ -228,23 +183,14 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
 
     it 'input is a valid ActiveEncode::Input object' do
       expect(subject.input).to be_a ActiveEncode::Input
-      expect(subject.input.id).not_to be_blank
-      expect(subject.input.url).not_to be_blank
-      expect(subject.input.created_at).to be_kind_of Time
-      expect(subject.input.updated_at).to be_kind_of Time
-      expect(subject.input.updated_at).to be >= subject.created_at
+      expect(subject.input).to be_valid
     end
 
     it 'output has only valid ActiveEncode::Output objects' do
       expect(subject.output).to be_a Array
       subject.output.each do |out|
         expect(out).to be_a ActiveEncode::Output
-        expect(out.id).not_to be_blank
-        expect(out.url).not_to be_blank
-        expect(out.label).not_to be_blank
-        expect(out.created_at).to be_kind_of Time
-        expect(out.updated_at).to be_kind_of Time
-        expect(out.updated_at).to be >= subject.created_at
+        expect(out).to be_valid
       end
     end
   end
@@ -264,23 +210,14 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
 
     it 'input is a valid ActiveEncode::Input object' do
       expect(subject.input).to be_a ActiveEncode::Input
-      expect(subject.input.id).not_to be_blank
-      expect(subject.input.url).not_to be_blank
-      expect(subject.input.created_at).to be_kind_of Time
-      expect(subject.input.updated_at).to be_kind_of Time
-      expect(subject.input.updated_at).to be >= subject.created_at
+      expect(subject.input).to be_valid
     end
 
     it 'output has only valid ActiveEncode::Output objects' do
       expect(subject.output).to be_a Array
       subject.output.each do |out|
         expect(out).to be_a ActiveEncode::Output
-        expect(out.id).not_to be_blank
-        expect(out.url).not_to be_blank
-        expect(out.label).not_to be_blank
-        expect(out.created_at).to be_kind_of Time
-        expect(out.updated_at).to be_kind_of Time
-        expect(out.updated_at).to be >= subject.created_at
+        expect(out).to be_valid
       end
     end
   end
