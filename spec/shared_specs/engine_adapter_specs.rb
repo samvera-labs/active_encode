@@ -6,6 +6,9 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
     raise 'adapter must be set with `let(:canceled_job)`' unless defined? canceled_job
     raise 'adapter must be set with `let(:completed_job)`' unless defined? completed_job
     raise 'adapter must be set with `let(:failed_job)`' unless defined? failed_job
+    raise 'adapter must be set with `let(:completed_tech_metadata)`' unless defined? completed_tech_metadata
+    raise 'adapter must be set with `let(:completed_output)`' unless defined? completed_output
+    raise 'adapter must be set with `let(:failed_tech_metadata)`' unless defined? failed_tech_metadata
   end
 
   it { is_expected.to respond_to :create }
@@ -24,27 +27,28 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
     its(:percent_complete) { is_expected.to be < 100 }
     its(:errors) { is_expected.to be_empty }
     its(:created_at) { is_expected.to be_kind_of Time }
-    its(:updated_at) { is_expected.to be_nil }
+    its(:updated_at) { is_expected.to be_kind_of Time }
 
-    context 'input' do
-      subject { created_job.input }
-
-      its(:width) { is_expected.to be_blank }
-      its(:height) { is_expected.to be_blank }
-      its(:frame_rate) { is_expected.to be_blank }
-      its(:duration) { is_expected.to be_blank }
-      its(:file_size) { is_expected.to be_blank }
-      its(:checksum) { is_expected.to be_blank }
-      its(:audio_codec) { is_expected.to be_blank }
-      its(:video_codec) { is_expected.to be_blank }
-      its(:audio_bitrate) { is_expected.to be_blank }
-      its(:video_bitrate) { is_expected.to be_blank }
+    it 'input is a valid ActiveEncode::Input object' do
+      expect(subject.input).to be_a ActiveEncode::Input
+      expect(subject.input.id).not_to be_blank
+      expect(subject.input.url).not_to be_blank
+      expect(subject.input.created_at).to be_kind_of Time
+      expect(subject.input.updated_at).to be_kind_of Time
+      expect(subject.input.updated_at).to be >= subject.created_at
     end
 
-    context 'output' do
-      subject { created_job.output }
-
-      it { is_expected.to be_blank }
+    it 'output has only valid ActiveEncode::Output objects' do
+      expect(subject.output).to be_a Array
+      subject.output.each do |out|
+        expect(out).to be_a ActiveEncode::Output
+        expect(out.id).not_to be_blank
+        expect(out.url).not_to be_blank
+        expect(out.label).not_to be_blank
+        expect(out.created_at).to be_kind_of Time
+        expect(out.updated_at).to be_kind_of Time
+        expect(out.updated_at).to be >= subject.created_at
+      end
     end
   end
 
@@ -61,6 +65,28 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       its(:errors) { is_expected.to be_empty }
       its(:created_at) { is_expected.to be_kind_of Time }
       its(:updated_at) { is_expected.to be > subject.created_at }
+
+      it 'input is a valid ActiveEncode::Input object' do
+        expect(subject.input).to be_a ActiveEncode::Input
+        expect(subject.input.id).not_to be_blank
+        expect(subject.input.url).not_to be_blank
+        expect(subject.input.created_at).to be_kind_of Time
+        expect(subject.input.updated_at).to be_kind_of Time
+        expect(subject.input.updated_at).to be >= subject.created_at
+      end
+
+      it 'output has only valid ActiveEncode::Output objects' do
+        expect(subject.output).to be_a Array
+        subject.output.each do |out|
+          expect(out).to be_a ActiveEncode::Output
+          expect(out.id).not_to be_blank
+          expect(out.url).not_to be_blank
+          expect(out.label).not_to be_blank
+          expect(out.created_at).to be_kind_of Time
+          expect(out.updated_at).to be_kind_of Time
+          expect(out.updated_at).to be >= subject.created_at
+        end
+      end
     end
 
     context "a cancelled encode" do
@@ -75,7 +101,28 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       its(:errors) { is_expected.to be_empty }
       its(:created_at) { is_expected.to be_kind_of Time }
       its(:updated_at) { is_expected.to be >= subject.created_at }
-      # its(:tech_metadata) { is_expected.to be_empty }
+
+      it 'input is a valid ActiveEncode::Input object' do
+        expect(subject.input).to be_a ActiveEncode::Input
+        expect(subject.input.id).not_to be_blank
+        expect(subject.input.url).not_to be_blank
+        expect(subject.input.created_at).to be_kind_of Time
+        expect(subject.input.updated_at).to be_kind_of Time
+        expect(subject.input.updated_at).to be >= subject.created_at
+      end
+
+      it 'output has only valid ActiveEncode::Output objects' do
+        expect(subject.output).to be_a Array
+        subject.output.each do |out|
+          expect(out).to be_a ActiveEncode::Output
+          expect(out.id).not_to be_blank
+          expect(out.url).not_to be_blank
+          expect(out.label).not_to be_blank
+          expect(out.created_at).to be_kind_of Time
+          expect(out.updated_at).to be_kind_of Time
+          expect(out.updated_at).to be >= subject.created_at
+        end
+      end
     end
 
     context "a completed encode" do
@@ -86,12 +133,43 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       end
       its(:id) { is_expected.to eq 'completed-id' }
       it { is_expected.to be_completed }
-      its(:output) { is_expected.to eq completed_output }
       its(:percent_complete) { is_expected.to eq 100 }
       its(:errors) { is_expected.to be_empty }
       its(:created_at) { is_expected.to be_kind_of Time }
       its(:updated_at) { is_expected.to be > subject.created_at }
-      # its(:tech_metadata) { is_expected.to include completed_tech_metadata }
+
+      it 'input is a valid ActiveEncode::Input object' do
+        expect(subject.input).to be_a ActiveEncode::Input
+        expect(subject.input.id).not_to be_blank
+        expect(subject.input.url).not_to be_blank
+        expect(subject.input.created_at).to be_kind_of Time
+        expect(subject.input.updated_at).to be_kind_of Time
+        expect(subject.input.updated_at).to be >= subject.created_at
+      end
+
+      it 'input has technical metadata' do
+        expect(subject.input.as_json).to include completed_tech_metadata
+      end
+
+      it 'output has only valid ActiveEncode::Output objects' do
+        expect(subject.output).to be_a Array
+        subject.output.each do |out|
+          expect(out).to be_a ActiveEncode::Output
+          expect(out.id).not_to be_blank
+          expect(out.url).not_to be_blank
+          expect(out.label).not_to be_blank
+          expect(out.created_at).to be_kind_of Time
+          expect(out.updated_at).to be_kind_of Time
+          expect(out.updated_at).to be >= subject.created_at
+        end
+      end
+
+      it 'output has technical metadata' do
+        subject.output.each do |output|
+          expected_output = completed_output.find {|expected_out| expected_out[:id] == output.id }
+          expect(output.as_json.symbolize_keys).to include expected_output
+        end
+      end
     end
 
     context "a failed encode" do
@@ -106,7 +184,32 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       its(:errors) { is_expected.not_to be_empty }
       its(:created_at) { is_expected.to be_kind_of Time }
       its(:updated_at) { is_expected.to be > subject.created_at }
-      # its(:tech_metadata) { is_expected.to include failed_tech_metadata }
+
+      it 'input is a valid ActiveEncode::Input object' do
+        expect(subject.input).to be_a ActiveEncode::Input
+        expect(subject.input.id).not_to be_blank
+        expect(subject.input.url).not_to be_blank
+        expect(subject.input.created_at).to be_kind_of Time
+        expect(subject.input.updated_at).to be_kind_of Time
+        expect(subject.input.updated_at).to be >= subject.created_at
+      end
+
+      it 'input has technical metadata' do
+        expect(subject.input.as_json.symbolize_keys).to include failed_tech_metadata
+      end
+
+      it 'output has only valid ActiveEncode::Output objects' do
+        expect(subject.output).to be_a Array
+        subject.output.each do |out|
+          expect(out).to be_a ActiveEncode::Output
+          expect(out.id).not_to be_blank
+          expect(out.url).not_to be_blank
+          expect(out.label).not_to be_blank
+          expect(out.created_at).to be_kind_of Time
+          expect(out.updated_at).to be_kind_of Time
+          expect(out.updated_at).to be >= subject.created_at
+        end
+      end
     end
   end
 
@@ -122,7 +225,28 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
     its(:errors) { is_expected.to be_empty }
     its(:created_at) { is_expected.to be_kind_of Time }
     its(:updated_at) { is_expected.to be >= subject.created_at }
-    # its(:tech_metadata) { is_expected.to be_empty }
+
+    it 'input is a valid ActiveEncode::Input object' do
+      expect(subject.input).to be_a ActiveEncode::Input
+      expect(subject.input.id).not_to be_blank
+      expect(subject.input.url).not_to be_blank
+      expect(subject.input.created_at).to be_kind_of Time
+      expect(subject.input.updated_at).to be_kind_of Time
+      expect(subject.input.updated_at).to be >= subject.created_at
+    end
+
+    it 'output has only valid ActiveEncode::Output objects' do
+      expect(subject.output).to be_a Array
+      subject.output.each do |out|
+        expect(out).to be_a ActiveEncode::Output
+        expect(out.id).not_to be_blank
+        expect(out.url).not_to be_blank
+        expect(out.label).not_to be_blank
+        expect(out.created_at).to be_kind_of Time
+        expect(out.updated_at).to be_kind_of Time
+        expect(out.updated_at).to be >= subject.created_at
+      end
+    end
   end
 
   describe "reload" do
@@ -137,5 +261,27 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
     its(:errors) { is_expected.to be_empty }
     its(:created_at) { is_expected.to be_kind_of Time }
     its(:updated_at) { is_expected.to be > subject.created_at }
+
+    it 'input is a valid ActiveEncode::Input object' do
+      expect(subject.input).to be_a ActiveEncode::Input
+      expect(subject.input.id).not_to be_blank
+      expect(subject.input.url).not_to be_blank
+      expect(subject.input.created_at).to be_kind_of Time
+      expect(subject.input.updated_at).to be_kind_of Time
+      expect(subject.input.updated_at).to be >= subject.created_at
+    end
+
+    it 'output has only valid ActiveEncode::Output objects' do
+      expect(subject.output).to be_a Array
+      subject.output.each do |out|
+        expect(out).to be_a ActiveEncode::Output
+        expect(out.id).not_to be_blank
+        expect(out.url).not_to be_blank
+        expect(out.label).not_to be_blank
+        expect(out.created_at).to be_kind_of Time
+        expect(out.updated_at).to be_kind_of Time
+        expect(out.updated_at).to be >= subject.created_at
+      end
+    end
   end
 end
