@@ -16,18 +16,16 @@ module ActiveEncode
       end
 
       def find(id, _opts = {})
-        new_encode = @encodes[id].dup
+        new_encode = @encodes[id]
         # Update the updated_at time to simulate changes
         new_encode.updated_at = Time.now
-        @encodes[id] = new_encode
         new_encode
       end
 
       def cancel(id)
-        new_encode = @encodes[id].dup
+        new_encode = @encodes[id]
         new_encode.state = :cancelled
         new_encode.updated_at = Time.now
-        @encodes[id] = new_encode
         new_encode
       end
 
