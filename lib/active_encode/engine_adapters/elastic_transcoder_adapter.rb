@@ -2,20 +2,20 @@ module ActiveEncode
   module EngineAdapters
     class ElasticTranscoderAdapter
       # TODO: add a stub for an input helper (supplied by an initializer) that transforms encode.input into a zencoder accepted url
-      def create(encode)
+      def create(input_url, options = {})
         job = client.create_job(
-          input: { key: encode.input },
-          pipeline_id: encode.options[:pipeline_id],
-          output_key_prefix: encode.options[:output_key_prefix],
-          outputs: encode.options[:outputs],
-          user_metadata: encode.options[:user_metadata]
+          input: { key: input_url },
+          pipeline_id: options[:pipeline_id],
+          output_key_prefix: options[:output_key_prefix],
+          outputs: options[:outputs],
+          user_metadata: options[:user_metadata]
         ).job
 
-        build_encode(job, encode.class)
+        build_encode(job)
       end
 
       def find(id, opts = {})
-        build_encode(get_job_details(id), opts[:cast])
+        build_encode(get_job_details(id))
       end
 
       # TODO: implement list_jobs_by_pipeline and list_jobs_by_status
@@ -24,9 +24,9 @@ module ActiveEncode
       end
 
       # Can only cancel jobs with status = "Submitted"
-      def cancel(encode)
-        response = client.cancel_job(id: encode.id)
-        build_encode(get_job_details(encode.id), encode.class) if response.successful?
+      def cancel(id)
+        response = client.cancel_job(id: id)
+        build_encode(get_job_details(id)) if response.successful?
       end
 
       def purge(_encode)
@@ -48,9 +48,9 @@ module ActiveEncode
           client.read_job(id: job_id).job
         end
 
-        def build_encode(job, cast)
+        def build_encode(job)
           return nil if job.nil?
-          encode = cast.new(convert_input(job), convert_options(job))
+          encode = ActiveEncode::Base.new(convert_input(job), convert_options(job))
           encode.id = job.id
           encode.state = convert_state(job)
           encode.current_operations = convert_current_operations(job)

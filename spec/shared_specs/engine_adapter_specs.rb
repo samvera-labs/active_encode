@@ -31,7 +31,9 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
     context "a running encode" do
       subject { running_job }
 
-      it { is_expected.to be_a ActiveEncode::Base }
+      it 'returns an ActiveEncode::Base object' do
+        expect(subject.class).to be ActiveEncode::Base
+      end
       its(:id) { is_expected.to eq 'running-id' }
       it { is_expected.to be_running }
       its(:percent_complete) { is_expected.to be > 0 }
@@ -44,7 +46,9 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
     context "a cancelled encode" do
       subject { canceled_job }
 
-      it { is_expected.to be_a ActiveEncode::Base }
+      it 'returns an ActiveEncode::Base object' do
+        expect(subject.class).to be ActiveEncode::Base
+      end
       its(:id) { is_expected.to eq 'cancelled-id' }
       it { is_expected.to be_cancelled }
       its(:percent_complete) { is_expected.to be > 0 }
@@ -57,7 +61,9 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
     context "a completed encode" do
       subject { completed_job }
 
-      it { is_expected.to be_a ActiveEncode::Base }
+      it 'returns an ActiveEncode::Base object' do
+        expect(subject.class).to be ActiveEncode::Base
+      end
       its(:id) { is_expected.to eq 'completed-id' }
       it { is_expected.to be_completed }
       its(:output) { is_expected.to eq completed_output }
@@ -72,7 +78,9 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
     context "a failed encode" do
       subject { failed_job }
 
-      it { is_expected.to be_a ActiveEncode::Base }
+      it 'returns an ActiveEncode::Base object' do
+        expect(subject.class).to be ActiveEncode::Base
+      end
       its(:id) { is_expected.to eq 'failed-id' }
       it { is_expected.to be_failed }
       its(:percent_complete) { is_expected.to be > 0 }
@@ -87,7 +95,9 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
   describe "#cancel!" do
     subject { cancelling_job.cancel! }
 
-    it { is_expected.to be_a ActiveEncode::Base }
+    it 'returns an ActiveEncode::Base object' do
+      expect(subject.class).to be ActiveEncode::Base
+    end
     its(:id) { is_expected.to eq 'cancelled-id' }
     it { is_expected.to be_cancelled }
     its(:percent_complete) { is_expected.to be > 0 }
@@ -100,7 +110,9 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
   describe "reload" do
     subject { running_job.reload }
 
-    it { is_expected.to be_a ActiveEncode::Base }
+    it 'returns an ActiveEncode::Base object' do
+      expect(subject.class).to be ActiveEncode::Base
+    end
     its(:id) { is_expected.to eq 'running-id' }
     it { is_expected.to be_running }
     its(:percent_complete) { is_expected.to be > 0 }

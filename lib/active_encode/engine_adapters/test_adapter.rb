@@ -5,8 +5,8 @@ module ActiveEncode
         @encodes = {}
       end
 
-      def create(encode)
-        new_encode = encode.dup
+      def create(input_url, options = {})
+        new_encode = ActiveEncode::Base.new(input_url, options)
         new_encode.id = SecureRandom.uuid
         new_encode.state = :running
         new_encode.created_at = Time.now
@@ -16,23 +16,21 @@ module ActiveEncode
       end
 
       def find(id, _opts = {})
-        new_encode = @encodes[id].dup
+        new_encode = @encodes[id]
         # Update the updated_at time to simulate changes
         new_encode.updated_at = Time.now
-        @encodes[id] = new_encode
+        new_encode
+      end
+
+      def cancel(id)
+        new_encode = @encodes[id]
+        new_encode.state = :cancelled
+        new_encode.updated_at = Time.now
         new_encode
       end
 
       def list(*_filters)
         raise NotImplementedError
-      end
-
-      def cancel(encode)
-        new_encode = @encodes[encode.id].dup
-        new_encode.state = :cancelled
-        new_encode.updated_at = Time.now
-        @encodes[encode.id] = new_encode
-        new_encode
       end
 
       def purge(encode)

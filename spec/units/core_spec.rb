@@ -11,6 +11,18 @@ describe ActiveEncode::Core do
 
   let(:encode_class) { ActiveEncode::Base }
 
+  describe 'attributes' do
+    subject { encode_class.new(nil) }
+
+    it { is_expected.to respond_to(:id, :input, :output, :options, :percent_complete, :current_operations) }
+
+    context 'with an ActiveEncode::Base subclass' do
+      let(:encode_class) { CustomEncode }
+
+      it { is_expected.to respond_to(:id, :input, :output, :options, :percent_complete, :current_operations) }
+    end
+  end
+
   describe 'find' do
     let(:id) { encode_class.create(nil).id }
     subject { encode_class.find(id) }
@@ -32,7 +44,7 @@ describe ActiveEncode::Core do
       it { is_expected.to be_a encode_class }
       its(:id) { is_expected.to eq id }
 
-      context 'casting', :skip do
+      context 'casting' do
         let(:id) { ActiveEncode::Base.create(nil).id }
 
         it { is_expected.to be_a encode_class }

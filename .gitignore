@@ -15,5 +15,4 @@ mkmf.log
 coverage
 .ruby-version
 .byebug_history
-
 .internal_test_app

@@ -1,10 +1,29 @@
 require 'spec_helper'
 
 describe ActiveEncode::Status do
-  subject { ActiveEncode::Base.new(nil) }
+  before do
+    class CustomEncode < ActiveEncode::Base
+    end
+  end
+   after do
+    Object.send(:remove_const, :CustomEncode)
+  end
+
+  let(:encode_class) { ActiveEncode::Base }
+
+  subject { encode_class.new(nil) }
+
+  describe 'attributes' do
+    it { is_expected.to respond_to(:state, :errors, :created_at, :updated_at) }
+
+    context 'with an ActiveEncode::Base subclass' do
+      let(:encode_class) { CustomEncode }
+
+      it { is_expected.to respond_to(:state, :errors, :created_at, :updated_at) }
+    end
+  end
 
   context 'new object' do
-    subject { ActiveEncode::Base.new(nil) }
     it { is_expected.not_to be_created }
     it { is_expected.not_to be_running }
     it { is_expected.not_to be_cancelled }

@@ -9,22 +9,22 @@ module ActiveEncode
       end
 
       # @param [ActiveEncode::Base] encode
-      def create(encode)
-        response = Shingoncoder::Job.create(input: encode.input)
-        build_encode(job_details(response.body["id"]), encode.class)
+      def create(input_url, options = {})
+        response = Shingoncoder::Job.create(input: input_url)
+        build_encode(job_details(response.body["id"]))
       end
 
       # @param [Fixnum] id
       # @param [Hash] opts
       # @option opts :cast the class to cast the encoding job to.
       def find(id, opts = {})
-        build_encode(job_details(id), opts[:cast])
+        build_encode(job_details(id))
       end
 
       # @param [ActiveEncode::Base] encode
-      def cancel(encode)
-        response = Shingoncoder::Job.cancel(encode.id)
-        build_encode(job_details(encode.id), encode.class) if response.success?
+      def cancel(id)
+        response = Shingoncoder::Job.cancel(id)
+        build_encode(job_details(id)) if response.success?
       end
 
       private
@@ -42,9 +42,9 @@ module ActiveEncode
 
         # @param [Shingoncoder::Response] job_details
         # @param [Class] cast the class of object to instantiate and return
-        def build_encode(job_details, cast)
+        def build_encode(job_details)
           return nil if job_details.nil?
-          encode = cast.new(convert_input(job_details), convert_options(job_details))
+          encode = ActiveEncode::Base.new(convert_input(job_details), convert_options(job_details))
           encode.id = job_details.body["job"]["id"].to_s
           encode.state = convert_state(job_details)
           progress = job_progress(encode.id)

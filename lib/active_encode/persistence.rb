@@ -34,7 +34,7 @@ module ActiveEncode
           global_id: encode.to_global_id.to_s,
           state: encode.state,
           adapter: encode.class.engine_adapter.class.name,
-          title: encode.input.to_s,
+          title: encode.input.url.to_s,
           # FIXME: Need to ensure that these values come through or else validations will fail
           created_at: encode.created_at,
           updated_at: encode.updated_at,

@@ -1,23 +1,23 @@
 module ActiveEncode
   module EngineAdapters
     class ZencoderAdapter
-      # TODO: add a stub for an input helper (supplied by an initializer) that transforms encode.input into a zencoder accepted url
-      def create(encode)
-        response = Zencoder::Job.create(input: encode.input.to_s)
-        build_encode(get_job_details(response.body["id"]), encode.class)
+      # TODO: add a stub for an input helper (supplied by an initializer) that transforms encode.input.url into a zencoder accepted url
+      def create(input_url, options = {})
+        response = Zencoder::Job.create(input: input_url.to_s)
+        build_encode(get_job_details(response.body["id"]))
       end
 
       def find(id, opts = {})
-        build_encode(get_job_details(id), opts[:cast])
+        build_encode(get_job_details(id))
       end
 
       def list(*_filters)
         raise NotImplementedError
       end
 
-      def cancel(encode)
-        response = Zencoder::Job.cancel(encode.id)
-        build_encode(get_job_details(encode.id), encode.class) if response.success?
+      def cancel(id)
+        response = Zencoder::Job.cancel(id)
+        build_encode(get_job_details(id)) if response.success?
       end
 
       def purge(_encode)
@@ -38,9 +38,9 @@ module ActiveEncode
           Zencoder::Job.progress(job_id)
         end
 
-        def build_encode(job_details, cast)
+        def build_encode(job_details)
           return nil if job_details.nil?
-          encode = cast.new(convert_input(job_details), convert_options(job_details))
+          encode = ActiveEncode::Base.new(convert_input(job_details), convert_options(job_details))
           encode.id = job_details.body["job"]["id"].to_s
           encode.state = convert_state(job_details)
           job_progress = get_job_progress(encode.id)
