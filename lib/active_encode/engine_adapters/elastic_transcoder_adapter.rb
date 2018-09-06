@@ -112,7 +112,8 @@ module ActiveEncode
             output.id = o.id
             output.label = o.key.split("/", 2).first
             output.url = job.output_key_prefix + o.key
-            # extras = { id: o.id, url: url, label: label }
+            # TODO: If HLS is considered distinct from this output then it should be a different output
+            # TODO: If HLS is not considered distinct from this output then this should be handled by a method on a ActiveEncode::Base subclass or consuming client
             # extras[:hls_url] = url + ".m3u8" if url.include?("/hls/") # TODO: find a better way to signal hls
             tech_md = convert_tech_metadata(o)
             [:width, :height, :frame_rate, :duration, :checksum, :audio_codec, :video_codec,
