@@ -19,37 +19,9 @@ module ActiveEncode
         build_encode(fetch_workflow(id))
       end
 
-      def list(*_filters)
-        raise NotImplementedError # TODO: implement this
-      end
-
       def cancel(id)
         workflow_om = Rubyhorn.client.stop(id)
         build_encode(get_workflow(workflow_om))
-      end
-
-      def purge(encode)
-        workflow_om = begin
-                        Rubyhorn.client.stop(encode.id)
-                      rescue
-                        nil
-                      end
-        workflow_om ||= begin
-                          Rubyhorn.client.get_stopped_workflow(encode.id)
-                        rescue
-                          nil
-                        end
-        purged_workflow = purge_outputs(get_workflow(workflow_om))
-        # Rubyhorn.client.delete_instance(encode.id) #Delete is not working so workflow instances can always be retrieved later!
-        build_encode(purged_workflow)
-      end
-
-      def remove_output(encode, output_id)
-        workflow = fetch_workflow(encode.id)
-        output = encode.output.find { |o| o[:id] == output_id }
-        return if output.nil?
-        purge_output(workflow, output_id)
-        output
       end
 
       private
@@ -81,17 +53,28 @@ module ActiveEncode
 
         def build_encode(workflow)
           return nil if workflow.nil?
-          encode = ActiveEncode::Base.new(convert_input(workflow), convert_options(workflow))
+          input_url = convert_input(workflow)
+          input_url = get_workflow_title(workflow) if input_url.blank?
+          encode = ActiveEncode::Base.new(input_url, convert_options(workflow))
           encode.id = convert_id(workflow)
           encode.state = convert_state(workflow)
           encode.current_operations = convert_current_operations(workflow)
           encode.percent_complete = calculate_percent_complete(workflow)
           encode.created_at = convert_created_at(workflow)
-          encode.updated_at = convert_updated_at(workflow)
-          encode.finished_at = convert_finished_at(workflow) unless encode.running?
+          encode.updated_at = convert_updated_at(workflow) || encode.created_at
           encode.output = convert_output(workflow, encode.options)
           encode.errors = convert_errors(workflow)
-          encode.tech_metadata = convert_tech_metadata(workflow)
+
+          encode.input.id = "presenter/source"
+          encode.input.state = encode.state
+          encode.input.created_at = encode.created_at
+          encode.input.updated_at = encode.updated_at
+          tech_md = convert_tech_metadata(workflow)
+          [:width, :height, :duration, :frame_rate, :checksum, :audio_codec, :video_codec,
+           :audio_bitrate, :video_bitrate].each do |field|
+            encode.input.send("#{field}=", tech_md[field])
+          end
+
           encode
         end
 
@@ -99,8 +82,12 @@ module ActiveEncode
           workflow.attribute('id').to_s
         end
 
+        def get_workflow_state(workflow)
+          workflow.attribute('state').to_s
+        end
+
         def convert_state(workflow)
-          case workflow.attribute('state').to_s
+          case get_workflow_state(workflow)
           when "INSTANTIATED", "RUNNING" # Should there be a queued state?
             :running
           when "STOPPED"
@@ -114,7 +101,11 @@ module ActiveEncode
 
         def convert_input(workflow)
           # Need to do anything else since this is a MH url? and this disappears when a workflow is cleaned up
-          workflow.xpath('mediapackage/media/track[@type="presenter/source"]/url/text()').to_s
+          workflow.xpath('mediapackage/media/track[@type="presenter/source"]/url/text()').to_s.strip
+        end
+
+        def get_workflow_title(workflow)
+          workflow.xpath('mediapackage/title/text()').to_s.strip
         end
 
         def convert_tech_metadata(workflow)
@@ -122,17 +113,29 @@ module ActiveEncode
         end
 
         def convert_output(workflow, options)
-          output = []
+          outputs = []
           workflow.xpath('//track[@type="presenter/delivery" and tags/tag[text()="streaming"]]').each do |track|
-            label = track.xpath('tags/tag[starts-with(text(),"quality")]/text()').to_s
-            url = track.at("url/text()").to_s
-            if url.start_with? "rtmp"
-              url = File.join(options[:stream_base], MatterhornRtmpUrl.parse(url).to_path) if options[:stream_base]
+            output = ActiveEncode::Output.new
+            output.label = track.xpath('tags/tag[starts-with(text(),"quality")]/text()').to_s
+            output.url = track.at("url/text()").to_s
+            if output.url.start_with? "rtmp"
+              output.url = File.join(options[:stream_base], MatterhornRtmpUrl.parse(output.url).to_path) if options[:stream_base]
             end
-            track_id = track.at("@id").to_s
-            output << convert_track_metadata(track).merge(id: track_id, url: url, label: label)
+            output.id = track.at("@id").to_s
+
+            tech_md = convert_track_metadata(track)
+            [:width, :height, :frame_rate, :duration, :checksum, :audio_codec, :video_codec,
+             :audio_bitrate, :video_bitrate, :file_size].each do |field|
+              output.send("#{field}=", tech_md[field])
+            end
+
+            output.state = :completed
+            output.created_at = convert_output_created_at(track, workflow)
+            output.updated_at = convert_output_updated_at(track, workflow)
+
+            outputs << output
           end
-          output
+          outputs
         end
 
         def convert_current_operations(workflow)
@@ -154,9 +157,16 @@ module ActiveEncode
           updated_at.present? ? Time.strptime(updated_at, "%Q") : nil
         end
 
-        def convert_finished_at(workflow)
-          finished_at = workflow.xpath('//operation[@state!="INSTANTIATED"]/completed/text()').last.to_s
-          finished_at.present? ? Time.strptime(finished_at, "%Q") : nil
+        def convert_output_created_at(track, workflow)
+          quality = track.xpath('tags/tag[starts-with(text(),"quality")]/text()').to_s
+          created_at = workflow.xpath("//operation[@id=\"compose\"][configurations/configuration[@key=\"target-tags\" and contains(text(), \"#{quality}\")]]/started/text()").to_s
+          created_at.present? ? Time.at(created_at.to_i / 1000.0) : nil
+        end
+
+        def convert_output_updated_at(track, workflow)
+          quality = track.xpath('tags/tag[starts-with(text(),"quality")]/text()').to_s
+          updated_at = workflow.xpath("//operation[@id=\"compose\"][configurations/configuration[@key=\"target-tags\" and contains(text(), \"#{quality}\")]]/completed/text()").to_s
+          updated_at.present? ? Time.at(updated_at.to_i / 1000.0) : nil
         end
 
         def convert_options(workflow)
@@ -169,20 +179,20 @@ module ActiveEncode
         def convert_track_metadata(track)
           return {} if track.nil?
           metadata = {}
-          metadata[:mime_type] = track.at("mimetype/text()").to_s if track.at('mimetype')
-          metadata[:checksum] = track.at("checksum/text()").to_s if track.at('checksum')
-          metadata[:duration] = track.at("duration/text()").to_s if track.at('duration')
+          # metadata[:mime_type] = track.at("mimetype/text()").to_s if track.at('mimetype')
+          metadata[:checksum] = track.at("checksum/text()").to_s.strip if track.at('checksum')
+          metadata[:duration] = track.at("duration/text()").to_s.to_i if track.at('duration')
           if track.at('audio')
             metadata[:audio_codec] = track.at("audio/encoder/@type").to_s
             metadata[:audio_channels] = track.at("audio/channels/text()").to_s
-            metadata[:audio_bitrate] = track.at("audio/bitrate/text()").to_s
+            metadata[:audio_bitrate] = track.at("audio/bitrate/text()").to_s.to_f
           end
           if track.at('video')
             metadata[:video_codec] = track.at("video/encoder/@type").to_s
-            metadata[:video_bitrate] = track.at("video/bitrate/text()").to_s
-            metadata[:video_framerate] = track.at("video/framerate/text()").to_s
-            metadata[:width] = track.at("video/resolution/text()").to_s.split('x')[0]
-            metadata[:height] = track.at("video/resolution/text()").to_s.split('x')[1]
+            metadata[:video_bitrate] = track.at("video/bitrate/text()").to_s.to_f
+            metadata[:frame_rate] = track.at("video/framerate/text()").to_s.to_f
+            metadata[:width] = track.at("video/resolution/text()").to_s.split('x')[0].to_i
+            metadata[:height] = track.at("video/resolution/text()").to_s.split('x')[1].to_i
           end
           metadata
         end
@@ -192,45 +202,6 @@ module ActiveEncode
           first_node = mp.first
           first_node['xmlns'] = 'http://mediapackage.opencastproject.org'
           mp
-        end
-
-        def purge_outputs(workflow)
-          # Delete hls tracks first since the next, more general xpath matches them as well
-          workflow.xpath('//track[@type="presenter/delivery" and tags/tag[text()="streaming"] and tags/tag[text()="hls"]]/@id').map(&:to_s).each do |hls_track_id|
-            begin
-              purge_output(workflow, hls_track_id)
-            rescue
-              nil
-            end
-          end
-          workflow.xpath('//track[@type="presenter/delivery" and tags/tag[text()="streaming"]]/@id').map(&:to_s).each do |track_id|
-            begin
-              purge_output(workflow, track_id)
-            rescue
-              nil
-            end
-          end
-
-          workflow
-        end
-
-        def purge_output(workflow, track_id)
-          media_package = get_media_package(workflow)
-          hls = workflow.xpath("//track[@id='#{track_id}']/tags/tag[text()='hls']").present?
-          job_url = if hls
-                      Rubyhorn.client.delete_hls_track(media_package, track_id)
-                    else
-                      Rubyhorn.client.delete_track(media_package, track_id)
-                    end
-          sleep(0.1)
-          job_status = Nokogiri::XML(Rubyhorn.client.get(URI(job_url).path)).root.attribute("status").value
-          # FIXME: have this return a boolean based upon result of operation
-          case job_status
-          when "FINISHED"
-            workflow.at_xpath("//track[@id=\"#{track_id}\"]").remove
-          when "FAILED"
-            workflow.at_xpath('//errors').add_child("<error>Output not purged: #{mp.at_xpath("//*[@id=\"#{track_id}\"]/tags/tag[starts-with(text(),\"quality\")]/text()")}</error>")
-          end
         end
 
         def calculate_percent_complete(workflow)

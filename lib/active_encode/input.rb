@@ -5,5 +5,11 @@ module ActiveEncode
 
     attr_accessor :id
     attr_accessor :url
+
+    def valid?
+      id.present? && url.present? &&
+      created_at.is_a?(Time) && updated_at.is_a?(Time) &&
+      updated_at >= created_at
+    end
   end
 end

@@ -90,38 +90,47 @@ describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
     ActiveEncode::Base.find('failed-id')
   end
 
-  let(:completed_output) { [{id: "2", url: "elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a", hls_url: "elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a.m3u8", label: "hls0400k", :width=>400, :height=>224, :video_framerate=>"25", :file_size=>6901104, :duration=>"117353", :segment_duration=> "2.0"}] }
-  let(:completed_tech_metadata) { {:width=>1280, :height=>720, :video_framerate=>"25", :file_size=>21069678, :duration=>"117312"} }
+  let(:completed_output) { [{ id: "2", url: "elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a", label: "hls0400k", :width=>400, :height=>224, :frame_rate=>25, :file_size=>6901104, :duration=>117353 }] }
+  let(:completed_tech_metadata) { { :width=>1280, :height=>720, :frame_rate=>25, :file_size=>21069678, :duration=>117312 } }
   let(:failed_tech_metadata) { {} }
 
   it_behaves_like "an ActiveEncode::EngineAdapter"
 
   describe "#create" do
-    let(:create_output) { [{id: "2", url: "elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a", hls_url: "elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a.m3u8", label: "hls0400k", segment_duration: "2.0"}] }
+    let(:create_output) { [{ id: "2", url: "elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a", label: "hls0400k" }] }
 
     subject { created_job }
 
     it { is_expected.to be_running }
-    its(:output) { is_expected.to eq create_output }
     its(:current_operations) { is_expected.to be_empty }
+
+    it 'output has technical metadata' do
+      subject.output.each do |output|
+        expected_output = create_output.find {|expected_out| expected_out[:id] == output.id }
+        expect(output.as_json.symbolize_keys).to include expected_output
+      end
+    end
   end
 
   describe "#find" do
     context "a running encode" do
-      let(:running_output) { [{id: "2", url: "elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a", hls_url: "elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a.m3u8", label: "hls0400k", :segment_duration=>"2.0"}] }
-      let(:running_tech_metadata) { {:width=>1280, :height=>720, :video_framerate=>"25", :file_size=>21069678, :duration=>"117312"} }
+      let(:running_output) { [{ id: "2", url: "elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a", label: "hls0400k" }] }
+      let(:running_tech_metadata) { {:width=>1280, :height=>720, :frame_rate=>25, :file_size=>21069678, :duration=>117312} }
 
       subject { running_job }
 
-      its(:output) { is_expected.to eq running_output }
       its(:current_operations) { is_expected.to be_empty }
-      its(:tech_metadata) { is_expected.to eq running_tech_metadata }
-    end
 
-    context "a canceled encode" do
-      subject { canceled_job }
+      it 'input has technical metadata' do
+        expect(subject.input.as_json.symbolize_keys).to include running_tech_metadata
+      end
 
-      its(:updated_at) { is_expected.to be_nil }
+      it 'output has technical metadata' do
+        subject.output.each do |output|
+          expected_output = running_output.find {|expected_out| expected_out[:id] == output.id }
+          expect(output.as_json.symbolize_keys).to include expected_output
+        end
+      end
     end
   end
 end

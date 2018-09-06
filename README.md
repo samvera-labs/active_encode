@@ -52,20 +52,7 @@ encode.cancel!
 encode.cancelled?  # true
 ```
 
-> `#purge!` and `#remove_output!` and the following documentation have been deprecated and will be removed in ActiveEncode 0.3.
-
-If the encoding job should be deleted, call purge:
-```ruby
-encode.purge!
-```
-
-Purge will attempt to remove all outputs that have been generated.  It is also possible to remove only a single output using its id:
-
-```ruby
-encode.remove_output! 'track-9'
-```
-
-An encoding job is meant to be the record of the work of the encoding engine and not the current state of the outputs.  Therefore removing outputs will not be reflected in the encoding job.
+An encoding job is meant to be the record of the work of the encoding engine and not the current state of the outputs.  Therefore removed outputs will not be reflected in the encoding job.
 
 ### Custom jobs
 
@@ -93,8 +80,6 @@ Engine adapters are shims between ActiveEncode and the back end encoding service
 | AWS Elastic Transcoder   |    X   |  X   |   X    |        |                  |
 | Zencoder                 |    X   |  X   |   X    |        |                  |
 | Matterhorn               |    X   |  X   |   X    |   X    |         X        |
-
-> The Inline and Shingoncoder adapters are deprecated and will be removed in ActiveEncode 0.3.
 
 ## Contributing
 

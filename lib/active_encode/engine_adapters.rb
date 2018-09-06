@@ -8,11 +8,8 @@ module ActiveEncode
   module EngineAdapters
     extend ActiveSupport::Autoload
 
-    autoload :ActiveJobAdapter
     autoload :MatterhornAdapter
-    autoload :InlineAdapter
     autoload :ZencoderAdapter
-    autoload :ShingoncoderAdapter
     autoload :ElasticTranscoderAdapter
     autoload :TestAdapter
 

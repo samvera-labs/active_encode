@@ -11,9 +11,6 @@ module ActiveEncode
 
       attr_accessor :created_at
       attr_accessor :updated_at
-
-      # @deprecated
-      attr_accessor :finished_at
     end
 
     def cancelled?

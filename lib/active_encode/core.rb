@@ -22,9 +22,6 @@ module ActiveEncode
 
       attr_accessor :current_operations
       attr_accessor :percent_complete
-
-      # @deprecated
-      attr_accessor :tech_metadata
     end
 
     module ClassMethods
@@ -43,11 +40,6 @@ module ActiveEncode
         encode.run_callbacks :find do
           encode.send(:merge!, engine_adapter.find(id))
         end
-      end
-
-      def list(*args)
-        ActiveSupport::Deprecation.warn("#list will be removed without replacement in ActiveEncode 0.3")
-        engine_adapter.list(args)
       end
     end
 
@@ -69,18 +61,6 @@ module ActiveEncode
       end
     end
 
-    def purge!
-      ActiveSupport::Deprecation.warn("#purge! will be removed without replacement in ActiveEncode 0.3")
-      run_callbacks :purge do
-        self.class.engine_adapter.purge self
-      end
-    end
-
-    def remove_output!(output_id)
-      ActiveSupport::Deprecation.warn("#remove_output will be removed without replacement in ActiveEncode 0.3")
-      self.class.engine_adapter.remove_output self, output_id
-    end
-
     def reload
       run_callbacks :reload do
         merge!(self.class.engine_adapter.find(id))
@@ -89,15 +69,6 @@ module ActiveEncode
 
     def created?
       !id.nil?
-    end
-
-    # @deprecated
-    def tech_metadata
-      metadata = {}
-      [:width, :height, :frame_rate, :duration, :file_size,
-       :audio_codec, :video_codec, :audio_bitrate, :video_bitrate, :checksum].each do |key|
-        metadata[key] = input.send(key)
-      end
     end
 
     protected
@@ -113,10 +84,6 @@ module ActiveEncode
         @updated_at = encode.updated_at
         @current_operations = encode.current_operations
         @percent_complete = encode.percent_complete
-
-        # deprecated
-        @tech_metadata = encode.tech_metadata
-        @finished_at = encode.finished_at
 
         self
       end
