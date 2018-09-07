@@ -48,37 +48,36 @@ module ActiveEncode
         encode.id = id
         encode.errors = []
         encode.current_operations = []
-
-        # Read progress data from file
-        progress_data = File.read working_path("progress", id)
-        encode.percent_complete = calculate_percent_complete progress_data
-
-        pid = File.read working_path("pid", id)
-        if running? pid
-          encode.state = :running
-          encode.current_operations = ["transcoding"]
-        else
-          error = File.read working_path("error.log", id)
-          if error
-            encode.state = :failed
-            encode.errors = [error]
-          elsif encode.percent_complete < 100
-            encode.state = :canceled
-          elsif progress_ended? progress_data
-            encode.state = :completed
-          end
-        end
-
         encode.created_at = File.mtime working_path("pid", id)
         encode.updated_at = File.mtime(working_path("progress", id))
 
+        pid = File.read(working_path("pid", id)).remove("\n")
         encode.input.id = pid
         encode.input.url = "N/A"
         encode.input.created_at = encode.created_at
         encode.input.updated_at = encode.updated_at
         encode.input.assign_tech_metadata get_tech_metadata(working_path("input_metadata", encode.id))
 
-        if encode.state == :completed
+        # Read progress data from file
+        progress_data = File.read working_path("progress", id)
+        encode.percent_complete = calculate_percent_complete encode, progress_data
+
+        if running? pid
+          encode.state = :running
+          encode.current_operations = ["transcoding"]
+        else
+          error = File.read working_path("error.log", id)
+          if error.present?
+            encode.state = :failed
+            encode.errors = [error]
+          elsif progress_ended? progress_data
+            encode.state = :completed
+          elsif encode.percent_complete < 100
+            encode.state = :canceled
+          end
+        end
+
+        if encode.completed?
           output = ActiveEncode::Output.new
           output.id = pid
           output.url = "file://#{File.absolute_path(working_path('low.mp4', id))}"
@@ -94,7 +93,7 @@ module ActiveEncode
         else
           encode.output = []
         end
-        
+
         encode
       end
 
@@ -110,15 +109,15 @@ private
 
       def running?(pid)
         begin
-          Process.getpgid pid
+          Process.getpgid pid.to_i
           true
         rescue Errno::ESRCH
           false
         end
       end
 
-      def calculate_percent_complete data
-        progress_value("out_time_ms=", data).to_i
+      def calculate_percent_complete encode, data
+        (progress_value("out_time_ms=", data).to_i * 0.0001 / encode.input.duration).round
       end
 
       def progress_ended? data
@@ -127,23 +126,32 @@ private
 
       def progress_value key, data
         ri = data.rindex(key) + key.length
-        data[ri..data.index("\n", ri)-2]
+        data[ri..data.index("\n", ri)-1]
       end
 
       def get_tech_metadata file_path
         doc = Nokogiri::XML File.read(file_path)
         doc.remove_namespaces!
-
-        { width: doc.xpath('//Width/text()').first.text.to_f,
-          height: doc.xpath('//Height/text()').first.text.to_f,
-          frame_rate: doc.xpath('//FrameRate/text()').first.text.to_f,
-          duration: doc.xpath('//Duration/text()').first.text.to_f,
-          file_size: doc.xpath('//FileSize/text()').first.text.to_i,
+        # byebug
+        { width: get_xpath_text(doc, '//Width/text()', :to_f),
+          height: get_xpath_text(doc, '//Height/text()', :to_f),
+          frame_rate: get_xpath_text(doc, '//FrameRate/text()', :to_f),
+          duration: get_xpath_text(doc, '//Duration/text()', :to_f),
+          file_size: get_xpath_text(doc, '//FileSize/text()', :to_i),
         #   checksum: doc.xpath('//Duration/text()').first.text.to_f,
-          audio_codec: doc.xpath('//track[@type="Audio"]/CodecID/text()').first.text.to_i,
-          audio_bitrate: doc.xpath('//track[@type="Audio"]/BitRate/text()').first.text.to_i,
-          video_codec: doc.xpath('//track[@type="Video"]/CodecID/text()').first.text.to_i,
-          video_bitrate: doc.xpath('//track[@type="Video"]/BitRate/text()').first.text.to_i }
+          audio_codec: get_xpath_text(doc, '//track[@type="Audio"]/CodecID/text()', :to_i),
+          audio_bitrate: get_xpath_text(doc, '//track[@type="Audio"]/BitRate/text()', :to_i),
+          video_codec: get_xpath_text(doc, '//track[@type="Video"]/CodecID/text()', :to_i),
+          video_bitrate: get_xpath_text(doc, '//track[@type="Video"]/BitRate/text()', :to_i) }
+      end
+
+      def get_xpath_text doc, xpath, cast_method
+        # byebug
+        if doc.xpath(xpath).first
+          doc.xpath(xpath).first.text.send(cast_method)
+        else
+          nil
+        end
       end
     end
   end

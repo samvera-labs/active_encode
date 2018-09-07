@@ -70,33 +70,33 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
         end
       end
     end
-    #
-    # context "a cancelled encode" do
-    #   subject { canceled_job }
-    #
-    #   it 'returns an ActiveEncode::Base object' do
-    #     expect(subject.class).to be ActiveEncode::Base
-    #   end
-    #   its(:id) { is_expected.to eq 'cancelled-id' }
-    #   it { is_expected.to be_cancelled }
-    #   its(:percent_complete) { is_expected.to be > 0 }
-    #   its(:errors) { is_expected.to be_empty }
-    #   its(:created_at) { is_expected.to be_kind_of Time }
-    #   its(:updated_at) { is_expected.to be >= subject.created_at }
-    #
-    #   it 'input is a valid ActiveEncode::Input object' do
-    #     expect(subject.input).to be_a ActiveEncode::Input
-    #     expect(subject.input).to be_valid
-    #   end
-    #
-    #   it 'output has only valid ActiveEncode::Output objects' do
-    #     expect(subject.output).to be_a Array
-    #     subject.output.each do |out|
-    #       expect(out).to be_a ActiveEncode::Output
-    #       expect(out).to be_valid
-    #     end
-    #   end
-    # end
+    
+    context "a cancelled encode" do
+      subject { canceled_job }
+
+      it 'returns an ActiveEncode::Base object' do
+        expect(subject.class).to be ActiveEncode::Base
+      end
+      its(:id) { is_expected.to eq 'cancelled-id' }
+      it { is_expected.to be_cancelled }
+      its(:percent_complete) { is_expected.to be > 0 }
+      its(:errors) { is_expected.to be_empty }
+      its(:created_at) { is_expected.to be_kind_of Time }
+      its(:updated_at) { is_expected.to be >= subject.created_at }
+
+      it 'input is a valid ActiveEncode::Input object' do
+        expect(subject.input).to be_a ActiveEncode::Input
+        expect(subject.input).to be_valid
+      end
+
+      it 'output has only valid ActiveEncode::Output objects' do
+        expect(subject.output).to be_a Array
+        subject.output.each do |out|
+          expect(out).to be_a ActiveEncode::Output
+          expect(out).to be_valid
+        end
+      end
+    end
 
     context "a completed encode" do
       subject { completed_job }

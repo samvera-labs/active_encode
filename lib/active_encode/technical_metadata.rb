@@ -22,5 +22,12 @@ module ActiveEncode
       attr_accessor :audio_bitrate
       attr_accessor :video_bitrate
     end
+
+    # Assign values from a Hash
+    def assign_tech_metadata tech_md
+      tech_md.each_key do |field|
+       self.send("#{field}=", tech_md[field])
+      end
+    end
   end
 end
