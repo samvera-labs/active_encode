@@ -70,7 +70,7 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
         end
       end
     end
-    
+
     context "a cancelled encode" do
       subject { canceled_job }
 
@@ -136,89 +136,89 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       end
     end
 
-    # context "a failed encode" do
-    #   subject { failed_job }
-    #
-    #   it 'returns an ActiveEncode::Base object' do
-    #     expect(subject.class).to be ActiveEncode::Base
-    #   end
-    #   its(:id) { is_expected.to eq 'failed-id' }
-    #   it { is_expected.to be_failed }
-    #   its(:percent_complete) { is_expected.to be > 0 }
-    #   its(:errors) { is_expected.not_to be_empty }
-    #   its(:created_at) { is_expected.to be_kind_of Time }
-    #   its(:updated_at) { is_expected.to be > subject.created_at }
-    #
-    #   it 'input is a valid ActiveEncode::Input object' do
-    #     expect(subject.input).to be_a ActiveEncode::Input
-    #     expect(subject.input).to be_valid
-    #   end
-    #
-    #   it 'input has technical metadata' do
-    #     expect(subject.input.as_json.symbolize_keys).to include failed_tech_metadata
-    #   end
-    #
-    #   it 'output has only valid ActiveEncode::Output objects' do
-    #     expect(subject.output).to be_a Array
-    #     subject.output.each do |out|
-    #       expect(out).to be_a ActiveEncode::Output
-    #       expect(out).to be_valid
-    #     end
-    #   end
-    # end
+    context "a failed encode" do
+      subject { failed_job }
+
+      it 'returns an ActiveEncode::Base object' do
+        expect(subject.class).to be ActiveEncode::Base
+      end
+      its(:id) { is_expected.to eq 'failed-id' }
+      it { is_expected.to be_failed }
+      its(:percent_complete) { is_expected.to be > 0 }
+      its(:errors) { is_expected.not_to be_empty }
+      its(:created_at) { is_expected.to be_kind_of Time }
+      its(:updated_at) { is_expected.to be > subject.created_at }
+
+      it 'input is a valid ActiveEncode::Input object' do
+        expect(subject.input).to be_a ActiveEncode::Input
+        expect(subject.input).to be_valid
+      end
+
+      it 'input has technical metadata' do
+        expect(subject.input.as_json.symbolize_keys).to include failed_tech_metadata
+      end
+
+      it 'output has only valid ActiveEncode::Output objects' do
+        expect(subject.output).to be_a Array
+        subject.output.each do |out|
+          expect(out).to be_a ActiveEncode::Output
+          expect(out).to be_valid
+        end
+      end
+    end
   end
 
-  # describe "#cancel!" do
-  #   subject { cancelling_job.cancel! }
-  #
-  #   it 'returns an ActiveEncode::Base object' do
-  #     expect(subject.class).to be ActiveEncode::Base
-  #   end
-  #   its(:id) { is_expected.to eq 'cancelled-id' }
-  #   it { is_expected.to be_cancelled }
-  #   its(:percent_complete) { is_expected.to be > 0 }
-  #   its(:errors) { is_expected.to be_empty }
-  #   its(:created_at) { is_expected.to be_kind_of Time }
-  #   its(:updated_at) { is_expected.to be >= subject.created_at }
-  #
-  #   it 'input is a valid ActiveEncode::Input object' do
-  #     expect(subject.input).to be_a ActiveEncode::Input
-  #     expect(subject.input).to be_valid
-  #   end
-  #
-  #   it 'output has only valid ActiveEncode::Output objects' do
-  #     expect(subject.output).to be_a Array
-  #     subject.output.each do |out|
-  #       expect(out).to be_a ActiveEncode::Output
-  #       expect(out).to be_valid
-  #     end
-  #   end
-  # end
-  #
-  # describe "reload" do
-  #   subject { running_job.reload }
-  #
-  #   it 'returns an ActiveEncode::Base object' do
-  #     expect(subject.class).to be ActiveEncode::Base
-  #   end
-  #   its(:id) { is_expected.to eq 'running-id' }
-  #   it { is_expected.to be_running }
-  #   its(:percent_complete) { is_expected.to be > 0 }
-  #   its(:errors) { is_expected.to be_empty }
-  #   its(:created_at) { is_expected.to be_kind_of Time }
-  #   its(:updated_at) { is_expected.to be > subject.created_at }
-  #
-  #   it 'input is a valid ActiveEncode::Input object' do
-  #     expect(subject.input).to be_a ActiveEncode::Input
-  #     expect(subject.input).to be_valid
-  #   end
-  #
-  #   it 'output has only valid ActiveEncode::Output objects' do
-  #     expect(subject.output).to be_a Array
-  #     subject.output.each do |out|
-  #       expect(out).to be_a ActiveEncode::Output
-  #       expect(out).to be_valid
-  #     end
-  #   end
-  # end
+  describe "#cancel!" do
+    subject { cancelling_job.cancel! }
+
+    it 'returns an ActiveEncode::Base object' do
+      expect(subject.class).to be ActiveEncode::Base
+    end
+    its(:id) { is_expected.to eq cancelling_job.id }
+    it { is_expected.to be_cancelled }
+    its(:percent_complete) { is_expected.to be > 0 }
+    its(:errors) { is_expected.to be_empty }
+    its(:created_at) { is_expected.to be_kind_of Time }
+    its(:updated_at) { is_expected.to be >= subject.created_at }
+
+    it 'input is a valid ActiveEncode::Input object' do
+      expect(subject.input).to be_a ActiveEncode::Input
+      expect(subject.input).to be_valid
+    end
+
+    it 'output has only valid ActiveEncode::Output objects' do
+      expect(subject.output).to be_a Array
+      subject.output.each do |out|
+        expect(out).to be_a ActiveEncode::Output
+        expect(out).to be_valid
+      end
+    end
+  end
+
+  describe "reload" do
+    subject { running_job.reload }
+
+    it 'returns an ActiveEncode::Base object' do
+      expect(subject.class).to be ActiveEncode::Base
+    end
+    its(:id) { is_expected.to eq 'running-id' }
+    it { is_expected.to be_running }
+    its(:percent_complete) { is_expected.to be > 0 }
+    its(:errors) { is_expected.to be_empty }
+    its(:created_at) { is_expected.to be_kind_of Time }
+    its(:updated_at) { is_expected.to be > subject.created_at }
+
+    it 'input is a valid ActiveEncode::Input object' do
+      expect(subject.input).to be_a ActiveEncode::Input
+      expect(subject.input).to be_valid
+    end
+
+    it 'output has only valid ActiveEncode::Output objects' do
+      expect(subject.output).to be_a Array
+      subject.output.each do |out|
+        expect(out).to be_a ActiveEncode::Output
+        expect(out).to be_valid
+      end
+    end
+  end
 end

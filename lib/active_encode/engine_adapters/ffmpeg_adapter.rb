@@ -28,7 +28,8 @@ module ActiveEncode
         new_encode.input.assign_tech_metadata get_tech_metadata(working_path("input_metadata", new_encode.id))
 
         # Run the ffmpeg command and save its pid
-        command = "ffmpeg -y -loglevel error -progress progress -i #{input_url} low.mp4 > error.log 2>&1 < /dev/null &"
+        # Output convention: -label.mp4
+        command = "ffmpeg -y -loglevel error -progress progress -i #{input_url} -s 640x480 low.mp4 -s 1280x720 medium.mp4 > error.log 2>&1"
         pid = Process.spawn(command)
         File.open(working_path("pid", new_encode.id), 'w') { |file| file.write pid }
         new_encode.input.id = pid
@@ -51,7 +52,7 @@ module ActiveEncode
         encode.created_at = File.mtime working_path("pid", id)
         encode.updated_at = File.mtime(working_path("progress", id))
 
-        pid = File.read(working_path("pid", id)).remove("\n")
+        pid = get_pid(id)
         encode.input.id = pid
         encode.input.url = "N/A"
         encode.input.created_at = encode.created_at
@@ -70,10 +71,10 @@ module ActiveEncode
           if error.present?
             encode.state = :failed
             encode.errors = [error]
-          elsif progress_ended? progress_data
+          elsif progress_ended?(progress_data) && encode.percent_complete == 100
             encode.state = :completed
           elsif encode.percent_complete < 100
-            encode.state = :canceled
+            encode.state = :cancelled
           end
         end
 
@@ -98,11 +99,18 @@ module ActiveEncode
       end
 
       # Cancel ongoing encode using pid file
-      def cancel(encode)
+      def cancel(id)
+        pid = get_pid(id)
+        Process.kill 'SIGTERM', pid.to_i
 
+        find id
       end
 
 private
+      def get_pid(id)
+        File.read(working_path("pid", id)).remove("\n")
+      end
+
       def working_path(path, id)
         File.join(WORK_DIR, id, path)
       end

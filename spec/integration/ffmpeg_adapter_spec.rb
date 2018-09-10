@@ -18,20 +18,17 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
   let(:created_job) { ActiveEncode::Base.create(file) }
   let(:running_job) do
     allow(Process).to receive(:getpgid).and_return 8888
-    prepare_files "running-id"
+    find_encode "running-id"
   end
-  let(:canceled_job) { ActiveEncode::Base.find('cancelled-id') }
-  let(:cancelling_job) { ActiveEncode::Base.find('running-id')}
-  let(:completed_job) do
-    prepare_files "completed-id"
+  let(:canceled_job) do
+    find_encode 'cancelled-id'
   end
-  let(:failed_job) { ActiveEncode::Base.find('failed-id') }
-  # let(:completed_tech_metadata) { [{ audio_bitrate: 72000, audio_codec: 0,
-  #   created_at: "2018-09-07T15:23:39.558-04:00", duration: 6.336,
-  #   file_size: 125403, frame_rate: 24.0,
-  #   id: "99999", label: "low",
-  #   :video_bitrate => 79302, :video_codec => 0, height: 110.0, :width => 200.0}] }
-
+  let(:cancelling_job) do
+    allow(Process).to receive(:kill).and_return(nil)
+    find_encode 'running-id'
+  end
+  let(:completed_job) { find_encode "completed-id" }
+  let(:failed_job) { find_encode 'failed-id' }
   let(:completed_tech_metadata) { {:audio_bitrate => 171030,
     :audio_codec => 0,
     :duration => 6.315,
@@ -44,14 +41,13 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
     :video_codec => 0,
     :width => 200.0
   } }
-
   let(:completed_output) { [{ id: "99999" }] }
   let(:failed_tech_metadata) { { } }
 
   it_behaves_like "an ActiveEncode::EngineAdapter"
 
-  # Precreate ffmpeg output directory and files
-  def prepare_files id
+  def find_encode id
+    # Precreate ffmpeg output directory and files
     FileUtils.copy_entry "spec/fixtures/ffmpeg/#{id}", "#{work_dir}/#{id}"
 
     # Simulate that progress is modified later than other files
@@ -80,11 +76,20 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
     end
   end
 
-  # describe "#find" do
-  #   subject { running_job }
-  #
-  #   it "creates a progress file" do
-  #     expect(File).to exist("#{work_dir}/#{subject.id}/progress.out")
-  #   end
-  # end
+  describe "#find" do
+    subject { running_job }
+
+    it "has a progress file" do
+      expect(File).to exist("#{work_dir}/#{subject.id}/progress")
+    end
+  end
+
+  describe "#cancel!" do
+    subject { running_job }
+
+    it "stops a running process" do
+      expect(Process).to receive(:kill).with('SIGTERM', running_job.input.id.to_i)
+      running_job.cancel!
+    end
+  end
 end
