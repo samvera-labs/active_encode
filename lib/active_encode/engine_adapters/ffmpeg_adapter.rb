@@ -30,7 +30,7 @@ module ActiveEncode
         new_encode.input.assign_tech_metadata get_tech_metadata(working_path("input_metadata", new_encode.id))
 
         # Run the ffmpeg command and save its pid
-        command = ffmpeg_command(input_url, options)
+        command = ffmpeg_command(new_encode, options)
         pid = Process.spawn(command)
         File.open(working_path("pid", new_encode.id), 'w') { |file| file.write pid }
         new_encode.input.id = pid
@@ -118,13 +118,14 @@ private
         outputs
       end
 
-      def ffmpeg_command(input_url, opts)
+      def ffmpeg_command(encode, opts)
+        input_url = encode.input.url
         output_opt = opts[:output].collect do |output|
           file_name = File.basename(input_url, File.extname(input_url))
           "-s #{output[:ffmpeg_opt]} file_name-#{output[:label]}.mp4"
         end.join(" ")
 
-        "ffmpeg -y -loglevel error -progress progress -i #{input_url} #{output_opt} > error.log 2>&1"
+        "ffmpeg -y -loglevel error -progress #{working_path("progress", encode.id)} -i #{input_url} #{output_opt} > #{working_path("error.log", encode.id)} 2>&1"
       end
 
       def get_pid(id)
