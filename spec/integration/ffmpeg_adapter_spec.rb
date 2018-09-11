@@ -14,7 +14,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
   end
 
   let!(:work_dir) { stub_const "ActiveEncode::EngineAdapters::FfmpegAdapter::WORK_DIR", @dir }
-  let(:file) { "file://#{File.absolute_path "spec/fixtures/Bars_512kb.mp4"}" }
+  let(:file) { "file://#{File.absolute_path "spec/fixtures/fireworks.mp4"}" }
   let(:created_job) do
     ActiveEncode::Base.create(file, { output: [{ label: "low", ffmpeg_opt: "640x480" }, { label: "high", ffmpeg_opt: "1280x720" }] })
   end
@@ -55,9 +55,10 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
     # Simulate that progress is modified later than other files
     sleep 0.1
     FileUtils.touch "#{work_dir}/#{id}/progress"
+    FileUtils.touch Dir.glob("#{work_dir}/#{id}/*.mp4")
 
     # # Stub out system calls
-    # allow(described_class).to receive(:`).and_return(1234)
+    allow_any_instance_of(ActiveEncode::EngineAdapters::FfmpegAdapter).to receive(:`).and_return(1234)
 
     ActiveEncode::Base.find(id)
   end

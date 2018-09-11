@@ -32,6 +32,7 @@ module ActiveEncode
         # Run the ffmpeg command and save its pid
         command = ffmpeg_command(new_encode, options)
         pid = Process.spawn(command)
+        # byebug
         File.open(working_path("pid", new_encode.id), 'w') { |file| file.write pid }
         new_encode.input.id = pid
 
@@ -146,7 +147,11 @@ private
       end
 
       def calculate_percent_complete encode, data
-        (progress_value("out_time_ms=", data).to_i * 0.0001 / encode.input.duration).round
+        if data.blank?
+          0
+        else
+          (progress_value("out_time_ms=", data).to_i * 0.0001 / encode.input.duration).round
+        end
       end
 
       def progress_ended? data
