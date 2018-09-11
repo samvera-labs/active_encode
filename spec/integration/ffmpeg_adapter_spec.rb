@@ -15,7 +15,9 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
 
   let!(:work_dir) { stub_const "ActiveEncode::EngineAdapters::FfmpegAdapter::WORK_DIR", @dir }
   let(:file) { "file://#{File.absolute_path "spec/fixtures/Bars_512kb.mp4"}" }
-  let(:created_job) { ActiveEncode::Base.create(file) }
+  let(:created_job) do
+    ActiveEncode::Base.create(file, { output: [{ label: "low", ffmpeg_opt: "640x480" }, { label: "high", ffmpeg_opt: "1280x720" }] })
+  end
   let(:running_job) do
     allow(Process).to receive(:getpgid).and_return 8888
     find_encode "running-id"

@@ -18,7 +18,9 @@ module ActiveEncode
 
         new_encode.input.url = input_url
         new_encode.input.created_at = new_encode.created_at
-        new_encode.input.updated_at = Time.new + 10
+        new_encode.input.updated_at = new_encode.created_at
+
+        new_encode.output = []
 
         # Create a working directory that holds all output files related to the encode
         FileUtils.mkdir_p working_path("", new_encode.id)
@@ -28,16 +30,13 @@ module ActiveEncode
         new_encode.input.assign_tech_metadata get_tech_metadata(working_path("input_metadata", new_encode.id))
 
         # Run the ffmpeg command and save its pid
-        # Output convention: -label.mp4
-        command = "ffmpeg -y -loglevel error -progress progress -i #{input_url} -s 640x480 low.mp4 -s 1280x720 medium.mp4 > error.log 2>&1"
+        command = ffmpeg_command(input_url, options)
         pid = Process.spawn(command)
         File.open(working_path("pid", new_encode.id), 'w') { |file| file.write pid }
         new_encode.input.id = pid
 
         # Prevent zombie process
         Process.detach(pid)
-
-        new_encode.output = []
 
         new_encode
       end
@@ -50,7 +49,7 @@ module ActiveEncode
         encode.errors = []
         encode.current_operations = []
         encode.created_at = File.mtime working_path("pid", id)
-        encode.updated_at = File.mtime(working_path("progress", id))
+        encode.updated_at = File.mtime working_path("progress", id)
 
         pid = get_pid(id)
         encode.input.id = pid
@@ -79,18 +78,7 @@ module ActiveEncode
         end
 
         if encode.completed?
-          output = ActiveEncode::Output.new
-          output.id = pid
-          output.url = "file://#{File.absolute_path(working_path('low.mp4', id))}"
-          output.label = "low"
-          output.created_at = encode.created_at
-          output.updated_at = File.mtime File.absolute_path(working_path('low.mp4', id))
-
-          # Extract technical metadata from output file
-          `mediainfo --Output=XML --LogFile=#{working_path("output_metadata", id)} #{output.url}`
-          output.assign_tech_metadata get_tech_metadata(working_path("output_metadata", id))
-
-          encode.output = [output]
+          encode.output = build_output encode
         else
           encode.output = []
         end
@@ -107,6 +95,38 @@ module ActiveEncode
       end
 
 private
+
+      def build_output encode
+        id = encode.id
+        outputs = []
+        Dir["#{File.absolute_path(working_path('', id))}/*.mp4"].each do |file_path|
+          output = ActiveEncode::Output.new
+          output.id = encode.input.id
+          output.url = "file://#{file_path}"
+          output.label = file_path[/(?!.*\-)(.*?)\.mp4/m, 1]
+          output.created_at = encode.created_at
+          output.updated_at = File.mtime file_path
+
+          # Extract technical metadata from output file
+          metadata_path = working_path("output_metadata-#{output.label}", id)
+          `mediainfo --Output=XML --LogFile=#{metadata_path} #{output.url}`
+          output.assign_tech_metadata get_tech_metadata(metadata_path)
+
+          outputs << output
+        end
+
+        outputs
+      end
+
+      def ffmpeg_command(input_url, opts)
+        output_opt = opts[:output].collect do |output|
+          file_name = File.basename(input_url, File.extname(input_url))
+          "-s #{output[:ffmpeg_opt]} file_name-#{output[:label]}.mp4"
+        end.join(" ")
+
+        "ffmpeg -y -loglevel error -progress progress -i #{input_url} #{output_opt} > error.log 2>&1"
+      end
+
       def get_pid(id)
         File.read(working_path("pid", id)).remove("\n")
       end
@@ -140,7 +160,6 @@ private
       def get_tech_metadata file_path
         doc = Nokogiri::XML File.read(file_path)
         doc.remove_namespaces!
-        # byebug
         { width: get_xpath_text(doc, '//Width/text()', :to_f),
           height: get_xpath_text(doc, '//Height/text()', :to_f),
           frame_rate: get_xpath_text(doc, '//FrameRate/text()', :to_f),
@@ -154,7 +173,6 @@ private
       end
 
       def get_xpath_text doc, xpath, cast_method
-        # byebug
         if doc.xpath(xpath).first
           doc.xpath(xpath).first.text.send(cast_method)
         else
