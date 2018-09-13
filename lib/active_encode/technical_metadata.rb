@@ -26,7 +26,7 @@ module ActiveEncode
     # Assign values from a Hash
     def assign_tech_metadata tech_md
       tech_md.each_key do |field|
-       self.send("#{field}=", tech_md[field])
+        self.send("#{field}=", tech_md[field]) if self.respond_to? field
       end
     end
   end

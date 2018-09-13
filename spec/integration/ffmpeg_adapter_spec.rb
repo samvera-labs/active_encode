@@ -32,15 +32,15 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
   let(:completed_job) { find_encode "completed-id" }
   let(:failed_job) { find_encode 'failed-id' }
   let(:completed_tech_metadata) { {:audio_bitrate => 171030,
-    :audio_codec => 0,
+    :audio_codec => 'mp4a-40-2',
     :duration => 6.315,
     :file_size => 199160,
     :frame_rate => 23.719,
     :height => 110.0,
     :id => "99999",
-    :url => "N/A",
+    :url => "/home/pdinh/Downloads/videoshort.mp4",
     :video_bitrate => 74477,
-    :video_codec => 0,
+    :video_codec => 'avc1',
     :width => 200.0
   } }
   let(:completed_output) { [{ id: "99999" }] }
@@ -70,12 +70,34 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       expect(File).to exist("#{work_dir}/#{subject.id}")
     end
 
-    it "has the input technical metadata in a file" do
-      expect(File.read("#{work_dir}/#{subject.id}/input_metadata")).not_to be_empty
+    context "input file exists" do
+      it "has the input technical metadata in a file" do
+        expect(File.read("#{work_dir}/#{subject.id}/input_metadata")).not_to be_empty
+      end
+
+      it "has the pid in a file" do
+        expect(File.read("#{work_dir}/#{subject.id}/pid")).not_to be_empty
+      end
     end
 
-    it "has the pid in a file" do
-      expect(File.read("#{work_dir}/#{subject.id}/pid")).not_to be_empty
+    context "input file doesn't exist" do
+      let(:missing_file) { "file:///a_bogus_file.mp4" }
+      let(:missing_job) { ActiveEncode::Base.create(missing_file, { output: [{ label: "low", ffmpeg_opt: "640x480" }]}) }
+
+      it "returns the encode with correct error" do
+        expect(missing_job.errors).to include("#{missing_file} does not exist or is not accessible")
+        expect(missing_job.percent_complete).to be 1
+      end
+    end
+
+    context "input file is not media" do
+      let(:nonmedia_file) { "file://#{File.absolute_path "spec/integration/ffmpeg_adapter_spec.rb"}" }
+      let(:nonmedia_job) { ActiveEncode::Base.create(nonmedia_file, { output: [{ label: "low", ffmpeg_opt: "640x480" }]}) }
+
+      it "returns the encode with correct error" do
+        expect(nonmedia_job.errors).to include("Error inspecting input: #{nonmedia_file}")
+        expect(nonmedia_job.percent_complete).to be 1
+      end
     end
   end
 
