@@ -27,7 +27,7 @@ module ActiveEncode
 
           if new_encode.input.file_size.blank?
             new_encode.errors = ["#{input_url} does not exist or is not accessible"]
-          elsif
+          else
             new_encode.errors = ["Error inspecting input: #{input_url}"]
           end
 
@@ -61,6 +61,9 @@ module ActiveEncode
         encode.input = build_input encode
         encode.percent_complete = calculate_percent_complete encode
 
+        pid = get_pid(id)
+        encode.input.id = pid if pid.present?
+
         error = File.read working_path("error.log", id)
         if error.present?
           encode.state = :failed
@@ -73,10 +76,6 @@ module ActiveEncode
 
         encode.current_operations = []
         encode.created_at, encode.updated_at = get_times encode.id
-
-        pid = get_pid(id)
-        encode.input.id = pid
-
 
         if running? pid
           encode.state = :running
@@ -119,8 +118,8 @@ private
       def build_input encode
         input = ActiveEncode::Input.new
         metadata = get_tech_metadata(working_path("input_metadata", encode.id))
-        input.assign_tech_metadata metadata
         input.url = metadata[:url]
+        input.assign_attributes(metadata.tap { |h| h.delete(:url) })
         input.created_at = encode.created_at
         input.updated_at = encode.created_at
         input.id = "N/A"
@@ -141,8 +140,8 @@ private
 
           # Extract technical metadata from output file
           metadata_path = working_path("output_metadata-#{output.label}", id)
-          `mediainfo --Output=XML --LogFile=#{metadata_path} #{output.url}`
-          output.assign_tech_metadata get_tech_metadata(metadata_path)
+          `mediainfo --Output=XML --LogFile=#{metadata_path} #{output.url}` unless File.file? metadata_path
+          output.assign_attributes(get_tech_metadata(metadata_path).tap { |h| h.delete(:url) })
 
           outputs << output
         end
@@ -160,7 +159,11 @@ private
       end
 
       def get_pid(id)
-        File.read(working_path("pid", id)).remove("\n")
+        if File.file? working_path("pid", id)
+          File.read(working_path("pid", id)).remove("\n")
+        else
+          nil
+        end
       end
 
       def working_path(path, id)
