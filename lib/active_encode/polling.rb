@@ -8,13 +8,13 @@ module ActiveEncode
     POLLING_WAIT_TIME = 10.seconds.freeze
 
     CALLBACKS = [
-        :after_status_update, :after_error, :after_cancelled, :after_complete
+        :after_status_update, :after_failed, :after_cancelled, :after_completed
     ].freeze
 
     included do
       extend ActiveModel::Callbacks
 
-      define_model_callbacks :status_update, :error, :cancelled, :complete, only: :after
+      define_model_callbacks :status_update, :failed, :cancelled, :completed, only: :after
 
       after_create do |encode|
         ActiveEncode::PollingJob.set(wait: POLLING_WAIT_TIME).perform_later(encode)
