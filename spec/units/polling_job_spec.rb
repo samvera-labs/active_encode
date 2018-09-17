@@ -7,9 +7,9 @@ describe ActiveEncode::PollingJob do
     class PollingEncode < ActiveEncode::Base
       include ActiveEncode::Polling
       after_status_update ->(encode) { encode.history << "PollingEncode ran after_status_update" }
-      after_error ->(encode) { encode.history << "PollingEncode ran after_error" }
+      after_failed ->(encode) { encode.history << "PollingEncode ran after_failed" }
       after_cancelled ->(encode) { encode.history << "PollingEncode ran after_cancelled" }
-      after_complete ->(encode) { encode.history << "PollingEncode ran after_complete" }
+      after_completed ->(encode) { encode.history << "PollingEncode ran after_completed" }
 
       def history
         @history ||= []
@@ -32,12 +32,12 @@ describe ActiveEncode::PollingJob do
       poll.perform(encode)
     end
 
-    context "with job in error" do
-      let(:state) { :error }
+    context "with job failed" do
+      let(:state) { :failed }
 
-      it "runs after_error" do
+      it "runs after_failed" do
         is_expected.to include("PollingEncode ran after_status_update")
-        is_expected.to include("PollingEncode ran after_error")
+        is_expected.to include("PollingEncode ran after_failed")
       end
 
       it "does not re-enqueue itself" do
@@ -58,12 +58,12 @@ describe ActiveEncode::PollingJob do
       end
     end
 
-    context "with job complete" do
-      let(:state) { :complete }
+    context "with job completed" do
+      let(:state) { :completed }
 
-      it "runs after_complete" do
+      it "runs after_completed" do
         is_expected.to include("PollingEncode ran after_status_update")
-        is_expected.to include("PollingEncode ran after_complete")
+        is_expected.to include("PollingEncode ran after_completed")
       end
 
       it "does not re-enqueue itself" do
