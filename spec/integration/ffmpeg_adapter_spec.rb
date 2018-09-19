@@ -16,7 +16,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
   let!(:work_dir) { stub_const "ActiveEncode::EngineAdapters::FfmpegAdapter::WORK_DIR", @dir }
   let(:file) { "file://#{File.absolute_path "spec/fixtures/fireworks.mp4"}" }
   let(:created_job) do
-    ActiveEncode::Base.create(file, { output: [{ label: "low", ffmpeg_opt: "640x480" }, { label: "high", ffmpeg_opt: "1280x720" }] })
+    ActiveEncode::Base.create(file, { outputs: [{ label: "low", ffmpeg_opt: "-s 640x480" }, { label: "high", ffmpeg_opt: "-s 1280x720" }] })
   end
   let(:running_job) do
     allow(Process).to receive(:getpgid).and_return 8888
@@ -82,7 +82,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
 
     context "input file doesn't exist" do
       let(:missing_file) { "file:///a_bogus_file.mp4" }
-      let(:missing_job) { ActiveEncode::Base.create(missing_file, { output: [{ label: "low", ffmpeg_opt: "640x480" }]}) }
+      let(:missing_job) { ActiveEncode::Base.create(missing_file, { outputs: [{ label: "low", ffmpeg_opt: "-s 640x480" }]}) }
 
       it "returns the encode with correct error" do
         expect(missing_job.errors).to include("#{missing_file} does not exist or is not accessible")
@@ -92,7 +92,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
 
     context "input file is not media" do
       let(:nonmedia_file) { "file://#{File.absolute_path "spec/integration/ffmpeg_adapter_spec.rb"}" }
-      let(:nonmedia_job) { ActiveEncode::Base.create(nonmedia_file, { output: [{ label: "low", ffmpeg_opt: "640x480" }]}) }
+      let(:nonmedia_job) { ActiveEncode::Base.create(nonmedia_file, { outputs: [{ label: "low", ffmpeg_opt: "-s 640x480" }]}) }
 
       it "returns the encode with correct error" do
         expect(nonmedia_job.errors).to include("Error inspecting input: #{nonmedia_file}")

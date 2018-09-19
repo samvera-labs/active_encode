@@ -86,7 +86,7 @@ module ActiveEncode
             encode.state = :cancelled
         end
 
-        encode.output = build_output encode if encode.completed?
+        encode.output = build_outputs encode if encode.completed?
 
         encode
       end
@@ -119,7 +119,7 @@ private
         input = ActiveEncode::Input.new
         metadata = get_tech_metadata(working_path("input_metadata", encode.id))
         input.url = metadata[:url]
-        input.assign_attributes(metadata.tap { |h| h.delete(:url) })
+        input.assign_tech_metadata(metadata.reject { |k, v| k == :url })
         input.created_at = encode.created_at
         input.updated_at = encode.created_at
         input.id = "N/A"
@@ -127,7 +127,7 @@ private
         input
       end
 
-      def build_output encode
+      def build_outputs encode
         id = encode.id
         outputs = []
         Dir["#{File.absolute_path(working_path('', id))}/*.mp4"].each do |file_path|
@@ -141,7 +141,7 @@ private
           # Extract technical metadata from output file
           metadata_path = working_path("output_metadata-#{output.label}", id)
           `mediainfo --Output=XML --LogFile=#{metadata_path} #{output.url}` unless File.file? metadata_path
-          output.assign_attributes(get_tech_metadata(metadata_path).tap { |h| h.delete(:url) })
+          output.assign_tech_metadata(get_tech_metadata(metadata_path).reject { |k, v| k == :url })
 
           outputs << output
         end
@@ -150,9 +150,9 @@ private
       end
 
       def ffmpeg_command(input_url, id, opts)
-        output_opt = opts[:output].collect do |output|
+        output_opt = opts[:outputs].collect do |output|
           file_name = "#{File.basename(input_url, File.extname(input_url))}-#{output[:label]}.mp4"
-          "-s #{output[:ffmpeg_opt]} #{working_path(file_name, id)}"
+          " #{output[:ffmpeg_opt]} #{working_path(file_name, id)}"
         end.join(" ")
 
         "ffmpeg -y -loglevel error -progress #{working_path("progress", id)} -i #{input_url} #{output_opt} > #{working_path("error.log", id)} 2>&1"
@@ -218,7 +218,6 @@ private
           frame_rate: get_xpath_text(doc, '//FrameRate/text()', :to_f),
           duration: get_xpath_text(doc, '//Duration/text()', :to_f),
           file_size: get_xpath_text(doc, '//FileSize/text()', :to_i),
-        #   checksum: doc.xpath('//Duration/text()').first.text.to_f,
           audio_codec: get_xpath_text(doc, '//track[@type="Audio"]/CodecID/text()', :to_s),
           audio_bitrate: get_xpath_text(doc, '//track[@type="Audio"]/BitRate/text()', :to_i),
           video_codec: get_xpath_text(doc, '//track[@type="Video"]/CodecID/text()', :to_s),

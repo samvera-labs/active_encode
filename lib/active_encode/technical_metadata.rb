@@ -1,10 +1,8 @@
-require 'active_model'
 require 'active_support'
 
 module ActiveEncode
   module TechnicalMetadata
     extend ActiveSupport::Concern
-    include ActiveModel::AttributeAssignment
 
     included do
       attr_accessor :width
@@ -23,6 +21,13 @@ module ActiveEncode
       attr_accessor :video_codec
       attr_accessor :audio_bitrate
       attr_accessor :video_bitrate
+    end
+
+    def assign_tech_metadata metadata
+      [:width, :height, :frame_rate, :duration, :file_size, :checksum,
+       :audio_codec, :video_codec, :audio_bitrate, :video_bitrate].each do |field|
+         self.send("#{field}=", metadata[field]) if metadata.has_key?(field)
+      end
     end
   end
 end
