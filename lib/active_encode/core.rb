@@ -45,7 +45,7 @@ module ActiveEncode
 
     def initialize(input_url, options = nil)
       @input = Input.new.tap{ |input| input.url = input_url }
-      @options = options || self.class.default_options(input_url)
+      @options = self.class.default_options(input_url).merge(Hash(options))
     end
 
     def create!

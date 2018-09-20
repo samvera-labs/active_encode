@@ -125,4 +125,35 @@ describe ActiveEncode::Core do
       its(:state) { is_expected.not_to be nil }
     end
   end
+
+  describe '#new' do
+    before do
+      class DefaultOptionsEncode < ActiveEncode::Base
+        def self.default_options(_input_url)
+          { preset: 'video' }
+        end
+      end
+    end
+     after do
+      Object.send(:remove_const, :DefaultOptionsEncode)
+    end
+
+    let(:encode_class) { DefaultOptionsEncode }
+    let(:default_options) { { preset: 'video' } }
+    let(:options) { { output: [{label: 'high', ffmpeg_opt: "640x480" }] } }
+    let(:encode) { encode_class.new(nil, options) }
+    subject { encode.options }
+
+    it 'merges default options and options parameter' do
+      expect(subject).to include default_options
+      expect(subject).to include options
+    end
+
+    context 'with collisions' do
+      let(:options) { { preset: 'avalon' } }
+      it 'prefers options parameter' do
+        expect(subject[:preset]).to eq 'avalon'
+      end
+    end
+  end
 end
