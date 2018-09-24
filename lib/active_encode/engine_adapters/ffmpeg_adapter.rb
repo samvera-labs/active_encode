@@ -119,7 +119,7 @@ private
         input = ActiveEncode::Input.new
         metadata = get_tech_metadata(working_path("input_metadata", encode.id))
         input.url = metadata[:url]
-        input.assign_tech_metadata(metadata.reject { |k, v| k == :url })
+        input.assign_tech_metadata(metadata)
         input.created_at = encode.created_at
         input.updated_at = encode.created_at
         input.id = "N/A"
@@ -141,7 +141,7 @@ private
           # Extract technical metadata from output file
           metadata_path = working_path("output_metadata-#{output.label}", id)
           `mediainfo --Output=XML --LogFile=#{metadata_path} #{output.url}` unless File.file? metadata_path
-          output.assign_tech_metadata(get_tech_metadata(metadata_path).reject { |k, v| k == :url })
+          output.assign_tech_metadata(get_tech_metadata(metadata_path))
 
           outputs << output
         end
