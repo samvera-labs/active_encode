@@ -64,15 +64,17 @@ module ActiveEncode
         pid = get_pid(id)
         encode.input.id = pid if pid.present?
 
-        error = File.read working_path("error.log", id)
-        if error.present?
-          encode.state = :failed
-          encode.errors = [error]
+        if File.file? working_path("error.log", id)
+          error = File.read working_path("error.log", id)
+          if error.present?
+            encode.state = :failed
+            encode.errors = [error]
 
-          return encode
-        else
-          encode.errors = []
+            return encode
+          end
         end
+
+        encode.errors = []
 
         encode.current_operations = []
         encode.created_at, encode.updated_at = get_times encode.id
@@ -104,8 +106,10 @@ private
       def get_times id
         updated_at = if File.file? working_path("progress", id)
             File.mtime(working_path("progress", id))
-          else
+          elsif File.file? working_path("error.log", id)
             File.mtime(working_path("error.log", id))
+          else
+            File.mtime(working_path("input_metadata", id))
           end
 
         return File.mtime(working_path("input_metadata", id)), updated_at
