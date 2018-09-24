@@ -174,7 +174,7 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
     it 'returns an ActiveEncode::Base object' do
       expect(subject.class).to be ActiveEncode::Base
     end
-    its(:id) { is_expected.to eq 'cancelled-id' }
+    its(:id) { is_expected.to eq cancelling_job.id }
     it { is_expected.to be_cancelled }
     its(:percent_complete) { is_expected.to be > 0 }
     its(:errors) { is_expected.to be_empty }

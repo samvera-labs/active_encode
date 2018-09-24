@@ -12,6 +12,7 @@ module ActiveEncode
     autoload :ZencoderAdapter
     autoload :ElasticTranscoderAdapter
     autoload :TestAdapter
+    autoload :FfmpegAdapter
 
     ADAPTER = 'Adapter'.freeze
     private_constant :ADAPTER

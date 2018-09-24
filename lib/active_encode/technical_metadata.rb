@@ -22,5 +22,12 @@ module ActiveEncode
       attr_accessor :audio_bitrate
       attr_accessor :video_bitrate
     end
+
+    def assign_tech_metadata metadata
+      [:width, :height, :frame_rate, :duration, :file_size, :checksum,
+       :audio_codec, :video_codec, :audio_bitrate, :video_bitrate].each do |field|
+         self.send("#{field}=", metadata[field]) if metadata.has_key?(field)
+      end
+    end
   end
 end
