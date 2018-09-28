@@ -155,7 +155,7 @@ private
 
       def ffmpeg_command(input_url, id, opts)
         output_opt = opts[:outputs].collect do |output|
-          file_name = "#{File.basename(input_url, File.extname(input_url))}-#{output[:label]}.mp4"
+          file_name = "#{File.basename(input_url, File.extname(input_url))}-#{output[:label]}.#{output[:extension]}"
           " #{output[:ffmpeg_opt]} #{working_path(file_name, id)}"
         end.join(" ")
 
