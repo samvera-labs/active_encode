@@ -16,6 +16,7 @@ module ActiveEncode
 
         # Create a working directory that holds all output files related to the encode
         FileUtils.mkdir_p working_path("", new_encode.id)
+        FileUtils.mkdir_p working_path("outputs", new_encode.id)
 
         # Extract technical metadata from input file
         `mediainfo --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} #{input_url}`
@@ -134,11 +135,13 @@ private
       def build_outputs encode
         id = encode.id
         outputs = []
-        Dir["#{File.absolute_path(working_path('', id))}/*.mp4"].each do |file_path|
+        Dir["#{File.absolute_path(working_path('outputs', id))}/*"].each do |file_path|
           output = ActiveEncode::Output.new
-          output.id = encode.input.id
           output.url = "file://#{file_path}"
-          output.label = file_path[/(?!.*\-)(.*?)\.mp4/m, 1]
+          original_extension = File.extname(encode.input.url)
+          original_filename = File.basename(encode.input.url).chomp(original_extension)
+          output.label = file_path[/#{Regexp.quote(original_filename)}\-(.*?)#{Regexp.quote(File.extname(file_path))}$/, 1]
+          output.id = "#{encode.input.id}-#{output.label}"
           output.created_at = encode.created_at
           output.updated_at = File.mtime file_path
 
@@ -155,7 +158,7 @@ private
 
       def ffmpeg_command(input_url, id, opts)
         output_opt = opts[:outputs].collect do |output|
-          file_name = "#{File.basename(input_url, File.extname(input_url))}-#{output[:label]}.#{output[:extension]}"
+          file_name = "outputs/#{File.basename(input_url, File.extname(input_url))}-#{output[:label]}.#{output[:extension]}"
           " #{output[:ffmpeg_opt]} #{working_path(file_name, id)}"
         end.join(" ")
 
