@@ -1,4 +1,4 @@
-class CreateActiveEncodeEncodeRecords < ActiveRecord::Migration[5.2]
+class CreateActiveEncodeEncodeRecords < ActiveRecord::Migration[5.0]
   def change
     create_table :active_encode_encode_records do |t|
       t.string :global_id
