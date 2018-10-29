@@ -191,7 +191,9 @@ private
         if data.blank?
           1
         else
-          (progress_value("out_time_ms=", data).to_i * 0.0001 / encode.input.duration).round
+          output = (progress_value("out_time_ms=", data).to_i * 0.0001 / encode.input.duration).round
+          return 100 if output > 100
+          output
         end
       end
 
