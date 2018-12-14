@@ -35,7 +35,7 @@ Or install it yourself as:
 
 ## Prerequisites
 
-FFmpeg needs to be installed to use the FFmpeg engine adapter.
+FFmpeg (tested with version 4+) and mediainfo (version 17.10+) need to be installed to use the FFmpeg engine adapter.
 
 ## Usage
 
