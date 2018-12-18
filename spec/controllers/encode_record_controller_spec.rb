@@ -13,19 +13,40 @@ describe ActiveEncode::EncodeRecordController, type: :controller, db_clean: true
   end
 
   describe 'GET show' do
-    it "responds with a 200 status code" do
-      get :show, params: { id: 1 }
-      expect(response.status).to eq 200
+    before do
+      get :show, params: { id: record_id }
     end
 
-    it "responds with JSON" do
-      get :show, params: { id: 1 }
-      expect(response.content_type).to eq "application/json"
+    context 'when record exists' do
+      let(:record_id) { 1 }
+
+      it "responds with a 200 status code" do
+        expect(response.status).to eq 200
+      end
+
+      it "responds with JSON" do
+        expect(response.content_type).to eq "application/json"
+      end
+
+      it "returns the encode record's raw json object" do
+        expect(response.body).to eq raw_object
+      end
     end
 
-    it "returns the encode record's raw json object" do
-      get :show, params: { id: 1 }
-      expect(response.body).to eq raw_object
+    context 'when record does not exist' do
+      let(:record_id) { "non-existant" }
+
+      it "responds with a 404 status code" do
+        expect(response.status).to eq 404
+      end
+
+      it "responds with JSON" do
+        expect(response.content_type).to eq "application/json"
+      end
+
+      it "returns the encode record's raw json object" do
+        expect(response.body).to eq "{\"message\":\"Couldn't find ActiveEncode::EncodeRecord with 'id'=#{record_id}\"}"
+      end
     end
   end
 end
