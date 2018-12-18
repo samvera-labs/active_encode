@@ -8,6 +8,10 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
     Dir.mktmpdir do |dir|
       @dir = dir
       example.run
+      Dir.foreach(dir) do |e|
+        next if e == "." || e == ".."
+        FileUtils.rm_rf(File.join(dir,e))
+      end
     end
 
     ActiveEncode::Base.engine_adapter = :test
