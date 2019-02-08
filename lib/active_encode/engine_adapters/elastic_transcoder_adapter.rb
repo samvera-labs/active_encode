@@ -39,31 +39,6 @@ module ActiveEncode
         build_encode(get_job_details(id)) if response.successful?
       end
 
-      # TODO: decide to keep here to move somewhere else
-      def remove_output!(id)
-        track = output.find { |o| o[:id] == id }
-        raise "Unknown track: `#{id}'" if track.nil?
-        s3_object = FileLocator::S3File.new(track[:url]).object
-        if s3_object.key =~ /\.m3u8$/
-          delete_segments(s3_object)
-        else
-          s3_object.delete
-        end
-      end
-
-      def delete_segments(obj)
-        raise "Invalid segmented video object" unless obj.key =~ %r(quality-.+/.+\.m3u8$)
-        bucket = obj.bucket
-        prefix = obj.key.sub(/\.m3u8$/,'')
-        next_token = nil
-        loop do
-          response = s3client.list_objects_v2(bucket: obj.bucket_name, prefix: prefix, continuation_token: next_token)
-          response.contents.collect(&:key).each { |key| bucket.object(key).delete }
-          next_token = response.continuation_token
-          break if next_token.nil?
-        end
-      end
-
       private
 
         # Needs region and credentials setup per http://docs.aws.amazon.com/sdkforruby/api/Aws/ElasticTranscoder/Client.html
@@ -81,7 +56,7 @@ module ActiveEncode
 
         def build_encode(job)
           return nil if job.nil?
-          encode = ActiveEncode::Base.new(convert_input(job), convert_options(job))
+          encode = ActiveEncode::Base.new(convert_input(job), {})
           encode.id = job.id
         	encode.state = JOB_STATES[job.status]
         	encode.current_operations = []
@@ -128,11 +103,6 @@ module ActiveEncode
           end
         end
 
-        def convert_current_operations(_job)
-          current_ops = []
-          current_ops
-        end
-
         def convert_percent_complete(job)
           job.outputs.inject(0) { |sum, output| sum + output_percentage(output) } / job.outputs.length
         end
@@ -154,10 +124,6 @@ module ActiveEncode
           job.input
         end
 
-        def convert_options(_job_details)
-          {}
-        end
-
         def copy_to_input_bucket input_url, bucket
           case Addressable::URI.parse(input_url).scheme
           when nil,'file'
@@ -177,7 +143,7 @@ module ActiveEncode
             s3_key = File.join(SecureRandom.uuid,s3_object.key)
             # logger.info("Copying to `#{source_bucket}/#{input_url}'")
             target = Aws::S3::Object.new(bucket_name: source_bucket, key: input_url)
-            target.copy_from(s3_object, multipart_copy: s3_object.size > 15.megabytes)
+            target.copy_from(s3_object, multipart_copy: s3_object.size > 15728640) # 15.megabytes
             s3_key
           end
         end

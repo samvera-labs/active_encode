@@ -136,4 +136,35 @@ describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
       end
     end
   end
+
+  describe "#check_s3_bucket" do
+    context "when file exists in masterfile_bucket" do
+      let(:input_url) { "s3://bucket1/file.mp4" }
+      let(:source_bucket) { "bucket1" }
+
+      it "just returns the key" do
+        # TODO: move these bucket helpers out to a service class so we don't have to test private methods
+        expect(described_class.new.send(:check_s3_bucket, input_url, source_bucket)).to eq "file.mp4"
+      end
+    end
+
+    context "when file is in another bucket" do
+      let(:input_url) { "s3://bucket1/file.mp4" }
+      let(:source_bucket) { "bucket2" }
+
+      it "copies to masterfile_bucket" do
+        # TODO: move these bucket helpers out to a service class so we don't have to test private methods
+        allow(SecureRandom).to receive(:uuid).and_return("randomstring")
+        expect(described_class.new.send(:check_s3_bucket, input_url, source_bucket)).to eq "randomstring/file.mp4"
+      end
+    end
+  end
+
+  describe "#output_percentage" do
+    let(:output) { double(ActiveEncode::Output, status: "Random status") }
+
+    it "returns 0 for any other status" do
+      expect(described_class.new.send(:output_percentage, output)).to eq 0
+    end
+  end
 end
