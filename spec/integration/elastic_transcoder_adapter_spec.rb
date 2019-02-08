@@ -12,9 +12,11 @@ describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
   end
 
   let(:client) { Aws::ElasticTranscoder::Client.new(stub_responses: true) }
+  let(:s3client) { Aws::S3::Client.new(stub_responses: true) }
 
   before do
     allow(Aws::ElasticTranscoder::Client).to receive(:new).and_return(client)
+    allow(Aws::S3::Client).to receive(:new).and_return(s3client)
   end
 
   let(:created_job) do
@@ -25,14 +27,15 @@ describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
     client.stub_responses(:create_job, Aws::ElasticTranscoder::Types::ReadJobResponse.new(job: j))
 
     ActiveEncode::Base.create(
-     "somefile.mp4",
+     "spec/fixtures/fireworks.mp4",
      pipeline_id: "1471963629141-kmcocm",
-       output_key_prefix: "elastic-transcoder-samples/output/hls/",
-       outputs: [{
-         key: 'hls0400k/' + "e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a",
-         preset_id: "1351620000001-200050",
-         segment_duration: "2"
-       }])
+     masterfile_bucket: "BucketName",
+     output_key_prefix: "elastic-transcoder-samples/output/hls/",
+     outputs: [{
+       key: 'hls0400k/' + "e8fe80f5bsomefilesource_bucket7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a",
+       preset_id: "1351620000001-200050",
+       segment_duration: "2",
+     }])
   end
 
   let(:running_job) do
@@ -90,14 +93,14 @@ describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
     ActiveEncode::Base.find('failed-id')
   end
 
-  let(:completed_output) { [{ id: "2", url: "elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a", label: "hls0400k", :width=>400, :height=>224, :frame_rate=>25, :file_size=>6901104, :duration=>117353 }] }
+  let(:completed_output) { [{ id: "2", url: "s3://BucketName/elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a", label: "hls0400k", :width=>400, :height=>224, :frame_rate=>25, :file_size=>6901104, :duration=>117353 }] }
   let(:completed_tech_metadata) { { :width=>1280, :height=>720, :frame_rate=>25, :file_size=>21069678, :duration=>117312 } }
   let(:failed_tech_metadata) { {} }
 
   it_behaves_like "an ActiveEncode::EngineAdapter"
 
   describe "#create" do
-    let(:create_output) { [{ id: "2", url: "elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a", label: "hls0400k" }] }
+    let(:create_output) { [{ id: "2", url: "s3://BucketName/elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a", label: "hls0400k" }] }
 
     subject { created_job }
 
@@ -114,7 +117,7 @@ describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
 
   describe "#find" do
     context "a running encode" do
-      let(:running_output) { [{ id: "2", url: "elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a", label: "hls0400k" }] }
+      let(:running_output) { [{ id: "2", url: "s3://BucketName/elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a", label: "hls0400k" }] }
       let(:running_tech_metadata) { {:width=>1280, :height=>720, :frame_rate=>25, :file_size=>21069678, :duration=>117312} }
 
       subject { running_job }
@@ -131,6 +134,37 @@ describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
           expect(output.as_json.symbolize_keys).to include expected_output
         end
       end
+    end
+  end
+
+  describe "#check_s3_bucket" do
+    context "when file exists in masterfile_bucket" do
+      let(:input_url) { "s3://bucket1/file.mp4" }
+      let(:source_bucket) { "bucket1" }
+
+      it "just returns the key" do
+        # TODO: move these bucket helpers out to a service class so we don't have to test private methods
+        expect(described_class.new.send(:check_s3_bucket, input_url, source_bucket)).to eq "file.mp4"
+      end
+    end
+
+    context "when file is in another bucket" do
+      let(:input_url) { "s3://bucket1/file.mp4" }
+      let(:source_bucket) { "bucket2" }
+
+      it "copies to masterfile_bucket" do
+        # TODO: move these bucket helpers out to a service class so we don't have to test private methods
+        allow(SecureRandom).to receive(:uuid).and_return("randomstring")
+        expect(described_class.new.send(:check_s3_bucket, input_url, source_bucket)).to eq "randomstring/file.mp4"
+      end
+    end
+  end
+
+  describe "#output_percentage" do
+    let(:output) { double(ActiveEncode::Output, status: "Random status") }
+
+    it "returns 0 for any other status" do
+      expect(described_class.new.send(:output_percentage, output)).to eq 0
     end
   end
 end

@@ -74,6 +74,36 @@ encode.cancelled?  # true
 
 An encoding job is meant to be the record of the work of the encoding engine and not the current state of the outputs.  Therefore moved or deleted outputs will not be reflected in the encoding job.
 
+### AWS ElasticTranscoder
+
+To use active_encode with the AWS ElasticTransoder, the following are required: 
+- An S3 bucket to store master files
+- An S3 bucket to store derivatives (recommended to be separate)
+- An ElasticTranscoder pipeline
+- Some transcoding presets for the pipeline
+
+Set the adapter:
+
+```ruby
+ActiveEncode::Base.engine_adapter = :elastic_transcoder
+```
+
+Construct the options hash:
+
+```ruby
+outputs = [{ key: "quality-low/hls/fireworks", preset_id: '1494429796844-aza6zh', segment_duration: '2' },
+           { key: "quality-medium/hls/fireworks", preset_id: '1494429797061-kvg9ki', segment_duration: '2' },
+           { key: "quality-high/hls/fireworks", preset_id: '1494429797265-9xi831', segment_duration: '2' }]
+options = {pipeline_id: 'my-pipeline-id', masterfile_bucket: 'my-master-files', outputs: outputs}
+```
+
+Create the job:
+
+```ruby
+file = 'file:///path/to/file/fireworks.mp4' # or 's3://my-bucket/fireworks.mp4'
+encode = ActiveEncode::Base.create(file, options)
+```
+
 ### Custom jobs
 
 Subclass ActiveEncode::Base to add custom callbacks or default options.  Available callbacks are before, after, and around the create and cancel actions.
