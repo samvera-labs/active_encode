@@ -37,7 +37,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
   let(:failed_job) { find_encode 'failed-id' }
   let(:completed_tech_metadata) { {:audio_bitrate => 171030,
     :audio_codec => 'mp4a-40-2',
-    :duration => 6.315,
+    :duration => 6315,
     :file_size => 199160,
     :frame_rate => 23.719,
     :height => 110.0,
