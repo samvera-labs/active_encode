@@ -49,7 +49,7 @@ ActiveEncode::Base.create(file, { outputs: [{ label: "low", ffmpeg_opt: "-s 640x
 Create returns an encoding job that has been submitted to the adapter for processing.  At this point it will have an id, a state, the input, and any additional information the adapter returns.
 
 ```ruby
-#<ActiveEncode::Base:0x007f8ef3b2ae88 @input=#<ActiveEncode::Input:0x007f8ef3b23188 @url="file:///Users/cjcolvar/Documents/Code/samvera-labs/active_encode/spec/fixtures/fireworks.mp4", @width=960.0, @height=540.0, @frame_rate=29.671, @duration=6.024, @file_size=1629578, @audio_codec="mp4a-40-2", @video_codec="avc1", @audio_bitrate=69737, @video_bitrate=2092780, @created_at=2018-12-03 14:22:05 -0500, @updated_at=2018-12-03 14:22:05 -0500, @id=7653>, @options={:outputs=>[{:label=>"low", :ffmpeg_opt=>"-s 640x480", :extension=>"mp4"}, {:label=>"high", :ffmpeg_opt=>"-s 1280x720", :extension=>"mp4"}]}, @id="1e4a907a-ccff-494f-ad70-b1c5072c2465", @created_at=2018-12-03 14:22:05 -0500, @updated_at=2018-12-03 14:22:05 -0500, @current_operations=[], @output=[], @state=:running, @percent_complete=1, @errors=[]>
+#<ActiveEncode::Base:0x007f8ef3b2ae88 @input=#<ActiveEncode::Input:0x007f8ef3b23188 @url="file:///Users/cjcolvar/Documents/Code/samvera-labs/active_encode/spec/fixtures/fireworks.mp4", @width=960.0, @height=540.0, @frame_rate=29.671, @duration=6024, @file_size=1629578, @audio_codec="mp4a-40-2", @video_codec="avc1", @audio_bitrate=69737, @video_bitrate=2092780, @created_at=2018-12-03 14:22:05 -0500, @updated_at=2018-12-03 14:22:05 -0500, @id=7653>, @options={:outputs=>[{:label=>"low", :ffmpeg_opt=>"-s 640x480", :extension=>"mp4"}, {:label=>"high", :ffmpeg_opt=>"-s 1280x720", :extension=>"mp4"}]}, @id="1e4a907a-ccff-494f-ad70-b1c5072c2465", @created_at=2018-12-03 14:22:05 -0500, @updated_at=2018-12-03 14:22:05 -0500, @current_operations=[], @output=[], @state=:running, @percent_complete=1, @errors=[]>
 ```
 ```ruby
 encode.id  # "1e4a907a-ccff-494f-ad70-b1c5072c2465"
@@ -76,7 +76,7 @@ An encoding job is meant to be the record of the work of the encoding engine and
 
 ### AWS ElasticTranscoder
 
-To use active_encode with the AWS ElasticTransoder, the following are required: 
+To use active_encode with the AWS ElasticTransoder, the following are required:
 - An S3 bucket to store master files
 - An S3 bucket to store derivatives (recommended to be separate)
 - An ElasticTranscoder pipeline

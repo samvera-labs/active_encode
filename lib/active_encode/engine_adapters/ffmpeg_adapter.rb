@@ -191,7 +191,8 @@ private
         if data.blank?
           1
         else
-          (progress_value("out_time_ms=", data).to_i * 0.0001 / encode.input.duration).round
+          progress_in_milliseconds = progress_value("out_time_ms=", data).to_i / 1000.0
+          (progress_in_milliseconds / encode.input.duration * 100).round
         end
       end
 
@@ -219,11 +220,13 @@ private
       def get_tech_metadata file_path
         doc = Nokogiri::XML File.read(file_path)
         doc.remove_namespaces!
+        duration = get_xpath_text(doc, '//Duration/text()', :to_f)
+        duration = duration * 1000 unless duration.nil?      # Convert to milliseconds
         { url: get_xpath_text(doc, '//media/@ref', :to_s),
           width: get_xpath_text(doc, '//Width/text()', :to_f),
           height: get_xpath_text(doc, '//Height/text()', :to_f),
           frame_rate: get_xpath_text(doc, '//FrameRate/text()', :to_f),
-          duration: get_xpath_text(doc, '//Duration/text()', :to_f),
+          duration: duration,
           file_size: get_xpath_text(doc, '//FileSize/text()', :to_i),
           audio_codec: get_xpath_text(doc, '//track[@type="Audio"]/CodecID/text()', :to_s),
           audio_bitrate: get_xpath_text(doc, '//track[@type="Audio"]/BitRate/text()', :to_i),
