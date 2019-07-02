@@ -19,7 +19,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
   end
 
   let!(:work_dir) { stub_const "ActiveEncode::EngineAdapters::FfmpegAdapter::WORK_DIR", @dir }
-  let(:file) { "file://#{File.absolute_path 'spec/fixtures/fireworks.mp4'}" }
+  let(:file) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'fireworks.mp4').to_s }
   let(:created_job) do
     ActiveEncode::Base.create(file, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: "mp4" }, { label: "high", ffmpeg_opt: "-s 1280x720", extension: "mp4" }])
   end
@@ -99,7 +99,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
     end
 
     context "input file is not media" do
-      let(:nonmedia_file) { "file://#{File.absolute_path 'spec/integration/ffmpeg_adapter_spec.rb'}" }
+      let(:nonmedia_file) { "file://" + Rails.root.join('Gemfile').to_s }
       let(:nonmedia_job) { ActiveEncode::Base.create(nonmedia_file, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }
 
       it "returns the encode with correct error" do
