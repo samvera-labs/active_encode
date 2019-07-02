@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module ActiveEncode
   class Input
     include Status
@@ -8,8 +9,8 @@ module ActiveEncode
 
     def valid?
       id.present? && url.present? &&
-      created_at.is_a?(Time) && updated_at.is_a?(Time) &&
-      updated_at >= created_at
+        created_at.is_a?(Time) && updated_at.is_a?(Time) &&
+        updated_at >= created_at
     end
   end
 end

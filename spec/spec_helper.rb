@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'coveralls'
 Coveralls.wear!
 
@@ -13,6 +14,6 @@ end
 
 RSpec::Matchers.define :be_the_same_time_as do |expected|
   match do |actual|
-    expect(Time.parse(expected)).to eq(Time.parse(actual))
+    expect(Time.parse(expected).utc).to eq(Time.parse(actual).utc)
   end
 end

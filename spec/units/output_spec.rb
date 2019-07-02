@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'spec_helper'
 
 describe ActiveEncode::Output do
@@ -6,8 +7,10 @@ describe ActiveEncode::Output do
   describe 'attributes' do
     it { is_expected.to respond_to(:id, :url, :label) }
     it { is_expected.to respond_to(:state, :errors, :created_at, :updated_at) }
-    it { is_expected.to respond_to(:width, :height, :frame_rate, :checksum,
-                                   :audio_codec, :video_codec, :audio_bitrate, :video_bitrate) }
+    it {
+      is_expected.to respond_to(:width, :height, :frame_rate, :checksum,
+                                :audio_codec, :video_codec, :audio_bitrate, :video_bitrate)
+    }
   end
 
   describe '#valid?' do
@@ -16,8 +19,8 @@ describe ActiveEncode::Output do
         obj.id = "1"
         obj.url = "file:///tmp/video.mp4"
         obj.label = "HD"
-        obj.created_at = Time.now
-        obj.updated_at = Time.now
+        obj.created_at = Time.now.utc
+        obj.updated_at = Time.now.utc
       end
     end
 
@@ -33,7 +36,7 @@ describe ActiveEncode::Output do
       expect(valid_output.tap { |obj| obj.created_at = "today" }).not_to be_valid
       expect(valid_output.tap { |obj| obj.updated_at = nil }).not_to be_valid
       expect(valid_output.tap { |obj| obj.updated_at = "today" }).not_to be_valid
-      expect(valid_output.tap { |obj| obj.created_at = Time.now }).not_to be_valid
+      expect(valid_output.tap { |obj| obj.created_at = Time.now.utc }).not_to be_valid
     end
   end
 end

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module ActiveEncode
   # == Active Encode adapters
   #
@@ -14,7 +15,7 @@ module ActiveEncode
     autoload :TestAdapter
     autoload :FfmpegAdapter
 
-    ADAPTER = 'Adapter'.freeze
+    ADAPTER = 'Adapter'
     private_constant :ADAPTER
 
     class << self

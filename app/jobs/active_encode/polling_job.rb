@@ -1,6 +1,6 @@
+# frozen_string_literal: true
 module ActiveEncode
   class PollingJob < ActiveJob::Base
-
     def perform(encode)
       encode.run_callbacks(:status_update) { encode }
       case encode.state

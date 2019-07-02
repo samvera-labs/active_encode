@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module ActiveEncode
   class Output
     include Status
@@ -9,8 +10,8 @@ module ActiveEncode
 
     def valid?
       id.present? && url.present? && label.present? &&
-      created_at.is_a?(Time) && updated_at.is_a?(Time) &&
-      updated_at >= created_at
+        created_at.is_a?(Time) && updated_at.is_a?(Time) &&
+        updated_at >= created_at
     end
   end
 end

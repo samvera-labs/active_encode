@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'addressable/uri'
 require 'aws-sdk'
 
@@ -10,7 +11,7 @@ class FileLocator
     def initialize(uri)
       uri = Addressable::URI.parse(uri)
       @bucket = URI.decode(uri.host)
-      @key = URI.decode(uri.path).sub(%r(^/*(.+)/*$),'\1')
+      @key = URI.decode(uri.path).sub(%r{^/*(.+)/*$}, '\1')
     end
 
     def object
@@ -39,9 +40,7 @@ class FileLocator
           end
         end
 
-        if @uri.scheme.nil?
-          @uri = Addressable::URI.parse("file://#{URI.encode(File.expand_path(source))}")
-        end
+        @uri = Addressable::URI.parse("file://#{URI.encode(File.expand_path(source))}") if @uri.scheme.nil?
       end
     end
     @uri
@@ -68,16 +67,16 @@ class FileLocator
       false
     end
   end
-  alias_method :exists?, :exist?
+  alias exists? exist?
 
   def reader
     case uri.scheme
     when 's3'
       S3File.new(uri).object.get.body
     when 'file'
-      File.open(location,'r')
+      File.open(location, 'r')
     else
-      Kernel::open(uri.to_s, 'r')
+      Kernel.open(uri.to_s, 'r')
     end
   end
 
@@ -86,7 +85,7 @@ class FileLocator
     when 's3'
       uri
     when 'file'
-      File.open(location,'r')
+      File.open(location, 'r')
     else
       location
     end

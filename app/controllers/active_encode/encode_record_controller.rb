@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module ActiveEncode
   class EncodeRecordController < ActionController::Base
     rescue_from ActiveRecord::RecordNotFound do |e|

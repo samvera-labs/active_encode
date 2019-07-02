@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'active_support'
 require 'active_encode/callbacks'
 
@@ -44,19 +45,19 @@ module ActiveEncode
     end
 
     def initialize(input_url, options = nil)
-      @input = Input.new.tap{ |input| input.url = input_url }
+      @input = Input.new.tap { |input| input.url = input_url }
       @options = self.class.default_options(input_url).merge(Hash(options))
     end
 
     def create!
       run_callbacks :create do
-        merge!(self.class.engine_adapter.create(self.input.url, self.options))
+        merge!(self.class.engine_adapter.create(input.url, options))
       end
     end
 
     def cancel!
       run_callbacks :cancel do
-        merge!(self.class.engine_adapter.cancel(self.id))
+        merge!(self.class.engine_adapter.cancel(id))
       end
     end
 

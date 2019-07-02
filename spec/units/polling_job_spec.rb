@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'rails_helper'
 
 describe ActiveEncode::PollingJob do
@@ -22,9 +23,9 @@ describe ActiveEncode::PollingJob do
   end
 
   describe '#perform' do
-    let(:encode) { PollingEncode.create("sample.mp4").tap { |encode| encode.state = state } }
-    let(:poll) { ActiveEncode::PollingJob.new }
     subject { encode.history }
+    let(:encode) { PollingEncode.create("sample.mp4").tap { |encode| encode.state = state } }
+    let(:poll) { described_class.new }
 
     before do
       encode
@@ -41,7 +42,7 @@ describe ActiveEncode::PollingJob do
       end
 
       it "does not re-enqueue itself" do
-        expect(ActiveEncode::PollingJob).not_to have_been_enqueued
+        expect(described_class).not_to have_been_enqueued
       end
     end
 
@@ -54,7 +55,7 @@ describe ActiveEncode::PollingJob do
       end
 
       it "does not re-enqueue itself" do
-        expect(ActiveEncode::PollingJob).not_to have_been_enqueued
+        expect(described_class).not_to have_been_enqueued
       end
     end
 
@@ -67,7 +68,7 @@ describe ActiveEncode::PollingJob do
       end
 
       it "does not re-enqueue itself" do
-        expect(ActiveEncode::PollingJob).not_to have_been_enqueued
+        expect(described_class).not_to have_been_enqueued
       end
     end
 
@@ -79,7 +80,7 @@ describe ActiveEncode::PollingJob do
       end
 
       it "re-enqueues itself" do
-        expect(ActiveEncode::PollingJob).to have_been_enqueued.with(encode)
+        expect(described_class).to have_been_enqueued.with(encode)
       end
     end
   end
