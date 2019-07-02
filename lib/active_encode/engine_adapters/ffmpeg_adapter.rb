@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'fileutils'
 require 'nokogiri'
 
@@ -9,8 +10,8 @@ module ActiveEncode
       def create(input_url, options = {})
         new_encode = ActiveEncode::Base.new(input_url, options)
         new_encode.id = SecureRandom.uuid
-        new_encode.created_at = Time.new
-        new_encode.updated_at = Time.new
+        new_encode.created_at = Time.now.utc
+        new_encode.updated_at = Time.now.utc
         new_encode.current_operations = []
         new_encode.output = []
 
@@ -26,11 +27,11 @@ module ActiveEncode
           new_encode.state = :failed
           new_encode.percent_complete = 1
 
-          if new_encode.input.file_size.blank?
-            new_encode.errors = ["#{input_url} does not exist or is not accessible"]
-          else
-            new_encode.errors = ["Error inspecting input: #{input_url}"]
-          end
+          new_encode.errors = if new_encode.input.file_size.blank?
+                                ["#{input_url} does not exist or is not accessible"]
+                              else
+                                ["Error inspecting input: #{input_url}"]
+                              end
 
           write_errors new_encode
           return new_encode
@@ -53,9 +54,10 @@ module ActiveEncode
       end
 
       # Return encode object from file system
-      def find(id, opts={})
+      def find(id, opts = {})
         encode_class = opts[:cast]
-        encode = ActiveEncode::Base.new(nil, opts)
+        encode_class ||= ActiveEncode::Base
+        encode = encode_class.new(nil, opts)
         encode.id = id
         encode.output = []
         encode.created_at, encode.updated_at = get_times encode.id
@@ -84,9 +86,9 @@ module ActiveEncode
           encode.state = :running
           encode.current_operations = ["transcoding"]
         elsif progress_ended?(encode.id) && encode.percent_complete == 100
-            encode.state = :completed
+          encode.state = :completed
         elsif encode.percent_complete < 100
-            encode.state = :cancelled
+          encode.state = :cancelled
         end
 
         encode.output = build_outputs encode if encode.completed?
@@ -102,25 +104,25 @@ module ActiveEncode
         find id
       end
 
-private
+    private
 
-      def get_times id
+      def get_times(id)
         updated_at = if File.file? working_path("progress", id)
-            File.mtime(working_path("progress", id))
-          elsif File.file? working_path("error.log", id)
-            File.mtime(working_path("error.log", id))
-          else
-            File.mtime(working_path("input_metadata", id))
-          end
+                       File.mtime(working_path("progress", id))
+                     elsif File.file? working_path("error.log", id)
+                       File.mtime(working_path("error.log", id))
+                     else
+                       File.mtime(working_path("input_metadata", id))
+                     end
 
-        return File.mtime(working_path("input_metadata", id)), updated_at
+        [File.mtime(working_path("input_metadata", id)), updated_at]
       end
 
-      def write_errors encode
+      def write_errors(encode)
         File.write(working_path("error.log", encode.id), encode.errors.join("\n"))
       end
 
-      def build_input encode
+      def build_input(encode)
         input = ActiveEncode::Input.new
         metadata = get_tech_metadata(working_path("input_metadata", encode.id))
         input.url = metadata[:url]
@@ -132,7 +134,7 @@ private
         input
       end
 
-      def build_outputs encode
+      def build_outputs(encode)
         id = encode.id
         outputs = []
         Dir["#{File.absolute_path(working_path('outputs', id))}/*"].each do |file_path|
@@ -162,15 +164,11 @@ private
           " #{output[:ffmpeg_opt]} #{working_path(file_name, id)}"
         end.join(" ")
 
-        "ffmpeg -y -loglevel error -progress #{working_path("progress", id)} -i #{input_url} #{output_opt} > #{working_path("error.log", id)} 2>&1"
+        "ffmpeg -y -loglevel error -progress #{working_path('progress', id)} -i #{input_url} #{output_opt} > #{working_path('error.log', id)} 2>&1"
       end
 
       def get_pid(id)
-        if File.file? working_path("pid", id)
-          File.read(working_path("pid", id)).remove("\n")
-        else
-          nil
-        end
+        File.read(working_path("pid", id)).remove("\n") if File.file? working_path("pid", id)
       end
 
       def working_path(path, id)
@@ -178,15 +176,13 @@ private
       end
 
       def running?(pid)
-        begin
-          Process.getpgid pid.to_i
-          true
-        rescue Errno::ESRCH
-          false
-        end
+        Process.getpgid pid.to_i
+        true
+      rescue Errno::ESRCH
+        false
       end
 
-      def calculate_percent_complete encode
+      def calculate_percent_complete(encode)
         data = read_progress encode.id
         if data.blank?
           1
@@ -196,32 +192,25 @@ private
         end
       end
 
-      def read_progress id
-        if File.file? working_path("progress", id)
-          File.read working_path("progress", id)
-        else
-          nil
-        end
+      def read_progress(id)
+        File.read working_path("progress", id) if File.file? working_path("progress", id)
       end
 
-      def progress_ended? id
+      def progress_ended?(id)
         "end" == progress_value("progress=", read_progress(id))
       end
 
-      def progress_value key, data
-        if data.present? && key.present?
-          ri = data.rindex(key) + key.length
-          data[ri..data.index("\n", ri)-1]
-        else
-          nil
-        end
+      def progress_value(key, data)
+        return nil unless data.present? && key.present?
+        ri = data.rindex(key) + key.length
+        data[ri..data.index("\n", ri) - 1]
       end
 
-      def get_tech_metadata file_path
+      def get_tech_metadata(file_path)
         doc = Nokogiri::XML File.read(file_path)
         doc.remove_namespaces!
         duration = get_xpath_text(doc, '//Duration/text()', :to_f)
-        duration = duration * 1000 unless duration.nil?      # Convert to milliseconds
+        duration *= 1000 unless duration.nil? # Convert to milliseconds
         { url: get_xpath_text(doc, '//media/@ref', :to_s),
           width: get_xpath_text(doc, '//Width/text()', :to_f),
           height: get_xpath_text(doc, '//Height/text()', :to_f),
@@ -234,12 +223,8 @@ private
           video_bitrate: get_xpath_text(doc, '//track[@type="Video"]/BitRate/text()', :to_i) }
       end
 
-      def get_xpath_text doc, xpath, cast_method
-        if doc.xpath(xpath).first
-          doc.xpath(xpath).first.text.send(cast_method)
-        else
-          nil
-        end
+      def get_xpath_text(doc, xpath, cast_method)
+        doc.xpath(xpath).first&.text&.send(cast_method)
       end
     end
   end

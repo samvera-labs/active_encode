@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'rails_helper'
 
 describe ActiveEncode::Persistence, db_clean: true do
@@ -12,8 +13,8 @@ describe ActiveEncode::Persistence, db_clean: true do
   end
 
   describe 'find' do
-    let(:encode) { CustomEncode.create(nil) }
     subject { ActiveEncode::EncodeRecord.find_by(global_id: encode.to_global_id.to_s) }
+    let(:encode) { CustomEncode.create(nil) }
 
     it 'persists changes on find' do
       expect { CustomEncode.find(encode.id) }.to change { subject.reload.updated_at }
@@ -21,8 +22,9 @@ describe ActiveEncode::Persistence, db_clean: true do
   end
 
   describe 'create' do
-    let(:encode) { CustomEncode.create(nil) }
     subject { ActiveEncode::EncodeRecord.find_by(global_id: encode.to_global_id.to_s) }
+    let(:create_options) { { option: 'value' } }
+    let(:encode) { CustomEncode.create(nil, create_options) }
 
     it 'creates a record' do
       expect { encode }.to change { ActiveEncode::EncodeRecord.count }.by(1)
@@ -35,11 +37,12 @@ describe ActiveEncode::Persistence, db_clean: true do
     its(:raw_object) { is_expected.to eq encode.to_json }
     its(:created_at) { is_expected.to be_within(1.second).of encode.created_at }
     its(:updated_at) { is_expected.to be_within(1.second).of encode.updated_at }
+    its(:create_options) { is_expected.to eq create_options.to_json }
   end
 
   describe 'cancel' do
-    let(:encode) { CustomEncode.create(nil) }
     subject { ActiveEncode::EncodeRecord.find_by(global_id: encode.to_global_id.to_s) }
+    let(:encode) { CustomEncode.create(nil) }
 
     it 'persists changes on cancel' do
       expect { encode.cancel! }.to change { subject.reload.state }.from("running").to("cancelled")
@@ -47,8 +50,8 @@ describe ActiveEncode::Persistence, db_clean: true do
   end
 
   describe 'reload' do
-    let(:encode) { CustomEncode.create(nil) }
     subject { ActiveEncode::EncodeRecord.find_by(global_id: encode.to_global_id.to_s) }
+    let(:encode) { CustomEncode.create(nil) }
 
     it 'persists changes on reload' do
       expect { encode.reload }.to change { subject.reload.updated_at }

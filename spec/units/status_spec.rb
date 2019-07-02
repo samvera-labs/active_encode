@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'spec_helper'
 
 describe ActiveEncode::Status do
@@ -5,13 +6,12 @@ describe ActiveEncode::Status do
     class CustomEncode < ActiveEncode::Base
     end
   end
-   after do
+  after do
     Object.send(:remove_const, :CustomEncode)
   end
 
-  let(:encode_class) { ActiveEncode::Base }
-
   subject { encode_class.new(nil) }
+  let(:encode_class) { ActiveEncode::Base }
 
   describe 'attributes' do
     it { is_expected.to respond_to(:state, :errors, :created_at, :updated_at) }

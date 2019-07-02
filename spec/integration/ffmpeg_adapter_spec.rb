@@ -1,8 +1,9 @@
+# frozen_string_literal: true
 require 'spec_helper'
 require 'shared_specs/engine_adapter_specs'
 
 describe ActiveEncode::EngineAdapters::FfmpegAdapter do
-  around(:example) do |example|
+  around do |example|
     ActiveEncode::Base.engine_adapter = :ffmpeg
 
     Dir.mktmpdir do |dir|
@@ -10,7 +11,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       example.run
       Dir.foreach(dir) do |e|
         next if e == "." || e == ".."
-        FileUtils.rm_rf(File.join(dir,e))
+        FileUtils.rm_rf(File.join(dir, e))
       end
     end
 
@@ -18,9 +19,9 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
   end
 
   let!(:work_dir) { stub_const "ActiveEncode::EngineAdapters::FfmpegAdapter::WORK_DIR", @dir }
-  let(:file) { "file://#{File.absolute_path "spec/fixtures/fireworks.mp4"}" }
+  let(:file) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'fireworks.mp4').to_s }
   let(:created_job) do
-    ActiveEncode::Base.create(file, { outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: "mp4"}, { label: "high", ffmpeg_opt: "-s 1280x720", extension: "mp4"}] })
+    ActiveEncode::Base.create(file, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: "mp4" }, { label: "high", ffmpeg_opt: "-s 1280x720", extension: "mp4" }])
   end
   let(:running_job) do
     allow(Process).to receive(:getpgid).and_return 8888
@@ -35,24 +36,27 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
   end
   let(:completed_job) { find_encode "completed-id" }
   let(:failed_job) { find_encode 'failed-id' }
-  let(:completed_tech_metadata) { {:audio_bitrate => 171030,
-    :audio_codec => 'mp4a-40-2',
-    :duration => 6315,
-    :file_size => 199160,
-    :frame_rate => 23.719,
-    :height => 110.0,
-    :id => "99999",
-    :url => "/home/pdinh/Downloads/videoshort.mp4",
-    :video_bitrate => 74477,
-    :video_codec => 'avc1',
-    :width => 200.0
-  } }
+  let(:completed_tech_metadata) do
+    {
+      audio_bitrate: 171_030,
+      audio_codec: 'mp4a-40-2',
+      duration: 6315,
+      file_size: 199_160,
+      frame_rate: 23.719,
+      height: 110.0,
+      id: "99999",
+      url: "/home/pdinh/Downloads/videoshort.mp4",
+      video_bitrate: 74_477,
+      video_codec: 'avc1',
+      width: 200.0
+    }
+  end
   let(:completed_output) { [{ id: "99999" }] }
-  let(:failed_tech_metadata) { { } }
+  let(:failed_tech_metadata) { {} }
 
   it_behaves_like "an ActiveEncode::EngineAdapter"
 
-  def find_encode id
+  def find_encode(id)
     # Precreate ffmpeg output directory and files
     FileUtils.copy_entry "spec/fixtures/ffmpeg/#{id}", "#{work_dir}/#{id}"
 
@@ -61,7 +65,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
     FileUtils.touch "#{work_dir}/#{id}/progress"
     FileUtils.touch Dir.glob("#{work_dir}/#{id}/*.mp4")
 
-    # # Stub out system calls
+    # Stub out system calls
     allow_any_instance_of(ActiveEncode::EngineAdapters::FfmpegAdapter).to receive(:`).and_return(1234)
 
     ActiveEncode::Base.find(id)
@@ -86,7 +90,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
 
     context "input file doesn't exist" do
       let(:missing_file) { "file:///a_bogus_file.mp4" }
-      let(:missing_job) { ActiveEncode::Base.create(missing_file, { outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]}) }
+      let(:missing_job) { ActiveEncode::Base.create(missing_file, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }
 
       it "returns the encode with correct error" do
         expect(missing_job.errors).to include("#{missing_file} does not exist or is not accessible")
@@ -95,8 +99,8 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
     end
 
     context "input file is not media" do
-      let(:nonmedia_file) { "file://#{File.absolute_path "spec/integration/ffmpeg_adapter_spec.rb"}" }
-      let(:nonmedia_job) { ActiveEncode::Base.create(nonmedia_file, { outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]}) }
+      let(:nonmedia_file) { "file://" + Rails.root.join('Gemfile').to_s }
+      let(:nonmedia_job) { ActiveEncode::Base.create(nonmedia_file, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }
 
       it "returns the encode with correct error" do
         expect(nonmedia_job.errors).to include("Error inspecting input: #{nonmedia_file}")

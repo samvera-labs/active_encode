@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'active_encode/core'
 require 'active_encode/engine_adapter'
 require 'active_encode/status'

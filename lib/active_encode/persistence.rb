@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'active_support'
 
 module ActiveEncode
@@ -9,8 +10,10 @@ module ActiveEncode
         persist(persistence_model_attributes(encode))
       end
 
-      after_create do |encode|
-        persist(persistence_model_attributes(encode))
+      around_create do |encode, block|
+        create_options = encode.options
+        encode = block.call
+        persist(persistence_model_attributes(encode).merge(create_options: create_options.to_json))
       end
 
       after_cancel do |encode|

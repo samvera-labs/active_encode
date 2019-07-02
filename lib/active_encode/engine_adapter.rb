@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'active_encode/engine_adapters'
 require 'active_support/core_ext/class/attribute'
 require 'active_support/core_ext/string/inflections'

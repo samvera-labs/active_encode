@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'addressable/uri'
 require 'aws-sdk'
 require 'file_locator'
@@ -5,11 +6,10 @@ require 'file_locator'
 module ActiveEncode
   module EngineAdapters
     class ElasticTranscoderAdapter
-
       JOB_STATES = {
         "Submitted" => :running, "Progressing" => :running, "Canceled" => :cancelled,
         "Error" => :failed, "Complete" => :completed
-      }
+      }.freeze
 
       # Require options to include :pipeline_id, :masterfile_bucket and :outputs
       # Example :outputs value:
@@ -29,7 +29,7 @@ module ActiveEncode
         build_encode(job)
       end
 
-      def find(id, opts = {})
+      def find(id, _opts = {})
         build_encode(get_job_details(id))
       end
 
@@ -58,14 +58,14 @@ module ActiveEncode
           return nil if job.nil?
           encode = ActiveEncode::Base.new(convert_input(job), {})
           encode.id = job.id
-        	encode.state = JOB_STATES[job.status]
-        	encode.current_operations = []
-        	encode.percent_complete = convert_percent_complete(job)
-        	encode.created_at = convert_time(job.timing["submit_time_millis"])
-        	encode.updated_at = convert_time(job.timing["finish_time_millis"]) || convert_time(job.timing["start_time_millis"]) || encode.created_at
+          encode.state = JOB_STATES[job.status]
+          encode.current_operations = []
+          encode.percent_complete = convert_percent_complete(job)
+          encode.created_at = convert_time(job.timing["submit_time_millis"])
+          encode.updated_at = convert_time(job.timing["finish_time_millis"]) || convert_time(job.timing["start_time_millis"]) || encode.created_at
 
-        	encode.output = convert_output(job)
-        	encode.errors = job.outputs.select { |o| o.status == "Error" }.collect(&:status_detail).compact
+          encode.output = convert_output(job)
+          encode.errors = job.outputs.select { |o| o.status == "Error" }.collect(&:status_detail).compact
 
           tech_md = convert_tech_metadata(job.input.detected_properties)
           [:width, :height, :frame_rate, :duration, :file_size].each do |field|
@@ -82,7 +82,7 @@ module ActiveEncode
 
         def convert_time(time_millis)
           return nil if time_millis.nil?
-          Time.at(time_millis / 1000)
+          Time.at(time_millis / 1000).utc
         end
 
         def convert_bitrate(rate)
@@ -124,35 +124,35 @@ module ActiveEncode
           job.input
         end
 
-        def copy_to_input_bucket input_url, bucket
+        def copy_to_input_bucket(input_url, bucket)
           case Addressable::URI.parse(input_url).scheme
-          when nil,'file'
+          when nil, 'file'
             upload_to_s3 input_url, bucket
           when 's3'
             check_s3_bucket input_url, bucket
           end
         end
 
-        def check_s3_bucket input_url, source_bucket
+        def check_s3_bucket(input_url, source_bucket)
           # logger.info("Checking `#{input_url}'")
           s3_object = FileLocator::S3File.new(input_url).object
           if s3_object.bucket_name == source_bucket
             # logger.info("Already in bucket `#{source_bucket}'")
             s3_object.key
           else
-            s3_key = File.join(SecureRandom.uuid,s3_object.key)
+            s3_key = File.join(SecureRandom.uuid, s3_object.key)
             # logger.info("Copying to `#{source_bucket}/#{input_url}'")
             target = Aws::S3::Object.new(bucket_name: source_bucket, key: input_url)
-            target.copy_from(s3_object, multipart_copy: s3_object.size > 15728640) # 15.megabytes
+            target.copy_from(s3_object, multipart_copy: s3_object.size > 15_728_640) # 15.megabytes
             s3_key
           end
         end
 
-        def upload_to_s3 input_url, source_bucket
-          original_input = input_url
+        def upload_to_s3(input_url, source_bucket)
+          # original_input = input_url
           bucket = Aws::S3::Resource.new(client: s3client).bucket(source_bucket)
           filename = FileLocator.new(input_url).location
-          s3_key = File.join(SecureRandom.uuid,File.basename(filename))
+          s3_key = File.join(SecureRandom.uuid, File.basename(filename))
           # logger.info("Copying `#{original_input}' to `#{source_bucket}/#{input_url}'")
           obj = bucket.object(s3_key)
           obj.upload_file filename
@@ -169,12 +169,13 @@ module ActiveEncode
           job.outputs.collect do |joutput|
             preset = read_preset(joutput.preset_id)
             extension = preset.container == 'ts' ? '.m3u8' : ''
-            tech_md = convert_tech_metadata(joutput, preset).merge({
+            additional_metadata = {
               managed: false,
               id: joutput.id,
               label: joutput.key.split("/", 2).first,
               url: "s3://#{pipeline.output_bucket}/#{job.output_key_prefix}#{joutput.key}#{extension}"
-            })
+            }
+            tech_md = convert_tech_metadata(joutput, preset).merge(additional_metadata)
 
             output = ActiveEncode::Output.new
             output.state = convert_state(joutput)
@@ -194,7 +195,7 @@ module ActiveEncode
           job.outputs.select { |o| o.status == "Error" }.collect(&:status_detail).compact
         end
 
-        def convert_tech_metadata(props, preset=nil)
+        def convert_tech_metadata(props, preset = nil)
           return {} if props.nil? || props.empty?
           metadata_fields = {
             file_size: { key: :file_size, method: :itself },
@@ -216,13 +217,13 @@ module ActiveEncode
           unless preset.nil?
             audio = preset.audio
             video = preset.video
-            metadata.merge!({
+            metadata.merge!(
               audio_codec: audio&.codec,
               audio_channels: audio&.channels,
               audio_bitrate: convert_bitrate(audio&.bit_rate),
               video_codec: video&.codec,
               video_bitrate: convert_bitrate(video&.bit_rate)
-            })
+            )
           end
 
           metadata

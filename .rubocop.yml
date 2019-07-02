@@ -1,75 +1,13 @@
-require: rubocop-rspec
+inherit_gem:
+  bixby: bixby_default.yml
+
+inherit_from: .rubocop_todo.yml
+
 
 AllCops:
+  TargetRubyVersion: 2.4
   DisplayCopNames: true
+  Exclude:
+    - 'vendor/**/*'
   Include:
     - '**/Rakefile'
-  Exclude:
-    - 'spec/**/*'
-    - 'vendor/**/*'
-
-Rails:
-  Enabled: True
-
-Metrics/LineLength:
-  Enabled: false
-
-Metrics/AbcSize:
-  Enabled: false
-
-Metrics/MethodLength:
-  Exclude:
-    - 'lib/active_encode/engine_adapters/*'
-
-Metrics/ClassLength:
-  Exclude:
-    - 'lib/active_encode/engine_adapters/*'
-
-Metrics/CyclomaticComplexity:
-  Exclude:
-    - 'lib/active_encode/engine_adapters/*'
-
-Style/IndentationConsistency:
-  EnforcedStyle: rails
-
-Style/CollectionMethods:
-  PreferredMethods:
-    collect: 'map'
-    collect!: 'map!'
-    inject: 'reduce'
-    detect: 'find'
-    find_all: 'select'
-
-Style/FileName: # https://github.com/bbatsov/rubocop/issues/2973
-  Exclude:
-    - 'Gemfile'
-
-Style/WordArray:
-  Enabled: false
-
-Style/RegexpLiteral:
-  Enabled: false
-
-Style/StringLiterals:
-  Enabled: false
-
-Style/ClassAndModuleChildren:
-  Enabled: false
-
-Style/Documentation:
-  Enabled: false
-
-RSpec/ExampleWording:
-  CustomTransform:
-    be: is
-    have: has
-    not: does not
-    NOT: does NOT
-  IgnoredWords:
-    - only
-
-RSpec/FilePath:
-  Enabled: false
-
-RSpec/InstanceVariable:
-  Enabled: false

@@ -130,7 +130,7 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
 
       it 'output has technical metadata' do
         subject.output.each do |output|
-          expected_output = completed_output.find {|expected_out| expected_out[:id] == output.id }
+          expected_output = completed_output.find { |expected_out| expected_out[:id] == output.id }
           expect(output.as_json.symbolize_keys).to include expected_output
         end
       end

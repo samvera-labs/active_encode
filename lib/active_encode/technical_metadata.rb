@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'active_support'
 
 module ActiveEncode
@@ -23,10 +24,10 @@ module ActiveEncode
       attr_accessor :video_bitrate
     end
 
-    def assign_tech_metadata metadata
+    def assign_tech_metadata(metadata)
       [:width, :height, :frame_rate, :duration, :file_size, :checksum,
        :audio_codec, :video_codec, :audio_bitrate, :video_bitrate].each do |field|
-         self.send("#{field}=", metadata[field]) if metadata.has_key?(field)
+        send("#{field}=", metadata[field]) if metadata.key?(field)
       end
     end
   end

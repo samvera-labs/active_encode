@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Copyright 2011-2018, The Trustees of Indiana University and Northwestern
 #   University.  Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -24,12 +25,12 @@ describe FileLocator, type: :service do
     let(:key) { "mykey.mp4" }
     let(:s3file) { FileLocator::S3File.new("s3://#{bucket}/#{key}") }
 
-    it "should be able to initialize from an S3 URI" do
+    it "is able to initialize from an S3 URI" do
       expect(s3file.bucket).to eq bucket
       expect(s3file.key).to eq key
     end
 
-    it "should return an S3 Object" do
+    it "returns an S3 Object" do
       s3_object = s3file.object
       expect(s3_object).to be_an Aws::S3::Object
       expect(s3_object.bucket_name).to eq bucket
@@ -42,30 +43,30 @@ describe FileLocator, type: :service do
     let(:source) { "file://#{path}" }
     let(:locator) { FileLocator.new(source) }
 
-    it "should return the correct uri" do
+    it "returns the correct uri" do
       expect(locator.uri).to eq Addressable::URI.parse(source)
     end
 
-    it "should return the correct location" do
+    it "returns the correct location" do
       expect(locator.location).to eq path
     end
 
-    it "should tell if file exists" do
+    it "tells if file exists" do
       allow(File).to receive(:exist?).with(path) { true }
       expect(locator.exist?).to be_truthy
     end
 
     context "return file" do
       let(:file) { double(File) }
-      before :each do
+      before do
         allow(File).to receive(:open).and_return file
       end
 
-      it "should return reader" do
+      it "returns reader" do
         expect(locator.reader).to eq file
       end
 
-      it "should return attachment" do
+      it "returns attachment" do
         expect(locator.attachment).to eq file
       end
     end
@@ -77,23 +78,23 @@ describe FileLocator, type: :service do
     let(:source) { "s3://#{bucket}/#{key}" }
     let(:locator) { FileLocator.new(source) }
 
-    it "should return the correct uri" do
+    it "returns the correct uri" do
       expect(locator.uri).to eq Addressable::URI.parse(source)
     end
 
-    it "should return the correct location" do
+    it "returns the correct location" do
       expect(locator.location).to start_with "https://#{bucket}.s3.us-stubbed-1.amazonaws.com/#{key}"
     end
 
-    it "should tell if file exists" do
+    it "tells if file exists" do
       expect(locator.exist?).to be_truthy
     end
 
-    it "should return reader" do
+    it "returns reader" do
       expect(locator.reader).to be_a StringIO
     end
 
-    it "should return attachment" do
+    it "returns attachment" do
       expect(locator.attachment).to eq Addressable::URI.parse(source)
     end
   end
@@ -103,25 +104,25 @@ describe FileLocator, type: :service do
     let(:source) { "bogus://#{path}" }
     let(:locator) { FileLocator.new(source) }
 
-    it "should return the correct uri" do
+    it "returns the correct uri" do
       expect(locator.uri).to eq Addressable::URI.parse(source)
     end
 
-    it "should return the correct location" do
+    it "returns the correct location" do
       expect(locator.location).to eq source
     end
 
-    it "should tell if file exists" do
+    it "tells if file exists" do
       expect(locator.exist?).to be_falsy
     end
 
-    it "should return reader" do
+    it "returns reader" do
       io = double(IO)
       allow(Kernel).to receive(:open).and_return io
       expect(locator.reader).to eq io
     end
 
-    it "should return attachment" do
+    it "returns attachment" do
       expect(locator.attachment).to eq locator.location
     end
   end

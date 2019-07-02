@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'rubyhorn'
 
 module ActiveEncode
@@ -11,7 +12,7 @@ module ActiveEncode
         build_encode(get_workflow(workflow_om))
       end
 
-      def find(id, opts = {})
+      def find(id, _opts = {})
         build_encode(fetch_workflow(id))
       end
 
@@ -145,7 +146,7 @@ module ActiveEncode
 
         def convert_created_at(workflow)
           created_at = workflow.xpath('mediapackage/@start').last.to_s
-          created_at.present? ? Time.parse(created_at) : nil
+          created_at.present? ? Time.parse(created_at).utc : nil
         end
 
         def convert_updated_at(workflow)
@@ -156,13 +157,13 @@ module ActiveEncode
         def convert_output_created_at(track, workflow)
           quality = track.xpath('tags/tag[starts-with(text(),"quality")]/text()').to_s
           created_at = workflow.xpath("//operation[@id=\"compose\"][configurations/configuration[@key=\"target-tags\" and contains(text(), \"#{quality}\")]]/started/text()").to_s
-          created_at.present? ? Time.at(created_at.to_i / 1000.0) : nil
+          created_at.present? ? Time.at(created_at.to_i / 1000.0).utc : nil
         end
 
         def convert_output_updated_at(track, workflow)
           quality = track.xpath('tags/tag[starts-with(text(),"quality")]/text()').to_s
           updated_at = workflow.xpath("//operation[@id=\"compose\"][configurations/configuration[@key=\"target-tags\" and contains(text(), \"#{quality}\")]]/completed/text()").to_s
-          updated_at.present? ? Time.at(updated_at.to_i / 1000.0) : nil
+          updated_at.present? ? Time.at(updated_at.to_i / 1000.0).utc : nil
         end
 
         def convert_options(workflow)

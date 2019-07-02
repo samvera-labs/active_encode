@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'spec_helper'
 
 describe ActiveEncode::Callbacks do
@@ -36,14 +37,14 @@ describe ActiveEncode::Callbacks do
   end
 
   describe 'find callback' do
-    let(:encode) { CallbackEncode.create("sample.mp4") }
     subject { CallbackEncode.find(encode.id).history }
+    let(:encode) { CallbackEncode.create("sample.mp4") }
     it { is_expected.to include("CallbackEncode ran after_find") }
   end
 
   describe 'reload callback' do
-    let(:encode) { CallbackEncode.create("sample.mp4") }
     subject { encode.reload.history }
+    let(:encode) { CallbackEncode.create("sample.mp4") }
     it { is_expected.to include("CallbackEncode ran after_reload") }
   end
 

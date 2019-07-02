@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'spec_helper'
 
 describe ActiveEncode::Core do
@@ -5,7 +6,7 @@ describe ActiveEncode::Core do
     class CustomEncode < ActiveEncode::Base
     end
   end
-   after do
+  after do
     Object.send(:remove_const, :CustomEncode)
   end
 
@@ -24,8 +25,8 @@ describe ActiveEncode::Core do
   end
 
   describe 'find' do
-    let(:id) { encode_class.create(nil).id }
     subject { encode_class.find(id) }
+    let(:id) { encode_class.create(nil).id }
 
     it { is_expected.to be_a encode_class }
     its(:id) { is_expected.to eq id }
@@ -70,8 +71,8 @@ describe ActiveEncode::Core do
   end
 
   describe '#create!' do
-    let(:encode) { encode_class.new(nil) }
     subject { encode.create! }
+    let(:encode) { encode_class.new(nil) }
 
     it { is_expected.to equal encode }
     it { is_expected.to be_a encode_class }
@@ -89,8 +90,8 @@ describe ActiveEncode::Core do
   end
 
   describe '#cancel!' do
-    let(:encode) { encode_class.create(nil) }
     subject { encode.cancel! }
+    let(:encode) { encode_class.create(nil) }
 
     it { is_expected.to equal encode }
     it { is_expected.to be_a encode_class }
@@ -108,8 +109,8 @@ describe ActiveEncode::Core do
   end
 
   describe '#reload' do
-    let(:encode) { encode_class.create(nil) }
     subject { encode.reload }
+    let(:encode) { encode_class.create(nil) }
 
     it { is_expected.to equal encode }
     it { is_expected.to be_a encode_class }
@@ -134,15 +135,15 @@ describe ActiveEncode::Core do
         end
       end
     end
-     after do
+    after do
       Object.send(:remove_const, :DefaultOptionsEncode)
     end
 
+    subject { encode.options }
     let(:encode_class) { DefaultOptionsEncode }
     let(:default_options) { { preset: 'video' } }
-    let(:options) { { output: [{label: 'high', ffmpeg_opt: "640x480" }] } }
+    let(:options) { { output: [{ label: 'high', ffmpeg_opt: "640x480" }] } }
     let(:encode) { encode_class.new(nil, options) }
-    subject { encode.options }
 
     it 'merges default options and options parameter' do
       expect(subject).to include default_options

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'active_support'
 require 'active_model/callbacks'
 
@@ -8,7 +9,7 @@ module ActiveEncode
     POLLING_WAIT_TIME = 10.seconds.freeze
 
     CALLBACKS = [
-        :after_status_update, :after_failed, :after_cancelled, :after_completed
+      :after_status_update, :after_failed, :after_cancelled, :after_completed
     ].freeze
 
     included do

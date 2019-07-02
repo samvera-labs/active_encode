@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 class CreateActiveEncodeEncodeRecords < ActiveRecord::Migration[5.0]
   def change
     create_table :active_encode_encode_records do |t|
