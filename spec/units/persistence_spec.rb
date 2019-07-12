@@ -38,6 +38,7 @@ describe ActiveEncode::Persistence, db_clean: true do
     its(:created_at) { is_expected.to be_within(1.second).of encode.created_at }
     its(:updated_at) { is_expected.to be_within(1.second).of encode.updated_at }
     its(:create_options) { is_expected.to eq create_options.to_json }
+    its(:progress) { is_expected.to eq encode.percent_complete }
   end
 
   describe 'cancel' do
