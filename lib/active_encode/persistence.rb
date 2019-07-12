@@ -41,7 +41,8 @@ module ActiveEncode
           # Need to ensure that these values come through or else validations will fail
           created_at: encode.created_at,
           updated_at: encode.updated_at,
-          raw_object: encode.to_json
+          raw_object: encode.to_json,
+          progress: encode.percent_complete
         }
       end
   end
