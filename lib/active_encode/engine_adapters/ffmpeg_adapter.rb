@@ -188,7 +188,9 @@ module ActiveEncode
           1
         else
           progress_in_milliseconds = progress_value("out_time_ms=", data).to_i / 1000.0
-          (progress_in_milliseconds / encode.input.duration * 100).round
+          output = (progress_in_milliseconds / encode.input.duration * 100).round
+          return 100 if output > 100
+          output
         end
       end
 
