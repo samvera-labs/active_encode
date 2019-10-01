@@ -124,5 +124,20 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       expect(Process).to receive(:kill).with('SIGTERM', running_job.input.id.to_i)
       running_job.cancel!
     end
+
+    it "does not attempt to stop a non-running encode" do
+      expect(Process).not_to receive(:kill).with('SIGTERM', completed_job.input.id.to_i)
+      completed_job.cancel!
+    end
+
+    it "raises an error if the process can not be found" do
+      expect(Process).to receive(:kill).with('SIGTERM', running_job.input.id.to_i).and_raise(Errno::ESRCH)
+      expect { running_job.cancel! }.to raise_error(ActiveEncode::NotRunningError)
+    end
+
+    it "raises an error" do
+      expect(Process).to receive(:kill).with('SIGTERM', running_job.input.id.to_i).and_raise(Errno::EPERM)
+      expect { running_job.cancel! }.to raise_error(ActiveEncode::CancelError)
+    end
   end
 end

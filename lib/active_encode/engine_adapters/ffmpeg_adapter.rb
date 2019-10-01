@@ -98,10 +98,17 @@ module ActiveEncode
 
       # Cancel ongoing encode using pid file
       def cancel(id)
-        pid = get_pid(id)
-        Process.kill 'SIGTERM', pid.to_i
-
-        find id
+        encode = find id
+        if encode.running?
+          pid = get_pid(id)
+          Process.kill 'SIGTERM', pid.to_i
+          encode = find id
+        end
+        encode
+      rescue Errno::ESRCH
+        raise NotRunningError
+      rescue StandardError
+        raise CancelError
       end
 
     private
