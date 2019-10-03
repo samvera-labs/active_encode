@@ -6,6 +6,8 @@ module ActiveEncode
   module EngineAdapters
     class FfmpegAdapter
       WORK_DIR = ENV["ENCODE_WORK_DIR"] || "encodes" # Should read from config
+      MEDIAINFO_PATH = ENV["MEDIAINFO_PATH"] || "mediainfo"
+      FFMPEG_PATH = ENV["FFMPEG_PATH"] || "ffmpeg"
 
       def create(input_url, options = {})
         new_encode = ActiveEncode::Base.new(input_url, options)
@@ -20,7 +22,7 @@ module ActiveEncode
         FileUtils.mkdir_p working_path("outputs", new_encode.id)
 
         # Extract technical metadata from input file
-        `mediainfo --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} #{input_url}`
+        `#{MEDIAINFO_PATH} --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} #{input_url}`
         new_encode.input = build_input new_encode
 
         if new_encode.input.duration.blank?
@@ -156,7 +158,7 @@ module ActiveEncode
 
           # Extract technical metadata from output file
           metadata_path = working_path("output_metadata-#{output.label}", id)
-          `mediainfo --Output=XML --LogFile=#{metadata_path} #{output.url}` unless File.file? metadata_path
+          `#{MEDIAINFO_PATH} --Output=XML --LogFile=#{metadata_path} #{output.url}` unless File.file? metadata_path
           output.assign_tech_metadata(get_tech_metadata(metadata_path))
 
           outputs << output
@@ -171,7 +173,7 @@ module ActiveEncode
           " #{output[:ffmpeg_opt]} #{working_path(file_name, id)}"
         end.join(" ")
 
-        "ffmpeg -y -loglevel error -progress #{working_path('progress', id)} -i #{input_url} #{output_opt} > #{working_path('error.log', id)} 2>&1"
+        "#{FFMPEG_PATH} -y -loglevel error -progress #{working_path('progress', id)} -i #{input_url} #{output_opt} > #{working_path('error.log', id)} 2>&1"
       end
 
       def get_pid(id)
