@@ -161,11 +161,12 @@ module ActiveEncode
         end
 
         def read_preset(id)
-          client.read_preset(id: id).preset
+          @presets ||= {}
+          @presets[id] ||= client.read_preset(id: id).preset
         end
 
         def convert_output(job)
-          pipeline = client.read_pipeline(id: job.pipeline_id).pipeline
+          @pipeline ||= client.read_pipeline(id: job.pipeline_id).pipeline
           job.outputs.collect do |joutput|
             preset = read_preset(joutput.preset_id)
             extension = preset.container == 'ts' ? '.m3u8' : ''
@@ -173,7 +174,7 @@ module ActiveEncode
               managed: false,
               id: joutput.id,
               label: joutput.key.split("/", 2).first,
-              url: "s3://#{pipeline.output_bucket}/#{job.output_key_prefix}#{joutput.key}#{extension}"
+              url: "s3://#{@pipeline.output_bucket}/#{job.output_key_prefix}#{joutput.key}#{extension}"
             }
             tech_md = convert_tech_metadata(joutput, preset).merge(additional_metadata)
 
