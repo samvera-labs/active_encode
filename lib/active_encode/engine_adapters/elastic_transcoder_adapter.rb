@@ -161,11 +161,15 @@ module ActiveEncode
         end
 
         def read_preset(id)
-          client.read_preset(id: id).preset
+          Rails.cache.fetch("transcoder-preset-#{id}") do
+            client.read_preset(id: id).preset
+          end
         end
 
         def convert_output(job)
-          pipeline = client.read_pipeline(id: job.pipeline_id).pipeline
+          pipeline = Rails.cache.fetch("transcoder-pipeline-#{job.pipeline_id}") do
+            client.read_pipeline(id: job.pipeline_id).pipeline
+          end
           job.outputs.collect do |joutput|
             preset = read_preset(joutput.preset_id)
             extension = preset.container == 'ts' ? '.m3u8' : ''
