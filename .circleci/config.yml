@@ -1,6 +1,6 @@
 version: 2.1
 orbs:
-  samvera: samvera/circleci-orb@0
+  samvera: samvera/circleci-orb@0.3.2
 jobs:
   bundle_and_test:
     parameters:
@@ -12,7 +12,7 @@ jobs:
         default: 5.2.3
       bundler_version:
         type: string
-        default: 2.0.1
+        default: 2.0.2
     executor:
       name: 'samvera/ruby'
       ruby_version: << parameters.ruby_version >>
@@ -29,18 +29,16 @@ jobs:
 
       - samvera/cached_checkout
 
-      - samvera/bundle_for_gem:
+      - samvera/bundle:
           ruby_version: << parameters.ruby_version >>
           bundler_version: << parameters.bundler_version >>
-          project: active_encode
 
       - samvera/engine_cart_generate:
           cache_key: v2-internal-test-app-{{ checksum "active_encode.gemspec" }}-{{ checksum "spec/test_app_templates/lib/generators/test_app_generator.rb" }}-<< parameters.rails_version >>-<< parameters.ruby_version >>
 
-      - samvera/bundle_for_gem:
+      - samvera/bundle:
           ruby_version: << parameters.ruby_version >>
           bundler_version: << parameters.bundler_version >>
-          project: active_encode
 
       - samvera/rubocop
 

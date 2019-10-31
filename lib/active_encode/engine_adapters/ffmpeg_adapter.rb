@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 require 'fileutils'
 require 'nokogiri'
+require 'shellwords'
 
 module ActiveEncode
   module EngineAdapters
@@ -22,7 +23,7 @@ module ActiveEncode
         FileUtils.mkdir_p working_path("outputs", new_encode.id)
 
         # Extract technical metadata from input file
-        `#{MEDIAINFO_PATH} --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} #{input_url}`
+        `#{MEDIAINFO_PATH} --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} #{input_url.shellescape}`
         new_encode.input = build_input new_encode
 
         if new_encode.input.duration.blank?
@@ -169,11 +170,10 @@ module ActiveEncode
 
       def ffmpeg_command(input_url, id, opts)
         output_opt = opts[:outputs].collect do |output|
-          file_name = "outputs/#{File.basename(input_url, File.extname(input_url))}-#{output[:label]}.#{output[:extension]}"
+          file_name = "outputs/#{File.basename(input_url, File.extname(input_url)).gsub(/[^0-9A-Za-z.\-]/, '_')}-#{output[:label]}.#{output[:extension]}"
           " #{output[:ffmpeg_opt]} #{working_path(file_name, id)}"
         end.join(" ")
-
-        "#{FFMPEG_PATH} -y -loglevel error -progress #{working_path('progress', id)} -i #{input_url} #{output_opt} > #{working_path('error.log', id)} 2>&1"
+        "#{FFMPEG_PATH} -y -loglevel error -progress #{working_path('progress', id)} -i #{input_url.shellescape} #{output_opt} > #{working_path('error.log', id)} 2>&1"
       end
 
       def get_pid(id)
