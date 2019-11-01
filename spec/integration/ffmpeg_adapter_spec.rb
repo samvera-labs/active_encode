@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-require 'spec_helper'
+require 'rails_helper'
 require 'shared_specs/engine_adapter_specs'
 
 describe ActiveEncode::EngineAdapters::FfmpegAdapter do
@@ -105,6 +105,23 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       it "returns the encode with correct error" do
         expect(nonmedia_job.errors).to include("Error inspecting input: #{nonmedia_file}")
         expect(nonmedia_job.percent_complete).to be 1
+      end
+    end
+
+    context "input filename with spaces" do
+      let(:file_with_space) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file with space.mp4').to_s }
+      let(:create_space_job) { ActiveEncode::Base.create(file_with_space, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }
+
+      it "does not have errors" do
+        expect(create_space_job.errors).to be_empty
+      end
+
+      it "has the input technical metadata in a file" do
+        expect(File.read("#{work_dir}/#{create_space_job.id}/input_metadata")).not_to be_empty
+      end
+
+      it "has the pid in a file" do
+        expect(File.read("#{work_dir}/#{create_space_job.id}/pid")).not_to be_empty
       end
     end
   end
