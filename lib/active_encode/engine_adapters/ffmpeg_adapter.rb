@@ -127,7 +127,6 @@ module ActiveEncode
       end
 
       def read_errors(id)
-        # byebug
         err_path = working_path("error.log", id)
         error = File.read(err_path) if File.file? err_path
         if error.present?

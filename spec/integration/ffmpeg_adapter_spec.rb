@@ -111,9 +111,11 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
     context "input filename with spaces" do
       let(:file_with_space) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file with space.mp4').to_s }
       let!(:create_space_job) { ActiveEncode::Base.create(file_with_space, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }
+      let(:find_space_job) { ActiveEncode::Base.find create_space_job.id }
 
       it "does not have errors" do
-        expect(create_space_job.errors).to be_empty
+        sleep 2
+        expect(find_space_job.errors).to be_empty
       end
 
       it "has the input technical metadata in a file" do
@@ -126,7 +128,6 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
 
       context 'when uri encoded' do
         let(:file_with_space) { URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file with space.mp4').to_s) }
-        let(:find_space_job) { ActiveEncode::Base.find create_space_job.id }
 
         it "does not have errors" do
           sleep 2
