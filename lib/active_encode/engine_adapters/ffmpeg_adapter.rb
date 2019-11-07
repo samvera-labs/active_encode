@@ -11,6 +11,9 @@ module ActiveEncode
       FFMPEG_PATH = ENV["FFMPEG_PATH"] || "ffmpeg"
 
       def create(input_url, options = {})
+        # Decode file uris for ffmpeg (mediainfo works either way)
+        input_url = URI.decode(input_url) if input_url.starts_with? "file:///"
+
         new_encode = ActiveEncode::Base.new(input_url, options)
         new_encode.id = SecureRandom.uuid
         new_encode.created_at = Time.now.utc
@@ -46,7 +49,7 @@ module ActiveEncode
 
         # Run the ffmpeg command and save its pid
         command = ffmpeg_command(input_url, new_encode.id, options)
-        pid = Process.spawn(command)
+        pid = Process.spawn(command, err: working_path('error.log', new_encode.id))
         File.open(working_path("pid", new_encode.id), 'w') { |file| file.write pid }
         new_encode.input.id = pid
 
@@ -70,22 +73,13 @@ module ActiveEncode
         pid = get_pid(id)
         encode.input.id = pid if pid.present?
 
-        if File.file? working_path("error.log", id)
-          error = File.read working_path("error.log", id)
-          if error.present?
-            encode.state = :failed
-            encode.errors = [error]
-
-            return encode
-          end
-        end
-
-        encode.errors = []
-
         encode.current_operations = []
         encode.created_at, encode.updated_at = get_times encode.id
 
-        if running? pid
+        encode.errors = read_errors(id)
+        if encode.errors.present?
+          encode.state = :failed
+        elsif running? pid
           encode.state = :running
           encode.current_operations = ["transcoding"]
         elsif progress_ended?(encode.id) && encode.percent_complete == 100
@@ -132,6 +126,16 @@ module ActiveEncode
         File.write(working_path("error.log", encode.id), encode.errors.join("\n"))
       end
 
+      def read_errors(id)
+        err_path = working_path("error.log", id)
+        error = File.read(err_path) if File.file? err_path
+        if error.present?
+          [error]
+        else
+          []
+        end
+      end
+
       def build_input(encode)
         input = ActiveEncode::Input.new
         metadata = get_tech_metadata(working_path("input_metadata", encode.id))
@@ -173,7 +177,7 @@ module ActiveEncode
           file_name = "outputs/#{File.basename(input_url, File.extname(input_url)).gsub(/[^0-9A-Za-z.\-]/, '_')}-#{output[:label]}.#{output[:extension]}"
           " #{output[:ffmpeg_opt]} #{working_path(file_name, id)}"
         end.join(" ")
-        "#{FFMPEG_PATH} -y -loglevel error -progress #{working_path('progress', id)} -i #{input_url.shellescape} #{output_opt} > #{working_path('error.log', id)} 2>&1"
+        "#{FFMPEG_PATH} -y -loglevel error -progress #{working_path('progress', id)} -i #{input_url.shellescape} #{output_opt}"
       end
 
       def get_pid(id)
