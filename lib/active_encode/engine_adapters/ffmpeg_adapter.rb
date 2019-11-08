@@ -154,9 +154,8 @@ module ActiveEncode
         Dir["#{File.absolute_path(working_path('outputs', id))}/*"].each do |file_path|
           output = ActiveEncode::Output.new
           output.url = "file://#{file_path}"
-          original_extension = File.extname(encode.input.url)
-          original_filename = File.basename(encode.input.url).chomp(original_extension)
-          output.label = file_path[/#{Regexp.quote(original_filename)}\-(.*?)#{Regexp.quote(File.extname(file_path))}$/, 1]
+          sanitized_filename = sanitize_base encode.input.url
+          output.label = file_path[/#{Regexp.quote(sanitized_filename)}\-(.*?)#{Regexp.quote(File.extname(file_path))}$/, 1]
           output.id = "#{encode.input.id}-#{output.label}"
           output.created_at = encode.created_at
           output.updated_at = File.mtime file_path
@@ -174,10 +173,15 @@ module ActiveEncode
 
       def ffmpeg_command(input_url, id, opts)
         output_opt = opts[:outputs].collect do |output|
-          file_name = "outputs/#{File.basename(input_url, File.extname(input_url)).gsub(/[^0-9A-Za-z.\-]/, '_')}-#{output[:label]}.#{output[:extension]}"
+          sanitized_filename = sanitize_base input_url
+          file_name = "outputs/#{sanitized_filename}-#{output[:label]}.#{output[:extension]}"
           " #{output[:ffmpeg_opt]} #{working_path(file_name, id)}"
         end.join(" ")
         "#{FFMPEG_PATH} -y -loglevel error -progress #{working_path('progress', id)} -i #{input_url.shellescape} #{output_opt}"
+      end
+
+      def sanitize_base(input_url)
+        File.basename(input_url, File.extname(input_url)).gsub(/[^0-9A-Za-z.\-]/, '_')
       end
 
       def get_pid(id)
