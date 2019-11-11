@@ -53,10 +53,16 @@ module ActiveEncode
         File.open(working_path("pid", new_encode.id), 'w') { |file| file.write pid }
         new_encode.input.id = pid
 
-        # Prevent zombie process
-        Process.detach(pid)
-
         new_encode
+      rescue StandardError => e
+        new_encode.state = :failed
+        new_encode.percent_complete = 1
+        new_encode.errors = [e.message]
+        write_errors new_encode
+        return new_encode
+      ensure
+        # Prevent zombie process
+        Process.detach(pid) if pid.present?
       end
 
       # Return encode object from file system
