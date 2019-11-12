@@ -143,6 +143,17 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
         end
       end
     end
+
+    context 'when failed' do
+      subject { created_job }
+
+      before do
+        allow_any_instance_of(Object).to receive(:`).and_raise Errno::ENOENT
+      end
+
+      it { is_expected.to be_failed }
+      its(:errors) { is_expected.not_to be_empty }
+    end
   end
 
   describe "#find" do
