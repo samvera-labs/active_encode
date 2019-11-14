@@ -12,7 +12,15 @@ module ActiveEncode
 
       def create(input_url, options = {})
         # Decode file uris for ffmpeg (mediainfo works either way)
-        input_url = URI.decode(input_url) if input_url.starts_with? "file:///"
+        case input_url
+        when /^file\:\/\/\//
+          input_url = URI.decode(input_url).shellescape
+        when /^s3\:\/\//
+          require 'file_locator'
+
+          s3_object = FileLocator::S3File.new(input_url).object
+          input_url = URI.parse(s3_object.presigned_url(:get))
+        end
 
         new_encode = ActiveEncode::Base.new(input_url, options)
         new_encode.id = SecureRandom.uuid
@@ -26,7 +34,7 @@ module ActiveEncode
         FileUtils.mkdir_p working_path("outputs", new_encode.id)
 
         # Extract technical metadata from input file
-        `#{MEDIAINFO_PATH} --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} #{input_url.shellescape}`
+        `#{MEDIAINFO_PATH} --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} "#{input_url}"`
         new_encode.input = build_input new_encode
 
         if new_encode.input.duration.blank?
@@ -183,13 +191,17 @@ module ActiveEncode
           file_name = "outputs/#{sanitized_filename}-#{output[:label]}.#{output[:extension]}"
           " #{output[:ffmpeg_opt]} #{working_path(file_name, id)}"
         end.join(" ")
-        "#{FFMPEG_PATH} -y -loglevel error -progress #{working_path('progress', id)} -i #{input_url.shellescape} #{output_opt}"
+        "#{FFMPEG_PATH} -y -loglevel error -progress #{working_path('progress', id)} -i \"#{input_url}\" #{output_opt}"
       end
 
       def sanitize_base(input_url)
-        File.basename(input_url, File.extname(input_url)).gsub(/[^0-9A-Za-z.\-]/, '_')
+        if input_url.is_a? URI::HTTP
+          File.basename(input_url.path, File.extname(input_url.path))
+        else
+          File.basename(input_url, File.extname(input_url)).gsub(/[^0-9A-Za-z.\-]/, '_')
+        end
       end
-
+      
       def get_pid(id)
         File.read(working_path("pid", id)).remove("\n") if File.file? working_path("pid", id)
       end
