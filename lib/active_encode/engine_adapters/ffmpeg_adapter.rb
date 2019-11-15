@@ -65,7 +65,7 @@ module ActiveEncode
       rescue StandardError => e
         new_encode.state = :failed
         new_encode.percent_complete = 1
-        new_encode.errors = [e.message]
+        new_encode.errors = [e.full_message]
         write_errors new_encode
         return new_encode
       ensure
