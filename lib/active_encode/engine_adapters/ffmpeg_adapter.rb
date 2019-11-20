@@ -58,7 +58,8 @@ module ActiveEncode
         # Run the ffmpeg command and save its pid
         command = ffmpeg_command(input_url, new_encode.id, options)
         pid = Process.spawn(command, err: working_path('error.log', new_encode.id))
-        File.open(working_path("pid", new_encode.id), 'w') { |file| file.write pid }
+        # File.open(working_path("pid", new_encode.id), 'w') { |file| file.write pid }
+        IO.write(working_path("pid", new_encode.id), "#{pid}\n#{command}")
         new_encode.input.id = pid
 
         new_encode
@@ -70,7 +71,10 @@ module ActiveEncode
         return new_encode
       ensure
         # Prevent zombie process
+        puts `ps x --forest #{pid}`
         Process.detach(pid) if pid.present?
+        puts "Detached #{pid}" if pid.present?
+        puts `ps x --forest #{pid}`
       end
 
       # Return encode object from file system
@@ -203,7 +207,7 @@ module ActiveEncode
       end
       
       def get_pid(id)
-        File.read(working_path("pid", id)).remove("\n") if File.file? working_path("pid", id)
+        IO.readlines(working_path("pid", id), chomp: true).first if File.file? working_path("pid", id)
       end
 
       def working_path(path, id)
