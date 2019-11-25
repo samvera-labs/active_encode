@@ -98,8 +98,11 @@ module ActiveEncode
           encode.current_operations = ["transcoding"]
         elsif progress_ended?(encode.id) && encode.percent_complete == 100
           encode.state = :completed
-        elsif encode.percent_complete < 100
+        elsif cancelled? encode.id
           encode.state = :cancelled
+        elsif encode.percent_complete < 100
+          encode.errors << "Encoding has completed but the output duration is shorter than the input"
+          encode.state = :failed
         end
 
         encode.output = build_outputs encode if encode.completed?
@@ -112,7 +115,20 @@ module ActiveEncode
         encode = find id
         if encode.running?
           pid = get_pid(id)
+
+          IO.popen("ps -ef | grep #{pid}") do |pipe|
+            child_pids = pipe.readlines.map do |line|
+              parts = line.split(/\s+/)
+              parts[1] if parts[2] == pid.to_s && parts[1] != pipe.pid.to_s
+            end.compact
+
+            child_pids.each do |cpid|
+              Process.kill 'SIGTERM', cpid.to_i
+            end
+          end
+
           Process.kill 'SIGTERM', pid.to_i
+          File.write(working_path("cancelled", id), "")
           encode = find id
         end
         encode
@@ -201,7 +217,7 @@ module ActiveEncode
           File.basename(input_url, File.extname(input_url)).gsub(/[^0-9A-Za-z.\-]/, '_')
         end
       end
-      
+
       def get_pid(id)
         File.read(working_path("pid", id)).remove("\n") if File.file? working_path("pid", id)
       end
@@ -223,10 +239,14 @@ module ActiveEncode
           1
         else
           progress_in_milliseconds = progress_value("out_time_ms=", data).to_i / 1000.0
-          output = (progress_in_milliseconds / encode.input.duration * 100).round
+          output = (progress_in_milliseconds / encode.input.duration * 100).ceil
           return 100 if output > 100
           output
         end
+      end
+
+      def cancelled?(id)
+        File.exist? working_path("cancelled", id)
       end
 
       def read_progress(id)
