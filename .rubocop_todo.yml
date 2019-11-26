@@ -40,6 +40,7 @@ Metrics/PerceivedComplexity:
 RSpec/AnyInstance:
   Exclude:
     - 'spec/integration/ffmpeg_adapter_spec.rb'
+    - 'spec/integration/pass_through_adapter_spec.rb'
 
 RSpec/ExampleLength:
   Enabled: false
@@ -47,6 +48,7 @@ RSpec/ExampleLength:
 RSpec/InstanceVariable:
   Exclude:
     - 'spec/integration/ffmpeg_adapter_spec.rb'
+    - 'spec/integration/pass_through_adapter_spec.rb'
 
 RSpec/MessageSpies:
   Exclude:
@@ -61,4 +63,5 @@ RSpec/VerifiedDoubles:
 
 Style/GuardClause:
   Exclude:
+    - 'lib/active_encode/engine_adapters/pass_through_adapter.rb'
     - 'lib/file_locator.rb'

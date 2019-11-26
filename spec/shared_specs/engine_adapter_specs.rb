@@ -50,12 +50,12 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       it 'returns an ActiveEncode::Base object' do
         expect(subject.class).to be ActiveEncode::Base
       end
-      its(:id) { is_expected.to eq 'running-id' }
+      its(:id) { is_expected.to be_present }
       it { is_expected.to be_running }
       its(:percent_complete) { is_expected.to be > 0 }
       its(:errors) { is_expected.to be_empty }
       its(:created_at) { is_expected.to be_kind_of Time }
-      its(:updated_at) { is_expected.to be > subject.created_at }
+      its(:updated_at) { is_expected.to be >= subject.created_at }
 
       it 'input is a valid ActiveEncode::Input object' do
         expect(subject.input).to be_a ActiveEncode::Input
@@ -77,7 +77,7 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       it 'returns an ActiveEncode::Base object' do
         expect(subject.class).to be ActiveEncode::Base
       end
-      its(:id) { is_expected.to eq 'cancelled-id' }
+      its(:id) { is_expected.to be_present }
       it { is_expected.to be_cancelled }
       its(:percent_complete) { is_expected.to be > 0 }
       its(:errors) { is_expected.to be_empty }
@@ -104,7 +104,7 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       it 'returns an ActiveEncode::Base object' do
         expect(subject.class).to be ActiveEncode::Base
       end
-      its(:id) { is_expected.to eq 'completed-id' }
+      its(:id) { is_expected.to be_present }
       it { is_expected.to be_completed }
       its(:percent_complete) { is_expected.to eq 100 }
       its(:errors) { is_expected.to be_empty }
@@ -142,7 +142,7 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       it 'returns an ActiveEncode::Base object' do
         expect(subject.class).to be ActiveEncode::Base
       end
-      its(:id) { is_expected.to eq 'failed-id' }
+      its(:id) { is_expected.to be_present }
       it { is_expected.to be_failed }
       its(:percent_complete) { is_expected.to be > 0 }
       its(:errors) { is_expected.not_to be_empty }
@@ -201,12 +201,11 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
     it 'returns an ActiveEncode::Base object' do
       expect(subject.class).to be ActiveEncode::Base
     end
-    its(:id) { is_expected.to eq 'running-id' }
-    it { is_expected.to be_running }
+    its(:id) { is_expected.to be_present }
     its(:percent_complete) { is_expected.to be > 0 }
     its(:errors) { is_expected.to be_empty }
     its(:created_at) { is_expected.to be_kind_of Time }
-    its(:updated_at) { is_expected.to be > subject.created_at }
+    its(:updated_at) { is_expected.to be >= subject.created_at }
 
     it 'input is a valid ActiveEncode::Input object' do
       expect(subject.input).to be_a ActiveEncode::Input
