@@ -26,7 +26,7 @@ describe ActiveEncode::EncodeRecordController, type: :controller, db_clean: true
       end
 
       it "responds with JSON" do
-        expect(response.content_type).to eq "application/json"
+        expect(response.content_type).to include "application/json"
       end
 
       it "returns the encode record's raw json object" do
@@ -42,7 +42,7 @@ describe ActiveEncode::EncodeRecordController, type: :controller, db_clean: true
       end
 
       it "responds with JSON" do
-        expect(response.content_type).to eq "application/json"
+        expect(response.content_type).to include "application/json"
       end
 
       it "returns the encode record's raw json object" do

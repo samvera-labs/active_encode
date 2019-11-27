@@ -14,7 +14,7 @@ module ActiveEncode
         # Decode file uris for ffmpeg (mediainfo works either way)
         case input_url
         when /^file\:\/\/\//
-          input_url = URI.decode(input_url).shellescape
+          input_url = URI.decode(input_url)
         when /^s3\:\/\//
           require 'file_locator'
 
@@ -89,7 +89,6 @@ module ActiveEncode
 
         encode.current_operations = []
         encode.created_at, encode.updated_at = get_times encode.id
-
         encode.errors = read_errors(id)
         if encode.errors.present?
           encode.state = :failed
