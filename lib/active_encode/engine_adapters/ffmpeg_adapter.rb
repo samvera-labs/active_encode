@@ -12,7 +12,15 @@ module ActiveEncode
 
       def create(input_url, options = {})
         # Decode file uris for ffmpeg (mediainfo works either way)
-        input_url = URI.decode(input_url) if input_url.starts_with? "file:///"
+        case input_url
+        when /^file\:\/\/\//
+          input_url = URI.decode(input_url)
+        when /^s3\:\/\//
+          require 'file_locator'
+
+          s3_object = FileLocator::S3File.new(input_url).object
+          input_url = URI.parse(s3_object.presigned_url(:get))
+        end
 
         new_encode = ActiveEncode::Base.new(input_url, options)
         new_encode.id = SecureRandom.uuid
@@ -26,7 +34,7 @@ module ActiveEncode
         FileUtils.mkdir_p working_path("outputs", new_encode.id)
 
         # Extract technical metadata from input file
-        `#{MEDIAINFO_PATH} --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} #{input_url.shellescape}`
+        `#{MEDIAINFO_PATH} --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} "#{input_url}"`
         new_encode.input = build_input new_encode
 
         if new_encode.input.duration.blank?
@@ -57,7 +65,7 @@ module ActiveEncode
       rescue StandardError => e
         new_encode.state = :failed
         new_encode.percent_complete = 1
-        new_encode.errors = [e.message]
+        new_encode.errors = [e.full_message]
         write_errors new_encode
         return new_encode
       ensure
@@ -81,7 +89,6 @@ module ActiveEncode
 
         encode.current_operations = []
         encode.created_at, encode.updated_at = get_times encode.id
-
         encode.errors = read_errors(id)
         if encode.errors.present?
           encode.state = :failed
@@ -90,8 +97,11 @@ module ActiveEncode
           encode.current_operations = ["transcoding"]
         elsif progress_ended?(encode.id) && encode.percent_complete == 100
           encode.state = :completed
-        elsif encode.percent_complete < 100
+        elsif cancelled? encode.id
           encode.state = :cancelled
+        elsif encode.percent_complete < 100
+          encode.errors << "Encoding has completed but the output duration is shorter than the input"
+          encode.state = :failed
         end
 
         encode.output = build_outputs encode if encode.completed?
@@ -104,7 +114,20 @@ module ActiveEncode
         encode = find id
         if encode.running?
           pid = get_pid(id)
+
+          IO.popen("ps -ef | grep #{pid}") do |pipe|
+            child_pids = pipe.readlines.map do |line|
+              parts = line.split(/\s+/)
+              parts[1] if parts[2] == pid.to_s && parts[1] != pipe.pid.to_s
+            end.compact
+
+            child_pids.each do |cpid|
+              Process.kill 'SIGTERM', cpid.to_i
+            end
+          end
+
           Process.kill 'SIGTERM', pid.to_i
+          File.write(working_path("cancelled", id), "")
           encode = find id
         end
         encode
@@ -183,11 +206,15 @@ module ActiveEncode
           file_name = "outputs/#{sanitized_filename}-#{output[:label]}.#{output[:extension]}"
           " #{output[:ffmpeg_opt]} #{working_path(file_name, id)}"
         end.join(" ")
-        "#{FFMPEG_PATH} -y -loglevel error -progress #{working_path('progress', id)} -i #{input_url.shellescape} #{output_opt}"
+        "#{FFMPEG_PATH} -y -loglevel error -progress #{working_path('progress', id)} -i \"#{input_url}\" #{output_opt}"
       end
 
       def sanitize_base(input_url)
-        File.basename(input_url, File.extname(input_url)).gsub(/[^0-9A-Za-z.\-]/, '_')
+        if input_url.is_a? URI::HTTP
+          File.basename(input_url.path, File.extname(input_url.path))
+        else
+          File.basename(input_url, File.extname(input_url)).gsub(/[^0-9A-Za-z.\-]/, '_')
+        end
       end
 
       def get_pid(id)
@@ -211,10 +238,14 @@ module ActiveEncode
           1
         else
           progress_in_milliseconds = progress_value("out_time_ms=", data).to_i / 1000.0
-          output = (progress_in_milliseconds / encode.input.duration * 100).round
+          output = (progress_in_milliseconds / encode.input.duration * 100).ceil
           return 100 if output > 100
           output
         end
+      end
+
+      def cancelled?(id)
+        File.exist? working_path("cancelled", id)
       end
 
       def read_progress(id)

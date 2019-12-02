@@ -32,7 +32,9 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
   end
   let(:cancelling_job) do
     allow(Process).to receive(:kill).and_return(nil)
-    find_encode 'running-id'
+    encode = find_encode 'running-id'
+    File.write "#{work_dir}/running-id/cancelled", ""
+    encode
   end
   let(:completed_job) { find_encode "completed-id" }
   let(:failed_job) { find_encode 'failed-id' }
