@@ -49,11 +49,19 @@ module ActiveEncode
           return new_encode
         end
 
+        # For saving filename to label map used to find the label when building outputs
+        filename_label_hash = {}
+
         # Copy derivatives to work directory
         options[:outputs].each do |opt|
           url = opt[:url]
-          FileUtils.cp FileLocator.new(url).location, working_path("outputs/#{sanitize_base opt[:url]}-#{opt[:label]}#{File.extname opt[:url]}", new_encode.id)
+          output_path = working_path("outputs/#{sanitize_base opt[:url]}#{File.extname opt[:url]}", new_encode.id)
+          FileUtils.cp FileLocator.new(url).location, output_path
+          filename_label_hash[output_path] = opt[:label]
         end
+
+        # Write filename-to-label map so we can retrieve them on build_output
+        File.write working_path("filename_label.yml", new_encode.id), filename_label_hash.to_yaml
 
         new_encode.percent_complete = 1
         new_encode.state = :running
@@ -177,11 +185,11 @@ module ActiveEncode
       def build_outputs(encode)
         id = encode.id
         outputs = []
+        filename_label_hash = YAML.safe_load(File.read(working_path("filename_label.yml", id))) if File.exist?(working_path("filename_label.yml", id))
         Dir["#{File.absolute_path(working_path('outputs', id))}/*"].each do |file_path|
           output = ActiveEncode::Output.new
           output.url = "file://#{file_path}"
-          sanitized_filename = sanitize_base encode.input.url
-          output.label = file_path[/#{Regexp.quote(sanitized_filename)}.*?\-(.*?)#{Regexp.quote(File.extname(file_path))}$/, 1]
+          output.label = filename_label_hash[file_path] if filename_label_hash
           output.id = "#{encode.input.id}-#{output.label}"
           output.created_at = encode.created_at
           output.updated_at = File.mtime file_path
