@@ -121,7 +121,7 @@ module ActiveEncode
         end
 
         def convert_input(job)
-          job.input
+          job.input.key
         end
 
         def copy_to_input_bucket(input_url, bucket)
