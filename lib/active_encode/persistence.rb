@@ -13,7 +13,7 @@ module ActiveEncode
       around_create do |encode, block|
         create_options = encode.options
         encode = block.call
-        persist(persistence_model_attributes(encode).merge(create_options: create_options.to_json))
+        persist(persistence_model_attributes(encode, create_options))
       end
 
       after_cancel do |encode|
@@ -32,8 +32,8 @@ module ActiveEncode
         model.update(encode_attributes) # Don't fail if persisting doesn't succeed?
       end
 
-      def persistence_model_attributes(encode)
-        {
+      def persistence_model_attributes(encode, create_options = nil)
+        attributes = {
           global_id: encode.to_global_id.to_s,
           state: encode.state,
           adapter: encode.class.engine_adapter.class.name,
@@ -44,6 +44,8 @@ module ActiveEncode
           raw_object: encode.to_json,
           progress: encode.percent_complete
         }
+        attributes[:create_options] = create_options.to_json if create_options.present?
+        attributes
       end
   end
 end
