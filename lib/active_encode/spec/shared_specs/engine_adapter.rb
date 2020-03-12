@@ -52,7 +52,7 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       end
       its(:id) { is_expected.to be_present }
       it { is_expected.to be_running }
-      its(:percent_complete) { is_expected.to be > 0 }
+      its(:percent_complete) { is_expected.to be_positive }
       its(:errors) { is_expected.to be_empty }
       its(:created_at) { is_expected.to be_kind_of Time }
       its(:updated_at) { is_expected.to be >= subject.created_at }
@@ -79,7 +79,7 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       end
       its(:id) { is_expected.to be_present }
       it { is_expected.to be_cancelled }
-      its(:percent_complete) { is_expected.to be > 0 }
+      its(:percent_complete) { is_expected.to be_positive }
       its(:errors) { is_expected.to be_empty }
       its(:created_at) { is_expected.to be_kind_of Time }
       its(:updated_at) { is_expected.to be >= subject.created_at }
@@ -144,7 +144,7 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       end
       its(:id) { is_expected.to be_present }
       it { is_expected.to be_failed }
-      its(:percent_complete) { is_expected.to be > 0 }
+      its(:percent_complete) { is_expected.to be_positive }
       its(:errors) { is_expected.not_to be_empty }
       its(:created_at) { is_expected.to be_kind_of Time }
       its(:updated_at) { is_expected.to be > subject.created_at }
@@ -176,7 +176,7 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
     end
     its(:id) { is_expected.to eq cancelling_job.id }
     it { is_expected.to be_cancelled }
-    its(:percent_complete) { is_expected.to be > 0 }
+    its(:percent_complete) { is_expected.to be_positive }
     its(:errors) { is_expected.to be_empty }
     its(:created_at) { is_expected.to be_kind_of Time }
     its(:updated_at) { is_expected.to be >= subject.created_at }
@@ -202,7 +202,7 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       expect(subject.class).to be ActiveEncode::Base
     end
     its(:id) { is_expected.to be_present }
-    its(:percent_complete) { is_expected.to be > 0 }
+    its(:percent_complete) { is_expected.to be_positive }
     its(:errors) { is_expected.to be_empty }
     its(:created_at) { is_expected.to be_kind_of Time }
     its(:updated_at) { is_expected.to be >= subject.created_at }

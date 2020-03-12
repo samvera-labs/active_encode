@@ -2,7 +2,7 @@
 require 'spec_helper'
 require 'aws-sdk'
 require 'json'
-require 'shared_specs/engine_adapter_specs'
+require 'active_encode/spec/shared_specs'
 
 describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
   around do |example|

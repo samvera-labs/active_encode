@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require 'spec_helper'
 require 'rubyhorn'
-require 'shared_specs/engine_adapter_specs'
+require 'active_encode/spec/shared_specs'
 
 describe ActiveEncode::EngineAdapters::MatterhornAdapter do
   before(:all) do
