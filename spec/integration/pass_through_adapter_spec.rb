@@ -145,7 +145,7 @@ describe ActiveEncode::EngineAdapters::PassThroughAdapter do
       end
 
       it { is_expected.to be_failed }
-      its(:errors) { is_expected.not_to be_empty }
+      it { expect(subject.errors).to be_present }
     end
   end
 end

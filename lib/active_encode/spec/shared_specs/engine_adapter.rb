@@ -21,13 +21,13 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
     it 'returns an ActiveEncode::Base object' do
       expect(subject.class).to be ActiveEncode::Base
     end
-    its(:id) { is_expected.not_to be_empty }
+    it { expect(subject.id).to be_present }
     it { is_expected.to be_running }
-    its(:current_operations) { is_expected.to be_empty }
-    its(:percent_complete) { is_expected.to be < 100 }
-    its(:errors) { is_expected.to be_empty }
-    its(:created_at) { is_expected.to be_kind_of Time }
-    its(:updated_at) { is_expected.to be_kind_of Time }
+    it { expect(subject.current_operations).to be_empty }
+    it { expect(subject.percent_complete).to be < 100 }
+    it { expect(subject.errors).to be_empty }
+    it { expect(subject.created_at).to be_kind_of Time }
+    it { expect(subject.updated_at).to be_kind_of Time }
 
     it 'input is a valid ActiveEncode::Input object' do
       expect(subject.input).to be_a ActiveEncode::Input
@@ -50,12 +50,12 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       it 'returns an ActiveEncode::Base object' do
         expect(subject.class).to be ActiveEncode::Base
       end
-      its(:id) { is_expected.to be_present }
+      it { expect(subject.id).to be_present }
       it { is_expected.to be_running }
-      its(:percent_complete) { is_expected.to be_positive }
-      its(:errors) { is_expected.to be_empty }
-      its(:created_at) { is_expected.to be_kind_of Time }
-      its(:updated_at) { is_expected.to be >= subject.created_at }
+      it { expect(subject.percent_complete).to be_positive }
+      it { expect(subject.errors).to be_empty }
+      it { expect(subject.created_at).to be_kind_of Time }
+      it { expect(subject.updated_at).to be >= subject.created_at }
 
       it 'input is a valid ActiveEncode::Input object' do
         expect(subject.input).to be_a ActiveEncode::Input
@@ -77,12 +77,12 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       it 'returns an ActiveEncode::Base object' do
         expect(subject.class).to be ActiveEncode::Base
       end
-      its(:id) { is_expected.to be_present }
+      it { expect(subject.id).to be_present }
       it { is_expected.to be_cancelled }
-      its(:percent_complete) { is_expected.to be_positive }
-      its(:errors) { is_expected.to be_empty }
-      its(:created_at) { is_expected.to be_kind_of Time }
-      its(:updated_at) { is_expected.to be >= subject.created_at }
+      it { expect(subject.percent_complete).to be_positive }
+      it { expect(subject.errors).to be_empty }
+      it { expect(subject.created_at).to be_kind_of Time }
+      it { expect(subject.updated_at).to be >= subject.created_at }
 
       it 'input is a valid ActiveEncode::Input object' do
         expect(subject.input).to be_a ActiveEncode::Input
@@ -104,12 +104,12 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       it 'returns an ActiveEncode::Base object' do
         expect(subject.class).to be ActiveEncode::Base
       end
-      its(:id) { is_expected.to be_present }
+      it { expect(subject.id).to be_present }
       it { is_expected.to be_completed }
-      its(:percent_complete) { is_expected.to eq 100 }
-      its(:errors) { is_expected.to be_empty }
-      its(:created_at) { is_expected.to be_kind_of Time }
-      its(:updated_at) { is_expected.to be > subject.created_at }
+      it { expect(subject.percent_complete).to eq 100 }
+      it { expect(subject.errors).to be_empty }
+      it { expect(subject.created_at).to be_kind_of Time }
+      it { expect(subject.updated_at).to be > subject.created_at }
 
       it 'input is a valid ActiveEncode::Input object' do
         expect(subject.input).to be_a ActiveEncode::Input
@@ -142,12 +142,12 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
       it 'returns an ActiveEncode::Base object' do
         expect(subject.class).to be ActiveEncode::Base
       end
-      its(:id) { is_expected.to be_present }
+      it { expect(subject.id).to be_present }
       it { is_expected.to be_failed }
-      its(:percent_complete) { is_expected.to be_positive }
-      its(:errors) { is_expected.not_to be_empty }
-      its(:created_at) { is_expected.to be_kind_of Time }
-      its(:updated_at) { is_expected.to be > subject.created_at }
+      it { expect(subject.percent_complete).to be_positive }
+      it { expect(subject.errors).not_to be_empty }
+      it { expect(subject.created_at).to be_kind_of Time }
+      it { expect(subject.updated_at).to be > subject.created_at }
 
       it 'input is a valid ActiveEncode::Input object' do
         expect(subject.input).to be_a ActiveEncode::Input
@@ -174,12 +174,12 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
     it 'returns an ActiveEncode::Base object' do
       expect(subject.class).to be ActiveEncode::Base
     end
-    its(:id) { is_expected.to eq cancelling_job.id }
+    it { expect(subject.id).to eq cancelling_job.id }
     it { is_expected.to be_cancelled }
-    its(:percent_complete) { is_expected.to be_positive }
-    its(:errors) { is_expected.to be_empty }
-    its(:created_at) { is_expected.to be_kind_of Time }
-    its(:updated_at) { is_expected.to be >= subject.created_at }
+    it { expect(subject.percent_complete).to be_positive }
+    it { expect(subject.errors).to be_empty }
+    it { expect(subject.created_at).to be_kind_of Time }
+    it { expect(subject.updated_at).to be >= subject.created_at }
 
     it 'input is a valid ActiveEncode::Input object' do
       expect(subject.input).to be_a ActiveEncode::Input
@@ -201,11 +201,11 @@ RSpec.shared_examples 'an ActiveEncode::EngineAdapter' do |*_flags|
     it 'returns an ActiveEncode::Base object' do
       expect(subject.class).to be ActiveEncode::Base
     end
-    its(:id) { is_expected.to be_present }
-    its(:percent_complete) { is_expected.to be_positive }
-    its(:errors) { is_expected.to be_empty }
-    its(:created_at) { is_expected.to be_kind_of Time }
-    its(:updated_at) { is_expected.to be >= subject.created_at }
+    it { expect(subject.id).to be_present }
+    it { expect(subject.percent_complete).to be_positive }
+    it { expect(subject.errors).to be_empty }
+    it { expect(subject.created_at).to be_kind_of Time }
+    it { expect(subject.updated_at).to be >= subject.created_at }
 
     it 'input is a valid ActiveEncode::Input object' do
       expect(subject.input).to be_a ActiveEncode::Input

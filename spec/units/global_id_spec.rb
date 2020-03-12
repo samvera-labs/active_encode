@@ -17,17 +17,17 @@ describe ActiveEncode::GlobalID do
     let(:encode) { encode_class.create(nil) }
 
     it { is_expected.to be_a GlobalID }
-    its(:model_class) { is_expected.to eq encode_class }
-    its(:model_id) { is_expected.to eq encode.id }
-    its(:app) { is_expected.to eq 'ActiveEncode' }
+    it { expect(subject.model_class).to eq encode_class }
+    it { expect(subject.model_id).to eq encode.id }
+    it { expect(subject.app).to eq 'ActiveEncode' }
 
     context 'with an ActiveEncode::Base subclass' do
       let(:encode_class) { CustomEncode }
 
       it { is_expected.to be_a GlobalID }
-      its(:model_class) { is_expected.to eq encode_class }
-      its(:model_id) { is_expected.to eq encode.id }
-      its(:app) { is_expected.to eq 'ActiveEncode' }
+      it { expect(subject.model_class).to eq encode_class }
+      it { expect(subject.model_id).to eq encode.id }
+      it { expect(subject.app).to eq 'ActiveEncode' }
     end
   end
 
@@ -38,13 +38,13 @@ describe ActiveEncode::GlobalID do
     let(:global_id) { encode.to_global_id }
 
     it { is_expected.to be_a encode_class }
-    its(:id) { is_expected.to eq encode.id }
+    it { expect(subject.id).to eq encode.id }
 
     context 'with an ActiveEncode::Base subclass' do
       let(:encode_class) { CustomEncode }
 
       it { is_expected.to be_a encode_class }
-      its(:id) { is_expected.to eq encode.id }
+      it { expect(subject.id).to eq encode.id }
     end
   end
 end

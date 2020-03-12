@@ -30,7 +30,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "engine_cart", "~> 2.2"
   spec.add_development_dependency "rake"
   spec.add_development_dependency "rspec"
-  spec.add_development_dependency "rspec-its"
   spec.add_development_dependency 'rspec_junit_formatter'
   spec.add_development_dependency "rspec-rails"
 
