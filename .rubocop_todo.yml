@@ -7,6 +7,7 @@ Metrics/AbcSize:
 
 Metrics/BlockLength:
   Exclude:
+    - 'lib/active_encode/spec/shared_specs/*'
     - 'spec/**/*'
 
 Metrics/BlockNesting:

@@ -124,6 +124,75 @@ end
 
 Engine adapters are shims between ActiveEncode and the back end encoding service.  You can add an additional engine by creating an engine adapter class that implements `:create`, `:find`, and `:cancel` and passes the shared specs.
 
+For example:
+```ruby
+# In your application at:
+# lib/active_encode/engine_adapters/my_custom_adapter.rb
+module ActiveEncode
+  module EngineAdapters
+    class MyCustomAdapter
+      def create(input_url, options = {})
+        # Start a new encoding job. This may be an external service, or a
+        # locally queued job.
+
+        # Return an instance ActiveEncode::Base (or subclass) that represents
+        # the encoding job that was just started.        
+      end
+
+      def find(id, opts = {})
+        # Find the encoding job for the given parameters.
+
+        # Return an instance of ActiveEncode::Base (or subclass) that represents
+        # the found encoding job.
+      end
+
+      def cancel(id)
+        # Cancel the encoding job for the given id.
+
+        # Return an instance of ActiveEncode::Base (or subclass) that represents
+        # the canceled job.
+      end
+    end
+  end
+end
+```
+Then, use the shared specs...
+```ruby
+# In your application at...
+# spec/lib/active_encode/engine_adapters/my_custom_adapter_spec.rb
+require 'spec_helper'
+require 'active_encode/spec/shared_specs'
+RSpec.describe MyCustomAdapter do
+  let(:created_job) {
+    # an instance of ActiveEncode::Base represented a newly created encode job
+  }
+  let(:running_job) {
+    # an instance of ActiveEncode::Base represented a running encode job
+  }
+  let(:canceled_job) {
+    # an instance of ActiveEncode::Base represented a canceled encode job
+  }
+  let(:completed_job) {
+    # an instance of ActiveEncode::Base represented a completed encode job
+  }
+  let(:failed_job) {
+    # an instance of ActiveEncode::Base represented a failed encode job
+  }
+  let(:completed_tech_metadata) {
+    # a hash representing completed technical metadata
+  }
+  let(:completed_output) {
+    # data representing completed output
+  }
+  let(:failed_tech_metadata) {
+    # a hash representing failed technical metadata
+  }
+
+  # Run the shared specs.
+  it_behaves_like 'an ActiveEncode::EngineAdapter'
+end
+```
+
 # Acknowledgments
 
 This software has been developed by and is brought to you by the Samvera community.  Learn more at the

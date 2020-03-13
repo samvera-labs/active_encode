@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require 'spec_helper'
 require 'rubyhorn'
-require 'shared_specs/engine_adapter_specs'
+require 'active_encode/spec/shared_specs'
 
 describe ActiveEncode::EngineAdapters::MatterhornAdapter do
   before(:all) do
@@ -42,53 +42,53 @@ describe ActiveEncode::EngineAdapters::MatterhornAdapter do
   describe "#create" do
     subject { created_job }
 
-    its(:output) { is_expected.to be_empty }
-    its(:options) { is_expected.to include(preset: 'full') }
+    it { expect(subject.output).to be_empty }
+    it { expect(subject.options).to include(preset: 'full') }
   end
 
   describe "#find" do
     context "a running encode" do
       subject { running_job }
 
-      its(:options) { is_expected.to include(preset: 'full') }
-      its(:output) { is_expected.to be_empty }
-      its(:current_operations) { is_expected.to include("Hold for workflow selection") }
+      it { expect(subject.options).to include(preset: 'full') }
+      it { expect(subject.output).to be_empty }
+      it { expect(subject.current_operations).to include("Hold for workflow selection") }
 
       context 'input' do
         subject { running_job.input }
 
-        its(:width) { is_expected.to be_blank }
-        its(:height) { is_expected.to be_blank }
-        its(:frame_rate) { is_expected.to be_blank }
-        its(:duration) { is_expected.to be_blank }
-        its(:file_size) { is_expected.to be_blank }
-        its(:checksum) { is_expected.to be_blank }
-        its(:audio_codec) { is_expected.to be_blank }
-        its(:video_codec) { is_expected.to be_blank }
-        its(:audio_bitrate) { is_expected.to be_blank }
-        its(:video_bitrate) { is_expected.to be_blank }
+        it { expect(subject.width).to be_blank }
+        it { expect(subject.height).to be_blank }
+        it { expect(subject.frame_rate).to be_blank }
+        it { expect(subject.duration).to be_blank }
+        it { expect(subject.file_size).to be_blank }
+        it { expect(subject.checksum).to be_blank }
+        it { expect(subject.audio_codec).to be_blank }
+        it { expect(subject.video_codec).to be_blank }
+        it { expect(subject.audio_bitrate).to be_blank }
+        it { expect(subject.video_bitrate).to be_blank }
       end
     end
     context "a cancelled encode" do
       subject { canceled_job }
 
-      its(:options) { is_expected.to include(preset: 'full') }
-      its(:current_operations) { is_expected.not_to be_empty }
-      its(:current_operations) { is_expected.to include("Tagging dublin core catalogs for publishing") }
-      its(:updated_at) { is_expected.to be > subject.created_at }
+      it { expect(subject.options).to include(preset: 'full') }
+      it { expect(subject.current_operations).not_to be_empty }
+      it { expect(subject.current_operations).to include("Tagging dublin core catalogs for publishing") }
+      it { expect(subject.updated_at).to be > subject.created_at }
     end
 
     context "a completed encode" do
       subject { completed_job }
 
-      its(:options) { is_expected.to include(preset: 'avalon') }
-      its(:current_operations) { is_expected.to include("Cleaning up") }
+      it { expect(subject.options).to include(preset: 'avalon') }
+      it { expect(subject.current_operations).to include("Cleaning up") }
     end
     context "a failed encode" do
       subject { failed_job }
 
-      its(:options) { is_expected.to include(preset: 'error') }
-      its(:current_operations) { is_expected.to include("Cleaning up after failure") }
+      it { expect(subject.options).to include(preset: 'error') }
+      it { expect(subject.current_operations).to include("Cleaning up after failure") }
     end
   end
 
@@ -97,7 +97,7 @@ describe ActiveEncode::EngineAdapters::MatterhornAdapter do
     let(:encode) { ActiveEncode::Base.create(file) }
 
     it { is_expected.to be_a ActiveEncode::Base }
-    its(:id) { is_expected.to eq 'cancelled-id' }
+    it { expect(subject.id).to eq 'cancelled-id' }
     it { is_expected.to be_cancelled }
   end
 
@@ -108,24 +108,24 @@ describe ActiveEncode::EngineAdapters::MatterhornAdapter do
 
     subject { running_job.reload }
 
-    its(:output) { is_expected.to be_empty }
-    its(:options) { is_expected.to include(preset: 'full') }
-    its(:current_operations) { is_expected.to include("Hold for workflow selection") }
-    its(:percent_complete) { is_expected.to eq 0.43478260869565216 }
+    it { expect(subject.output).to be_empty }
+    it { expect(subject.options).to include(preset: 'full') }
+    it { expect(subject.current_operations).to include("Hold for workflow selection") }
+    it { expect(subject.percent_complete).to eq 0.43478260869565216 }
 
     context 'input' do
       subject { running_job.reload.input }
 
-      its(:width) { is_expected.to be_blank }
-      its(:height) { is_expected.to be_blank }
-      its(:frame_rate) { is_expected.to be_blank }
-      its(:duration) { is_expected.to be_blank }
-      its(:file_size) { is_expected.to be_blank }
-      its(:checksum) { is_expected.to be_blank }
-      its(:audio_codec) { is_expected.to be_blank }
-      its(:video_codec) { is_expected.to be_blank }
-      its(:audio_bitrate) { is_expected.to be_blank }
-      its(:video_bitrate) { is_expected.to be_blank }
+      it { expect(subject.width).to be_blank }
+      it { expect(subject.height).to be_blank }
+      it { expect(subject.frame_rate).to be_blank }
+      it { expect(subject.duration).to be_blank }
+      it { expect(subject.file_size).to be_blank }
+      it { expect(subject.checksum).to be_blank }
+      it { expect(subject.audio_codec).to be_blank }
+      it { expect(subject.video_codec).to be_blank }
+      it { expect(subject.audio_bitrate).to be_blank }
+      it { expect(subject.video_bitrate).to be_blank }
     end
   end
 end

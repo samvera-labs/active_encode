@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 require 'rails_helper'
-require 'shared_specs/engine_adapter_specs'
+require 'active_encode/spec/shared_specs'
 
 describe ActiveEncode::EngineAdapters::FfmpegAdapter do
   around do |example|
@@ -154,7 +154,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       end
 
       it { is_expected.to be_failed }
-      its(:errors) { is_expected.not_to be_empty }
+      it { expect(subject.errors).to be_present }
     end
   end
 

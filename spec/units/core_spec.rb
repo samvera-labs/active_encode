@@ -29,7 +29,7 @@ describe ActiveEncode::Core do
     let(:id) { encode_class.create(nil).id }
 
     it { is_expected.to be_a encode_class }
-    its(:id) { is_expected.to eq id }
+    it { expect(subject.id).to eq id }
 
     context 'with no id' do
       let(:id) { nil }
@@ -43,13 +43,13 @@ describe ActiveEncode::Core do
       let(:encode_class) { CustomEncode }
 
       it { is_expected.to be_a encode_class }
-      its(:id) { is_expected.to eq id }
+      it { expect(subject.id).to eq id }
 
       context 'casting' do
         let(:id) { ActiveEncode::Base.create(nil).id }
 
         it { is_expected.to be_a encode_class }
-        its(:id) { is_expected.to eq id }
+        it { expect(subject.id).to eq id }
       end
     end
   end
@@ -58,15 +58,15 @@ describe ActiveEncode::Core do
     subject { encode_class.create(nil) }
 
     it { is_expected.to be_a encode_class }
-    its(:id) { is_expected.not_to be nil }
-    its(:state) { is_expected.not_to be nil }
+    it { expect(subject.id).not_to be nil }
+    it { expect(subject.state).not_to be nil }
 
     context 'with an ActiveEncode::Base subclass' do
       let(:encode_class) { CustomEncode }
 
       it { is_expected.to be_a encode_class }
-      its(:id) { is_expected.not_to be nil }
-      its(:state) { is_expected.not_to be nil }
+      it { expect(subject.id).not_to be nil }
+      it { expect(subject.state).not_to be nil }
     end
   end
 
@@ -76,16 +76,16 @@ describe ActiveEncode::Core do
 
     it { is_expected.to equal encode }
     it { is_expected.to be_a encode_class }
-    its(:id) { is_expected.not_to be nil }
-    its(:state) { is_expected.not_to be nil }
+    it { expect(subject.id).not_to be nil }
+    it { expect(subject.state).not_to be nil }
 
     context 'with an ActiveEncode::Base subclass' do
       let(:encode_class) { CustomEncode }
 
       it { is_expected.to equal encode }
       it { is_expected.to be_a encode_class }
-      its(:id) { is_expected.not_to be nil }
-      its(:state) { is_expected.not_to be nil }
+      it { expect(subject.id).not_to be nil }
+      it { expect(subject.state).not_to be nil }
     end
   end
 
@@ -95,7 +95,7 @@ describe ActiveEncode::Core do
 
     it { is_expected.to equal encode }
     it { is_expected.to be_a encode_class }
-    its(:id) { is_expected.not_to be nil }
+    it { expect(subject.id).not_to be nil }
     it { is_expected.to be_cancelled }
 
     context 'with an ActiveEncode::Base subclass' do
@@ -103,7 +103,7 @@ describe ActiveEncode::Core do
 
       it { is_expected.to equal encode }
       it { is_expected.to be_a encode_class }
-      its(:id) { is_expected.not_to be nil }
+      it { expect(subject.id).not_to be nil }
       it { is_expected.to be_cancelled }
     end
   end
@@ -114,16 +114,16 @@ describe ActiveEncode::Core do
 
     it { is_expected.to equal encode }
     it { is_expected.to be_a encode_class }
-    its(:id) { is_expected.not_to be nil }
-    its(:state) { is_expected.not_to be nil }
+    it { expect(subject.id).not_to be nil }
+    it { expect(subject.state).not_to be nil }
 
     context 'with an ActiveEncode::Base subclass' do
       let(:encode_class) { CustomEncode }
 
       it { is_expected.to equal encode }
       it { is_expected.to be_a encode_class }
-      its(:id) { is_expected.not_to be nil }
-      its(:state) { is_expected.not_to be nil }
+      it { expect(subject.id).not_to be nil }
+      it { expect(subject.state).not_to be nil }
     end
   end
 

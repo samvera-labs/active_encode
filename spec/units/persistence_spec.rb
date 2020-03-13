@@ -30,15 +30,15 @@ describe ActiveEncode::Persistence, db_clean: true do
       expect { encode }.to change { ActiveEncode::EncodeRecord.count }.by(1)
     end
 
-    its(:global_id) { is_expected.to eq encode.to_global_id.to_s }
-    its(:state) { is_expected.to eq encode.state.to_s }
-    its(:adapter) { is_expected.to eq encode.class.engine_adapter.class.name }
-    its(:title) { is_expected.to eq encode.input.url.to_s }
-    its(:raw_object) { is_expected.to eq encode.to_json }
-    its(:created_at) { is_expected.to be_within(1.second).of encode.created_at }
-    its(:updated_at) { is_expected.to be_within(1.second).of encode.updated_at }
-    its(:create_options) { is_expected.to eq create_options.to_json }
-    its(:progress) { is_expected.to eq encode.percent_complete }
+    it { expect(subject.global_id).to eq encode.to_global_id.to_s }
+    it { expect(subject.state).to eq encode.state.to_s }
+    it { expect(subject.adapter).to eq encode.class.engine_adapter.class.name }
+    it { expect(subject.title).to eq encode.input.url.to_s }
+    it { expect(subject.raw_object).to eq encode.to_json }
+    it { expect(subject.created_at).to be_within(1.second).of encode.created_at }
+    it { expect(subject.updated_at).to be_within(1.second).of encode.updated_at }
+    it { expect(subject.create_options).to eq create_options.to_json }
+    it { expect(subject.progress).to eq encode.percent_complete }
   end
 
   describe 'cancel' do

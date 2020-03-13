@@ -2,7 +2,7 @@
 require 'spec_helper'
 require 'aws-sdk'
 require 'json'
-require 'shared_specs/engine_adapter_specs'
+require 'active_encode/spec/shared_specs'
 
 describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
   around do |example|
@@ -106,7 +106,7 @@ describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
     let(:create_output) { [{ id: "2", url: "s3://BucketName/elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a", label: "hls0400k" }] }
 
     it { is_expected.to be_running }
-    its(:current_operations) { is_expected.to be_empty }
+    it { expect(subject.current_operations).to be_empty }
 
     it 'output has technical metadata' do
       subject.output.each do |output|
@@ -122,7 +122,7 @@ describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
       let(:running_output) { [{ id: "2", url: "s3://BucketName/elastic-transcoder-samples/output/hls/hls0400k/e8fe80f5b7063b12d567b90c0bdf6322116bba11ac458fe9d62921644159fe4a", label: "hls0400k" }] }
       let(:running_tech_metadata) { { width: 1280, height: 720, frame_rate: 25, file_size: 21_069_678, duration: 117_312 } }
 
-      its(:current_operations) { is_expected.to be_empty }
+      it { expect(subject.current_operations).to be_empty }
 
       it 'input has technical metadata' do
         expect(subject.input.as_json.symbolize_keys).to include running_tech_metadata
