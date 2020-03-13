@@ -161,7 +161,7 @@ Then, use the shared specs...
 # In your application at...
 # spec/lib/active_encode/engine_adapters/my_custom_adapter_spec.rb
 require 'spec_helper'
-require 'active_encode/shared_specs/engine_adapter_specs'
+require 'active_encode/spec/shared_specs'
 RSpec.describe MyCustomAdapter do
   let(:created_job) {
     # an instance of ActiveEncode::Base represented a newly created encode job
