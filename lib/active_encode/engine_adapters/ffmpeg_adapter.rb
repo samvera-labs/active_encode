@@ -36,11 +36,11 @@ module ActiveEncode
         # Extract technical metadata from input file
         curl_option = if options && options[:headers]
                         headers = options[:headers].map { |k, v| "#{k}: #{v}" }
-                        (["--File_curl=HttpHeader"] + headers).join(",")
+                        (["--File_curl=HttpHeader"] + headers).join(",").yield_self { |s| "'#{s}'" }
                       else
                         ""
                       end
-        `#{MEDIAINFO_PATH} '#{curl_option}' --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} "#{input_url}"`
+        `#{MEDIAINFO_PATH} #{curl_option} --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} "#{input_url}"`
         new_encode.input = build_input new_encode
 
         if new_encode.input.duration.blank?
@@ -212,10 +212,10 @@ module ActiveEncode
           file_name = "outputs/#{sanitized_filename}-#{output[:label]}.#{output[:extension]}"
           " #{output[:ffmpeg_opt]} #{working_path(file_name, id)}"
         end.join(" ")
-        header_opt = opts[:headers]&.map do |k, v|
-          "-headers '#{k}: #{v}'"
-        end&.join(" ")
-
+        header_opt = Array(opts[:headers]).map do |k, v|
+          "#{k}: #{v}\r\n"
+        end.join
+        header_opt = "-headers '#{header_opt}'" if header_opt.present?
         "#{FFMPEG_PATH} #{header_opt} -y -loglevel error -progress #{working_path('progress', id)} -i \"#{input_url}\" #{output_opt}"
       end
 
