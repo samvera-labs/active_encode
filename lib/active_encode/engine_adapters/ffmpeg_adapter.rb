@@ -34,7 +34,13 @@ module ActiveEncode
         FileUtils.mkdir_p working_path("outputs", new_encode.id)
 
         # Extract technical metadata from input file
-        `#{MEDIAINFO_PATH} --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} "#{input_url}"`
+        curl_option = if options && options[:headers]
+                        headers = options[:headers].map { |k, v| "#{k}: #{v}" }
+                        (["--File_curl=HttpHeader"] + headers).join(",").yield_self { |s| "'#{s}'" }
+                      else
+                        ""
+                      end
+        `#{MEDIAINFO_PATH} #{curl_option} --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} "#{input_url}"`
         new_encode.input = build_input new_encode
 
         if new_encode.input.duration.blank?
@@ -206,7 +212,11 @@ module ActiveEncode
           file_name = "outputs/#{sanitized_filename}-#{output[:label]}.#{output[:extension]}"
           " #{output[:ffmpeg_opt]} #{working_path(file_name, id)}"
         end.join(" ")
-        "#{FFMPEG_PATH} -y -loglevel error -progress #{working_path('progress', id)} -i \"#{input_url}\" #{output_opt}"
+        header_opt = Array(opts[:headers]).map do |k, v|
+          "#{k}: #{v}\r\n"
+        end.join
+        header_opt = "-headers '#{header_opt}'" if header_opt.present?
+        "#{FFMPEG_PATH} #{header_opt} -y -loglevel error -progress #{working_path('progress', id)} -i \"#{input_url}\" #{output_opt}"
       end
 
       def sanitize_base(input_url)
