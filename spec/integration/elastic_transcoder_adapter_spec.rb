@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 require 'spec_helper'
-require 'aws-sdk'
+require 'aws-sdk-elastictranscoder'
 require 'json'
 require 'active_encode/spec/shared_specs'
 

@@ -5,7 +5,8 @@ source 'https://rubygems.org'
 gemspec
 
 gem 'addressable'
-gem 'aws-sdk'
+gem 'aws-sdk-elastictranscoder'
+gem 'aws-sdk-s3'
 gem 'byebug'
 gem 'rubyhorn', git: "https://github.com/avalonmediasystem/rubyhorn.git"
 gem 'shingoncoder'

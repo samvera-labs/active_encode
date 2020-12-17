@@ -22,7 +22,8 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "rails"
 
-  spec.add_development_dependency "aws-sdk"
+  spec.add_development_dependency "aws-sdk-elastictranscoder"
+  spec.add_development_dependency "aws-sdk-s3"
   spec.add_development_dependency "bixby", '~> 1.0.0'
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "coveralls"

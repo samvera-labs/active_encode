@@ -12,7 +12,7 @@
 #   CONDITIONS OF ANY KIND, either express or implied. See the License for the
 #   specific language governing permissions and limitations under the License.
 # ---  END LICENSE_HEADER BLOCK  ---
-require 'aws-sdk'
+require 'aws-sdk-s3'
 require 'rails_helper'
 
 describe FileLocator, type: :service do
