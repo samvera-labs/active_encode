@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 require 'addressable/uri'
-require 'aws-sdk'
+require 'aws-sdk-elastictranscoder'
 require 'file_locator'
 
 module ActiveEncode

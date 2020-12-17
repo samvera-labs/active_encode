@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 require 'addressable/uri'
-require 'aws-sdk'
+require 'aws-sdk-s3'
 
 class FileLocator
   attr_reader :source
