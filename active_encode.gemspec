@@ -22,7 +22,10 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "rails"
 
+  spec.add_development_dependency "aws-sdk-cloudwatchevents"
+  spec.add_development_dependency "aws-sdk-cloudwatchlogs"
   spec.add_development_dependency "aws-sdk-elastictranscoder"
+  spec.add_development_dependency "aws-sdk-mediaconvert"
   spec.add_development_dependency "aws-sdk-s3"
   spec.add_development_dependency "bixby", '~> 1.0.0'
   spec.add_development_dependency "bundler"

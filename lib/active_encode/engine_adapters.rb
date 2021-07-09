@@ -14,6 +14,7 @@ module ActiveEncode
     autoload :ElasticTranscoderAdapter
     autoload :TestAdapter
     autoload :FfmpegAdapter
+    autoload :MediaConvertAdapter
     autoload :PassThroughAdapter
 
     ADAPTER = 'Adapter'
