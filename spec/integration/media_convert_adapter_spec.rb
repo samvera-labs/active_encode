@@ -9,15 +9,24 @@ require 'active_encode/spec/shared_specs'
 require 'active_support/json'
 require 'active_support/time'
 
+def with_json_parsing
+  old_settings = { parse_json_times: ActiveSupport.parse_json_times, time_zone: Time.zone }
+  ActiveSupport.parse_json_times = true
+  Time.zone = 'America/Chicago'
+  yield
+ensure
+  ActiveSupport.parse_json_times = old_settings[:parse_json_times]
+  Time.zone = old_settings[:time_zone]
+end
+
 def reconstitute_response(fixture_path)
-  HashWithIndifferentAccess.new(ActiveSupport::JSON.decode(File.read(File.join("spec/fixtures", fixture_path))))
+  with_json_parsing do
+    HashWithIndifferentAccess.new(ActiveSupport::JSON.decode(File.read(File.join("spec/fixtures", fixture_path))))
+  end
 end
 
 describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
   around do |example|
-    ActiveSupport.parse_json_times = true
-    Time.zone = 'America/Chicago'
-
     # Setting this before each test works around a stubbing + memoization limitation
     ActiveEncode::Base.engine_adapter = :media_convert
     ActiveEncode::Base.engine_adapter.role = 'arn:aws:iam::123456789012:role/service-role/MediaConvert_Default_Role'
@@ -65,6 +74,7 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
   end
 
   let(:cancelling_job) do
+    mediaconvert.stub_responses(:cancel_job, reconstitute_response("media_convert/job_canceling.json"))
     mediaconvert.stub_responses(:get_job, reconstitute_response("media_convert/job_canceled.json"))
     ActiveEncode::Base.find(job_id)
   end

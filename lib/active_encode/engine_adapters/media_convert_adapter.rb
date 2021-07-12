@@ -9,8 +9,6 @@ require 'file_locator'
 
 require 'active_support/json'
 require 'active_support/time'
-ActiveSupport.parse_json_times = true
-Time.zone = 'America/Chicago'
 
 module ActiveEncode
   module EngineAdapters
