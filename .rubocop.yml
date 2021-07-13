@@ -8,6 +8,7 @@ AllCops:
   TargetRubyVersion: 2.4
   DisplayCopNames: true
   Exclude:
+    - 'active_encode.gemspec'
     - 'vendor/**/*'
   Include:
     - '**/Rakefile'
