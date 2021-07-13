@@ -95,13 +95,15 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
 
   let(:completed_output) do
     [
-      { id: "1625859001514-vvqfwj-output-0", url: "s3://output-bucket/active-encode-test/output-1080.m3u8",
+      { id: "1625859001514-vvqfwj-output-auto", url: "s3://output-bucket/active-encode-test/output.m3u8",
+        label: "output.m3u8", audio_codec: "AAC", duration: 888_020, video_codec: "H_264" },
+      { id: "1625859001514-vvqfwj-output-1080", url: "s3://output-bucket/active-encode-test/output-1080.m3u8",
         label: "output-1080.m3u8", audio_bitrate: 128_000, audio_codec: "AAC", duration: 888_020,
         video_bitrate: 8_500_000, height: 1080, width: 1920, video_codec: "H_264", frame_rate: 29.97 },
-      { id: "1625859001514-vvqfwj-output-1", url: "s3://output-bucket/active-encode-test/output-720.m3u8",
+      { id: "1625859001514-vvqfwj-output-720", url: "s3://output-bucket/active-encode-test/output-720.m3u8",
         label: "output-720.m3u8", audio_bitrate: 96_000, audio_codec: "AAC", duration: 888_020,
         video_bitrate: 5_000_000, height: 720, width: 1280, video_codec: "H_264", frame_rate: 29.97 },
-      { id: "1625859001514-vvqfwj-output-2", url: "s3://output-bucket/active-encode-test/output-540.m3u8",
+      { id: "1625859001514-vvqfwj-output-540", url: "s3://output-bucket/active-encode-test/output-540.m3u8",
         label: "output-540.m3u8", audio_bitrate: 96_000, audio_codec: "AAC", duration: 888_020,
         video_bitrate: 3_500_000, height: 540, width: 960, video_codec: "H_264", frame_rate: 29.97 }
     ]
@@ -110,4 +112,15 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
   let(:failed_tech_metadata) { {} }
 
   it_behaves_like "an ActiveEncode::EngineAdapter"
+
+  describe "output" do
+    it "contains all expected outputs" do
+      completed_output.each do |expected_output|
+        found_output = completed_job.output.find { |output| output.id == expected_output[:id] }
+        expected_output.each_pair do |key, value|
+          expect(found_output.send(key)).to eq(value)
+        end
+      end
+    end
+  end
 end

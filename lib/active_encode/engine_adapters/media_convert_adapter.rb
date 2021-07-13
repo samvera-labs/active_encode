@@ -194,7 +194,7 @@ module ActiveEncode
           results = get_encode_results(job)
           settings = job.settings.output_groups.first.outputs
 
-          results.dig('detail', 'outputGroupDetails', 0, 'outputDetails').map.with_index do |detail, index|
+          outputs = results.dig('detail', 'outputGroupDetails', 0, 'outputDetails').map.with_index do |detail, index|
             tech_md = MediaConvertOutput.tech_metadata(settings[index], detail)
             output = ActiveEncode::Output.new
 
@@ -205,9 +205,25 @@ module ActiveEncode
              :audio_bitrate, :video_bitrate, :file_size, :label, :url, :id].each do |field|
               output.send("#{field}=", tech_md[field])
             end
-            output.id ||= "#{job.id}-output-#{index}"
+            output.id ||= "#{job.id}-output#{tech_md[:suffix]}"
             output
           end
+
+          adaptive_playlist = results.dig('detail', 'outputGroupDetails', 0, 'playlistFilePaths', 0)
+          unless adaptive_playlist.nil?
+            output = ActiveEncode::Output.new
+            output.created_at = job.timing.submit_time
+            output.updated_at = job.timing.finish_time || job.timing.start_time || output.created_at
+            output.id = "#{job.id}-output-auto"
+
+            [:duration, :audio_codec, :video_codec].each do |field|
+              output.send("#{field}=", outputs.first.send(field))
+            end
+            output.label = File.basename(adaptive_playlist)
+            output.url = adaptive_playlist
+            outputs << output
+          end
+          outputs
         end
 
         def get_encode_results(job)

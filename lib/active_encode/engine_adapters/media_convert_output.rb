@@ -42,7 +42,8 @@ module ActiveEncode
             audio_bitrate: extract_audio_bitrate(settings),
             video_bitrate: extract_video_bitrate(settings),
             url: url,
-            label: File.basename(url)
+            label: File.basename(url),
+            suffix: settings.name_modifier
           }
         end
 
