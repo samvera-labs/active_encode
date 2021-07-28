@@ -51,6 +51,15 @@ module ActiveEncode
         cmaf: { fragment_length: 2, segment_control: "SEGMENTED_FILES", segment_length: 10 }
       }.freeze
 
+      class ResultsNotAvailable < RuntimeError
+        attr_reader :encode
+
+        def initialize(msg = nil, encode = nil)
+          @encode = encode
+          super(msg)
+        end
+      end
+
       attr_accessor :role, :output_bucket
       attr_writer :log_group, :queue
 
@@ -167,11 +176,23 @@ module ActiveEncode
           encode.updated_at = job.timing.finish_time || job.timing.start_time || encode.created_at
           encode.percent_complete = convert_percent_complete(job)
           encode.errors = [job.error_message].compact
+          encode.output = []
 
           encode.input.created_at = encode.created_at
           encode.input.updated_at = encode.updated_at
 
-          encode.output = encode.state == :completed ? convert_output(job) : []
+          encode = complete_encode(encode, job) if encode.state == :completed
+          encode
+        end
+
+        def complete_encode(encode, job)
+          result = convert_output(job)
+          if result.nil?
+            raise ResultsNotAvailable.new("Unable to load progress for job #{job.id}", encode) if job.timing.finish_time < 10.minutes.ago
+            encode.state = :running
+          else
+            encode.output = result
+          end
           encode
         end
 
@@ -192,6 +213,11 @@ module ActiveEncode
 
         def convert_output(job)
           results = get_encode_results(job)
+          return nil if results.nil?
+          convert_encode_results(job, results)
+        end
+
+        def convert_encode_results(job, results)
           settings = job.settings.output_groups.first.outputs
 
           outputs = results.dig('detail', 'outputGroupDetails', 0, 'outputDetails').map.with_index do |detail, index|
@@ -228,7 +254,7 @@ module ActiveEncode
 
         def get_encode_results(job)
           start_time = job.timing.submit_time
-          end_time = job.timing.finish_time || Time.now.utc
+          end_time = (job.timing.finish_time || Time.now.utc) + 10.minutes
 
           response = cloudwatch_logs.start_query(
             log_group_name: log_group,
@@ -243,7 +269,8 @@ module ActiveEncode
             sleep(0.5)
             response = cloudwatch_logs.get_query_results(query_id: query_id)
           end
-          raise ActiveEncode::NotFound, "Unable to load progress for job #{job.id}" if response.results.empty?
+
+          return nil if response.results.empty?
 
           JSON.parse(response.results.first.first.value)
         end

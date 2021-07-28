@@ -87,6 +87,16 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
     ActiveEncode::Base.find(job_id)
   end
 
+  let(:recent_completed_job_without_results) do
+    job_response = reconstitute_response("media_convert/job_completed.json")
+    job_response["job"]["timing"]["finish_time"] = 5.minutes.ago
+    mediaconvert.stub_responses(:get_job, job_response)
+    cloudwatch_logs.stub_responses(:start_query, reconstitute_response("media_convert/job_completed_detail_query.json"))
+    cloudwatch_logs.stub_responses(:get_query_results, reconstitute_response("media_convert/job_completed_empty_detail.json"))
+
+    ActiveEncode::Base.find(job_id)
+  end
+
   let(:failed_job) do
     mediaconvert.stub_responses(:get_job, reconstitute_response("media_convert/job_failed.json"))
 
@@ -120,6 +130,22 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
         expected_output.each_pair do |key, value|
           expect(found_output.send(key)).to eq(value)
         end
+      end
+    end
+
+    it "has no logging entries but finished within the last 10 minutes" do
+      expect(recent_completed_job_without_results.state).to eq(:running)
+    end
+
+    it "finished more than 10 minutes ago but has no logging entries" do
+      mediaconvert.stub_responses(:get_job, reconstitute_response("media_convert/job_completed.json"))
+      cloudwatch_logs.stub_responses(:start_query, reconstitute_response("media_convert/job_completed_detail_query.json"))
+      cloudwatch_logs.stub_responses(:get_query_results, reconstitute_response("media_convert/job_completed_empty_detail.json"))
+
+      expect { ActiveEncode::Base.find(job_id) }.to raise_error do |error|
+        expect(error).to be_a(ActiveEncode::EngineAdapters::MediaConvertAdapter::ResultsNotAvailable)
+        expect(error.encode).to be_a(ActiveEncode::Base)
+        expect(error.encode.state).to eq(:completed)
       end
     end
   end
