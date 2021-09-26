@@ -123,6 +123,33 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
 
   it_behaves_like "an ActiveEncode::EngineAdapter"
 
+  describe "queue" do
+    let(:operations) { mediaconvert.api_requests(exclude_presign: true) }
+
+    it "uses the default queue" do
+      mediaconvert.stub_responses(:create_job, reconstitute_response("media_convert/job_created.json"))
+      ActiveEncode::Base.create(
+        "s3://input-bucket/test_files/source_file.mp4",
+        output_prefix: "active-encode-test/output",
+        outputs: [],
+        use_original_url: true
+      )
+      expect(operations).to include(include(operation_name: :create_job, params: include(queue: 'Default')))
+    end
+
+    it "uses a specific queue" do
+      mediaconvert.stub_responses(:create_job, reconstitute_response("media_convert/job_created.json"))
+      ActiveEncode::Base.engine_adapter.queue = 'test-queue'
+      ActiveEncode::Base.create(
+        "s3://input-bucket/test_files/source_file.mp4",
+        output_prefix: "active-encode-test/output",
+        outputs: [],
+        use_original_url: true
+      )
+      expect(operations).to include(include(operation_name: :create_job, params: include(queue: 'test-queue')))
+    end
+  end
+
   describe "output" do
     it "contains all expected outputs" do
       completed_output.each do |expected_output|
