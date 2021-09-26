@@ -130,6 +130,7 @@ module ActiveEncode
         input = options[:media_type] == :audio ? make_audio_input(input_url) : make_video_input(input_url)
 
         create_job_params = {
+          queue: queue,
           role: role,
           settings: {
             inputs: [input],
