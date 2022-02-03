@@ -75,7 +75,8 @@ module ActiveEncode
           source: ["aws.mediaconvert"],
           "detail-type": ["MediaConvert Job State Change"],
           detail: {
-            queue: [queue_arn]
+            queue: [queue_arn],
+            status: ["COMPLETE"]
           }
         }
 
@@ -87,7 +88,7 @@ module ActiveEncode
           name: rule_name,
           event_pattern: event_pattern.to_json,
           state: "ENABLED",
-          description: "Forward MediaConvert job state changes from queue #{queue} to #{log_group}"
+          description: "Forward MediaConvert job state changes on COMPLETE from queue #{queue} to #{log_group}"
         )
 
         cloudwatch_events.put_targets(
