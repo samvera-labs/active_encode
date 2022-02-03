@@ -13,8 +13,5 @@ AllCops:
   Include:
     - '**/Rakefile'
 
-Layout/IndentHash:
-  Enabled: false
-
-Style/BracesAroundHashParameters:
+Rails/RakeEnvironment:
   Enabled: false
