@@ -73,7 +73,7 @@ module ActiveEncode
         new_encode.percent_complete = 1
         new_encode.errors = [e.full_message]
         write_errors new_encode
-        return new_encode
+        new_encode
       end
 
       # Return encode object from file system
@@ -110,7 +110,7 @@ module ActiveEncode
         encode.percent_complete = 1
         encode.errors = [e.full_message]
         write_errors encode
-        return encode
+        encode
       end
 
       # Cancel ongoing encode using pid file

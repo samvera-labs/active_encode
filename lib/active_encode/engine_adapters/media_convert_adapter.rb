@@ -171,240 +171,240 @@ module ActiveEncode
 
       private
 
-        def build_encode(job)
-          return nil if job.nil?
-          encode = ActiveEncode::Base.new(job.settings.inputs.first.file_input, {})
-          encode.id = job.id
-          encode.input.id = job.id
-          encode.state = JOB_STATES[job.status]
-          encode.current_operations = [job.current_phase].compact
-          encode.created_at = job.timing.submit_time
-          encode.updated_at = job.timing.finish_time || job.timing.start_time || encode.created_at
-          encode.percent_complete = convert_percent_complete(job)
-          encode.errors = [job.error_message].compact
-          encode.output = []
+      def build_encode(job)
+        return nil if job.nil?
+        encode = ActiveEncode::Base.new(job.settings.inputs.first.file_input, {})
+        encode.id = job.id
+        encode.input.id = job.id
+        encode.state = JOB_STATES[job.status]
+        encode.current_operations = [job.current_phase].compact
+        encode.created_at = job.timing.submit_time
+        encode.updated_at = job.timing.finish_time || job.timing.start_time || encode.created_at
+        encode.percent_complete = convert_percent_complete(job)
+        encode.errors = [job.error_message].compact
+        encode.output = []
 
-          encode.input.created_at = encode.created_at
-          encode.input.updated_at = encode.updated_at
+        encode.input.created_at = encode.created_at
+        encode.input.updated_at = encode.updated_at
 
-          encode = complete_encode(encode, job) if encode.state == :completed
-          encode
+        encode = complete_encode(encode, job) if encode.state == :completed
+        encode
+      end
+
+      def complete_encode(encode, job)
+        result = convert_output(job)
+        if result.nil?
+          raise ResultsNotAvailable.new("Unable to load progress for job #{job.id}", encode) if job.timing.finish_time < 10.minutes.ago
+          encode.state = :running
+        else
+          encode.output = result
         end
+        encode
+      end
 
-        def complete_encode(encode, job)
-          result = convert_output(job)
-          if result.nil?
-            raise ResultsNotAvailable.new("Unable to load progress for job #{job.id}", encode) if job.timing.finish_time < 10.minutes.ago
-            encode.state = :running
-          else
-            encode.output = result
+      def convert_percent_complete(job)
+        case job.status
+        when "SUBMITTED"
+          5
+        when "PROGRESSING"
+          job.job_percent_complete
+        when "CANCELED", "ERROR"
+          50
+        when "COMPLETE"
+          100
+        else
+          0
+        end
+      end
+
+      def convert_output(job)
+        results = get_encode_results(job)
+        return nil if results.nil?
+        convert_encode_results(job, results)
+      end
+
+      def convert_encode_results(job, results)
+        settings = job.settings.output_groups.first.outputs
+
+        outputs = results.dig('detail', 'outputGroupDetails', 0, 'outputDetails').map.with_index do |detail, index|
+          tech_md = MediaConvertOutput.tech_metadata(settings[index], detail)
+          output = ActiveEncode::Output.new
+
+          output.created_at = job.timing.submit_time
+          output.updated_at = job.timing.finish_time || job.timing.start_time || output.created_at
+
+          [:width, :height, :frame_rate, :duration, :checksum, :audio_codec, :video_codec,
+           :audio_bitrate, :video_bitrate, :file_size, :label, :url, :id].each do |field|
+            output.send("#{field}=", tech_md[field])
           end
-          encode
+          output.id ||= "#{job.id}-output#{tech_md[:suffix]}"
+          output
         end
 
-        def convert_percent_complete(job)
-          case job.status
-          when "SUBMITTED"
-            5
-          when "PROGRESSING"
-            job.job_percent_complete
-          when "CANCELED", "ERROR"
-            50
-          when "COMPLETE"
-            100
-          else
-            0
+        adaptive_playlist = results.dig('detail', 'outputGroupDetails', 0, 'playlistFilePaths', 0)
+        unless adaptive_playlist.nil?
+          output = ActiveEncode::Output.new
+          output.created_at = job.timing.submit_time
+          output.updated_at = job.timing.finish_time || job.timing.start_time || output.created_at
+          output.id = "#{job.id}-output-auto"
+
+          [:duration, :audio_codec, :video_codec].each do |field|
+            output.send("#{field}=", outputs.first.send(field))
           end
+          output.label = File.basename(adaptive_playlist)
+          output.url = adaptive_playlist
+          outputs << output
         end
+        outputs
+      end
 
-        def convert_output(job)
-          results = get_encode_results(job)
-          return nil if results.nil?
-          convert_encode_results(job, results)
-        end
+      def get_encode_results(job)
+        start_time = job.timing.submit_time
+        end_time = (job.timing.finish_time || Time.now.utc) + 10.minutes
 
-        def convert_encode_results(job, results)
-          settings = job.settings.output_groups.first.outputs
-
-          outputs = results.dig('detail', 'outputGroupDetails', 0, 'outputDetails').map.with_index do |detail, index|
-            tech_md = MediaConvertOutput.tech_metadata(settings[index], detail)
-            output = ActiveEncode::Output.new
-
-            output.created_at = job.timing.submit_time
-            output.updated_at = job.timing.finish_time || job.timing.start_time || output.created_at
-
-            [:width, :height, :frame_rate, :duration, :checksum, :audio_codec, :video_codec,
-             :audio_bitrate, :video_bitrate, :file_size, :label, :url, :id].each do |field|
-              output.send("#{field}=", tech_md[field])
-            end
-            output.id ||= "#{job.id}-output#{tech_md[:suffix]}"
-            output
-          end
-
-          adaptive_playlist = results.dig('detail', 'outputGroupDetails', 0, 'playlistFilePaths', 0)
-          unless adaptive_playlist.nil?
-            output = ActiveEncode::Output.new
-            output.created_at = job.timing.submit_time
-            output.updated_at = job.timing.finish_time || job.timing.start_time || output.created_at
-            output.id = "#{job.id}-output-auto"
-
-            [:duration, :audio_codec, :video_codec].each do |field|
-              output.send("#{field}=", outputs.first.send(field))
-            end
-            output.label = File.basename(adaptive_playlist)
-            output.url = adaptive_playlist
-            outputs << output
-          end
-          outputs
-        end
-
-        def get_encode_results(job)
-          start_time = job.timing.submit_time
-          end_time = (job.timing.finish_time || Time.now.utc) + 10.minutes
-
-          response = cloudwatch_logs.start_query(
-            log_group_name: log_group,
-            start_time: start_time.to_i,
-            end_time: end_time.to_i,
-            limit: 1,
-            query_string: "fields @message | filter detail.jobId = '#{job.id}' | filter detail.status = 'COMPLETE' | sort @ingestionTime desc"
-          )
-          query_id = response.query_id
+        response = cloudwatch_logs.start_query(
+          log_group_name: log_group,
+          start_time: start_time.to_i,
+          end_time: end_time.to_i,
+          limit: 1,
+          query_string: "fields @message | filter detail.jobId = '#{job.id}' | filter detail.status = 'COMPLETE' | sort @ingestionTime desc"
+        )
+        query_id = response.query_id
+        response = cloudwatch_logs.get_query_results(query_id: query_id)
+        until response.status == "Complete"
+          sleep(0.5)
           response = cloudwatch_logs.get_query_results(query_id: query_id)
-          until response.status == "Complete"
-            sleep(0.5)
-            response = cloudwatch_logs.get_query_results(query_id: query_id)
-          end
-
-          return nil if response.results.empty?
-
-          JSON.parse(response.results.first.first.value)
         end
 
-        def cloudwatch_events
-          @cloudwatch_events ||= Aws::CloudWatchEvents::Client.new
+        return nil if response.results.empty?
+
+        JSON.parse(response.results.first.first.value)
+      end
+
+      def cloudwatch_events
+        @cloudwatch_events ||= Aws::CloudWatchEvents::Client.new
+      end
+
+      def cloudwatch_logs
+        @cloudwatch_logs ||= Aws::CloudWatchLogs::Client.new
+      end
+
+      def mediaconvert
+        endpoint = Aws::MediaConvert::Client.new.describe_endpoints.endpoints.first.url
+        @mediaconvert ||= Aws::MediaConvert::Client.new(endpoint: endpoint)
+      end
+
+      def s3_uri(url, options = {})
+        bucket = options[:masterfile_bucket]
+
+        case Addressable::URI.parse(url).scheme
+        when nil, 'file'
+          upload_to_s3 url, bucket
+        when 's3'
+          return url if options[:use_original_url]
+          check_s3_bucket url, bucket
+        else
+          raise ArgumentError, "Cannot handle source URL: #{url}"
         end
+      end
 
-        def cloudwatch_logs
-          @cloudwatch_logs ||= Aws::CloudWatchLogs::Client.new
-        end
-
-        def mediaconvert
-          endpoint = Aws::MediaConvert::Client.new.describe_endpoints.endpoints.first.url
-          @mediaconvert ||= Aws::MediaConvert::Client.new(endpoint: endpoint)
-        end
-
-        def s3_uri(url, options = {})
-          bucket = options[:masterfile_bucket]
-
-          case Addressable::URI.parse(url).scheme
-          when nil, 'file'
-            upload_to_s3 url, bucket
-          when 's3'
-            return url if options[:use_original_url]
-            check_s3_bucket url, bucket
-          else
-            raise ArgumentError, "Cannot handle source URL: #{url}"
-          end
-        end
-
-        def check_s3_bucket(input_url, source_bucket)
-          # logger.info("Checking `#{input_url}'")
-          s3_object = FileLocator::S3File.new(input_url).object
-          if s3_object.bucket_name == source_bucket
-            # logger.info("Already in bucket `#{source_bucket}'")
-            s3_object.key
-          else
-            s3_key = File.join(SecureRandom.uuid, s3_object.key)
-            # logger.info("Copying to `#{source_bucket}/#{input_url}'")
-            target = Aws::S3::Object.new(bucket_name: source_bucket, key: input_url)
-            target.copy_from(s3_object, multipart_copy: s3_object.size > 15_728_640) # 15.megabytes
-            s3_key
-          end
-        end
-
-        def upload_to_s3(input_url, source_bucket)
-          # original_input = input_url
-          bucket = Aws::S3::Resource.new(client: s3client).bucket(source_bucket)
-          filename = FileLocator.new(input_url).location
-          s3_key = File.join(SecureRandom.uuid, File.basename(filename))
-          # logger.info("Copying `#{original_input}' to `#{source_bucket}/#{input_url}'")
-          obj = bucket.object(s3_key)
-          obj.upload_file filename
-
+      def check_s3_bucket(input_url, source_bucket)
+        # logger.info("Checking `#{input_url}'")
+        s3_object = FileLocator::S3File.new(input_url).object
+        if s3_object.bucket_name == source_bucket
+          # logger.info("Already in bucket `#{source_bucket}'")
+          s3_object.key
+        else
+          s3_key = File.join(SecureRandom.uuid, s3_object.key)
+          # logger.info("Copying to `#{source_bucket}/#{input_url}'")
+          target = Aws::S3::Object.new(bucket_name: source_bucket, key: input_url)
+          target.copy_from(s3_object, multipart_copy: s3_object.size > 15_728_640) # 15.megabytes
           s3_key
         end
+      end
 
-        def event_rule_exists?(rule_name)
-          rule = cloudwatch_events.list_rules(name_prefix: rule_name).rules.find do |existing_rule|
-            existing_rule.name == rule_name
-          end
-          !rule.nil?
+      def upload_to_s3(input_url, source_bucket)
+        # original_input = input_url
+        bucket = Aws::S3::Resource.new(client: s3client).bucket(source_bucket)
+        filename = FileLocator.new(input_url).location
+        s3_key = File.join(SecureRandom.uuid, File.basename(filename))
+        # logger.info("Copying `#{original_input}' to `#{source_bucket}/#{input_url}'")
+        obj = bucket.object(s3_key)
+        obj.upload_file filename
+
+        s3_key
+      end
+
+      def event_rule_exists?(rule_name)
+        rule = cloudwatch_events.list_rules(name_prefix: rule_name).rules.find do |existing_rule|
+          existing_rule.name == rule_name
         end
+        !rule.nil?
+      end
 
-        def find_log_group(name)
-          cloudwatch_logs.describe_log_groups(log_group_name_prefix: name).log_groups.find do |group|
-            group.log_group_name == name
-          end
+      def find_log_group(name)
+        cloudwatch_logs.describe_log_groups(log_group_name_prefix: name).log_groups.find do |group|
+          group.log_group_name == name
         end
+      end
 
-        def create_log_group(name)
-          result = find_log_group(name)
+      def create_log_group(name)
+        result = find_log_group(name)
 
-          return result unless result.nil?
+        return result unless result.nil?
 
-          cloudwatch_logs.create_log_group(log_group_name: name)
-          cloudwatch_logs.put_retention_policy(
-            log_group_name: name,
-            retention_in_days: SETUP_LOG_GROUP_RETENTION_DAYS
-          )
+        cloudwatch_logs.create_log_group(log_group_name: name)
+        cloudwatch_logs.put_retention_policy(
+          log_group_name: name,
+          retention_in_days: SETUP_LOG_GROUP_RETENTION_DAYS
+        )
 
-          find_log_group(name)
-        end
+        find_log_group(name)
+      end
 
-        def make_audio_input(input_url)
-          {
-            audio_selectors: { "Audio Selector 1" => { default_selection: "DEFAULT" } },
-            audio_selector_groups: {
-              "Audio Selector Group 1" => {
-                audio_selector_names: ["Audio Selector 1"]
-              }
-            },
-            file_input: input_url,
-            timecode_source: "ZEROBASED"
-          }
-        end
-
-        def make_video_input(input_url)
-          {
-            audio_selectors: { "Audio Selector 1" => { default_selection: "DEFAULT" } },
-            file_input: input_url,
-            timecode_source: "ZEROBASED",
-            video_selector: {}
-          }
-        end
-
-        def make_output_groups(options)
-          output_type = options[:output_type] || :hls
-          raise ArgumentError, "Unknown output type: #{output_type.inspect}" unless OUTPUT_GROUP_TEMPLATES.keys.include?(output_type)
-          output_group_settings_key = "#{output_type}_group_settings".to_sym
-          output_group_settings = OUTPUT_GROUP_TEMPLATES[output_type].merge(destination: "s3://#{output_bucket}/#{options[:output_prefix]}")
-
-          outputs = options[:outputs].map do |output|
-            {
-              preset: output[:preset],
-              name_modifier: output[:modifier]
+      def make_audio_input(input_url)
+        {
+          audio_selectors: { "Audio Selector 1" => { default_selection: "DEFAULT" } },
+          audio_selector_groups: {
+            "Audio Selector Group 1" => {
+              audio_selector_names: ["Audio Selector 1"]
             }
-          end
+          },
+          file_input: input_url,
+          timecode_source: "ZEROBASED"
+        }
+      end
 
-          [{
-            output_group_settings: {
-              type: output_group_settings_key.upcase,
-              output_group_settings_key => output_group_settings
-            },
-            outputs: outputs
-          }]
+      def make_video_input(input_url)
+        {
+          audio_selectors: { "Audio Selector 1" => { default_selection: "DEFAULT" } },
+          file_input: input_url,
+          timecode_source: "ZEROBASED",
+          video_selector: {}
+        }
+      end
+
+      def make_output_groups(options)
+        output_type = options[:output_type] || :hls
+        raise ArgumentError, "Unknown output type: #{output_type.inspect}" unless OUTPUT_GROUP_TEMPLATES.keys.include?(output_type)
+        output_group_settings_key = "#{output_type}_group_settings".to_sym
+        output_group_settings = OUTPUT_GROUP_TEMPLATES[output_type].merge(destination: "s3://#{output_bucket}/#{options[:output_prefix]}")
+
+        outputs = options[:outputs].map do |output|
+          {
+            preset: output[:preset],
+            name_modifier: output[:modifier]
+          }
         end
+
+        [{
+          output_group_settings: {
+            type: output_group_settings_key.upcase,
+            output_group_settings_key => output_group_settings
+          },
+          outputs: outputs
+        }]
+      end
     end
   end
 end

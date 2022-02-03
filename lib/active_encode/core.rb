@@ -73,19 +73,19 @@ module ActiveEncode
 
     protected
 
-      def merge!(encode)
-        @id = encode.id
-        @input = encode.input
-        @output = encode.output
-        @options = encode.options
-        @state = encode.state
-        @errors = encode.errors
-        @created_at = encode.created_at
-        @updated_at = encode.updated_at
-        @current_operations = encode.current_operations
-        @percent_complete = encode.percent_complete
+    def merge!(encode)
+      @id = encode.id
+      @input = encode.input
+      @output = encode.output
+      @options = encode.options
+      @state = encode.state
+      @errors = encode.errors
+      @created_at = encode.created_at
+      @updated_at = encode.updated_at
+      @current_operations = encode.current_operations
+      @percent_complete = encode.percent_complete
 
-        self
-      end
+      self
+    end
   end
 end

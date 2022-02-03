@@ -2,6 +2,7 @@
 require 'spec_helper'
 
 describe ActiveEncode::Status do
+  subject { encode_class.new(nil) }
   before do
     class CustomEncode < ActiveEncode::Base
     end
@@ -10,7 +11,6 @@ describe ActiveEncode::Status do
     Object.send(:remove_const, :CustomEncode)
   end
 
-  subject { encode_class.new(nil) }
   let(:encode_class) { ActiveEncode::Base }
 
   describe 'attributes' do
