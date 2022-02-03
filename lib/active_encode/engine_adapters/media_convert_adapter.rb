@@ -77,7 +77,9 @@ module ActiveEncode
           }
         }
 
-        log_group_arn = create_log_group(log_group).arn
+        # AWS is inconsistent about whether a cloudwatch ARN has :* appended
+        # to the end, and we need to make sure it doesn't in the rule target.
+        log_group_arn = create_log_group(log_group).arn.chomp(":*")
 
         cloudwatch_events.put_rule(
           name: rule_name,
