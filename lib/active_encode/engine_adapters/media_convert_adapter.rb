@@ -354,10 +354,10 @@ module ActiveEncode
           return result unless result.nil?
 
           cloudwatch_logs.create_log_group(log_group_name: name)
-          cloudwatch_logs.put_retention_policy({
+          cloudwatch_logs.put_retention_policy(
             log_group_name: name,
             retention_in_days: SETUP_LOG_GROUP_RETENTION_DAYS
-          })
+          )
 
           find_log_group(name)
         end
