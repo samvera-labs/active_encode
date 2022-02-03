@@ -10,8 +10,6 @@ AllCops:
   Exclude:
     - 'active_encode.gemspec'
     - 'vendor/**/*'
-  Include:
-    - '**/Rakefile'
 
 Rails/RakeEnvironment:
   Enabled: false
