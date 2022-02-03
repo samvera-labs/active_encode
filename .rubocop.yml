@@ -12,3 +12,9 @@ AllCops:
     - 'vendor/**/*'
   Include:
     - '**/Rakefile'
+
+Layout/IndentHash:
+  Enabled: false
+
+Style/BracesAroundHashParameters:
+  Enabled: false
