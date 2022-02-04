@@ -102,11 +102,10 @@ describe ActiveEncode::EngineAdapters::MatterhornAdapter do
   end
 
   describe "reload" do
+    subject { running_job.reload }
     before do
       expect(Rubyhorn.client).to receive(:instance_xml).twice.with('running-id').and_return(Rubyhorn::Workflow.from_xml(File.open('spec/fixtures/matterhorn/running_response.xml')))
     end
-
-    subject { running_job.reload }
 
     it { expect(subject.output).to be_empty }
     it { expect(subject.options).to include(preset: 'full') }

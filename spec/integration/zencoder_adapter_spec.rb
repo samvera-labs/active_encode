@@ -20,12 +20,12 @@ describe ActiveEncode::EngineAdapters::ZencoderAdapter do
   let(:file) { "file://#{File.absolute_path('spec/fixtures/Bars_512kb.mp4')}" }
 
   describe "#create" do
+    subject { ActiveEncode::Base.create(file) }
     before do
       allow(Zencoder::Job).to receive(:details).and_return(details_response)
       allow(Zencoder::Job).to receive(:progress).and_return(progress_response)
     end
 
-    subject { ActiveEncode::Base.create(file) }
     let(:details_response) { Zencoder::Response.new(body: JSON.parse(File.read('spec/fixtures/zencoder/job_details_create.json'))) }
     let(:progress_response) { Zencoder::Response.new(body: JSON.parse(File.read('spec/fixtures/zencoder/job_progress_create.json'))) }
     let(:create_output) { [{ id: "511404522", url: "https://zencoder-temp-storage-us-east-1.s3.amazonaws.com/o/20150610/c09b61e4d130ddf923f0653418a80b9c/399ae101c3f99b4f318635e78a4e587a.mp4?AWSAccessKeyId=AKIAI456JQ76GBU7FECA&Signature=GY/9LMkQAiDOrMQwS5BkmOE200s%3D&Expires=1434033527", label: nil }] }
@@ -302,13 +302,13 @@ describe ActiveEncode::EngineAdapters::ZencoderAdapter do
   end
 
   describe "#cancel!" do
+    subject { encode.cancel! }
     before do
       allow(Zencoder::Job).to receive(:cancel).and_return(cancel_response)
       allow(Zencoder::Job).to receive(:details).and_return(details_response)
       allow(Zencoder::Job).to receive(:progress).and_return(progress_response)
     end
 
-    subject { encode.cancel! }
     let(:cancel_response) { Zencoder::Response.new(code: 200) } # TODO: check that this is the correct response code for a successful cancel
     let(:details_response) { Zencoder::Response.new(body: JSON.parse(File.read('spec/fixtures/zencoder/job_details_cancelled.json'))) }
     let(:progress_response) { Zencoder::Response.new(body: JSON.parse(File.read('spec/fixtures/zencoder/job_progress_cancelled.json'))) }
@@ -320,12 +320,12 @@ describe ActiveEncode::EngineAdapters::ZencoderAdapter do
   end
 
   describe "reload" do
+    subject { ActiveEncode::Base.find('166019107').reload }
     before do
       allow(Zencoder::Job).to receive(:details).and_return(details_response)
       allow(Zencoder::Job).to receive(:progress).and_return(progress_response)
     end
 
-    subject { ActiveEncode::Base.find('166019107').reload }
     let(:details_response) { Zencoder::Response.new(body: JSON.parse(File.read('spec/fixtures/zencoder/job_details_running.json'))) }
     let(:progress_response) { Zencoder::Response.new(body: JSON.parse(File.read('spec/fixtures/zencoder/job_progress_running.json'))) }
     # let(:reload_output) { [{ id: "510582971", url: "https://zencoder-temp-storage-us-east-1.s3.amazonaws.com/o/20150609/48a6907086c012f68b9ca43461280515/1726d7ec3e24f2171bd07b2abb807b6c.mp4?AWSAccessKeyId=AKIAI456JQ76GBU7FECA&Signature=vSvlxU94wlQLEbpG3Zs8ibp4MoY%3D&Expires=1433953106", label: nil }] }

@@ -23,7 +23,7 @@ Metrics/CyclomaticComplexity:
     - 'lib/active_encode/engine_adapters/ffmpeg_adapter.rb'
     - 'lib/active_encode/engine_adapters/zencoder_adapter.rb'
 
-Metrics/LineLength:
+Layout/LineLength:
   Exclude:
     - 'lib/active_encode/engine_adapters/matterhorn_adapter.rb'
     - 'spec/**/*'

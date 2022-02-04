@@ -5,16 +5,11 @@ inherit_from: .rubocop_todo.yml
 
 
 AllCops:
-  TargetRubyVersion: 2.4
+  TargetRubyVersion: 2.5
   DisplayCopNames: true
   Exclude:
     - 'active_encode.gemspec'
     - 'vendor/**/*'
-  Include:
-    - '**/Rakefile'
 
-Layout/IndentHash:
-  Enabled: false
-
-Style/BracesAroundHashParameters:
+Rails/RakeEnvironment:
   Enabled: false

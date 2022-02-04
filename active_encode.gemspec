@@ -27,7 +27,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "aws-sdk-elastictranscoder"
   spec.add_development_dependency "aws-sdk-mediaconvert"
   spec.add_development_dependency "aws-sdk-s3"
-  spec.add_development_dependency "bixby", '~> 1.0.0'
+  spec.add_development_dependency "bixby", '~> 3.0'
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "coveralls"
   spec.add_development_dependency "database_cleaner"
