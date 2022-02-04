@@ -6,10 +6,10 @@ jobs:
     parameters:
       ruby_version:
         type: string
-        default: 2.6.3
+        default: 2.7.5
       rails_version:
         type: string
-        default: 5.2.3
+        default: 5.2.6
       bundler_version:
         type: string
         default: 2.0.2
@@ -65,16 +65,24 @@ workflows:
   ci:
     jobs:
       - bundle_and_test:
+          name: "ruby3-1_rails7-0"
+          ruby_version: "3.1.0"
+          rails_version: "7.0.1"
+      - bundle_and_test:
+          name: "ruby3-0_rails6-1"
+          ruby_version: "3.0.3"
+          rails_version: "6.1.4.4"
+      - bundle_and_test:
+          name: "ruby3-0_rails6-0"
+          ruby_version: "3.0.3"
+          rails_version: "6.0.4.4"
+      - bundle_and_test:
+          name: "ruby2-7_rails6-0"
+          ruby_version: "2.7.5"
+          rails_version: "6.0.4.4"
+      - bundle_and_test:
+          name: "ruby2-7_rails5-2"
+          ruby_version: "2.7.5"
+      - bundle_and_test:
           name: "ruby2-6_rails5-2"
-          ruby_version: "2.6.3"
-      - bundle_and_test:
-          name: "ruby2-5_rails5-2"
-          ruby_version: "2.5.5"
-      - bundle_and_test:
-          name: "ruby2-6_rails5-1"
-          ruby_version: "2.6.3"
-          rails_version: "5.1.7"
-      - bundle_and_test:
-          name: "ruby2-5_rails5-1"
-          ruby_version: "2.5.5"
-          rails_version: "5.1.7"
+          ruby_version: "2.6.9"
