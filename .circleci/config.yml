@@ -65,8 +65,8 @@ workflows:
   ci:
     jobs:
       - bundle_and_test:
-          name: "ruby3-1_rails7-0"
-          ruby_version: "3.1.0"
+          name: "ruby3-0_rails7-0"
+          ruby_version: "3.0.3"
           rails_version: "7.0.1"
       - bundle_and_test:
           name: "ruby3-0_rails6-1"
