@@ -129,7 +129,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       end
 
       context 'when uri encoded' do
-        let(:file_with_space) { URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file with space.mp4').to_s) }
+        let(:file_with_space) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file with space.mp4').to_s) }
 
         it "does not have errors" do
           sleep 2
