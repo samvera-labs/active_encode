@@ -20,6 +20,7 @@ Metrics/ClassLength:
 
 Metrics/CyclomaticComplexity:
   Exclude:
+    - 'lib/active_encode/engine_adapters/elastic_transcoder_adapter.rb'
     - 'lib/active_encode/engine_adapters/ffmpeg_adapter.rb'
     - 'lib/active_encode/engine_adapters/zencoder_adapter.rb'
 
@@ -36,6 +37,7 @@ Metrics/MethodLength:
 Metrics/PerceivedComplexity:
   Exclude:
     - 'lib/active_encode/engine_adapters/ffmpeg_adapter.rb'
+    - 'lib/active_encode/engine_adapters/media_convert_adapter.rb'
     - 'lib/file_locator.rb'
 
 RSpec/AnyInstance:
