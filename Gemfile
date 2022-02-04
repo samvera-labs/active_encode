@@ -4,7 +4,6 @@ source 'https://rubygems.org'
 # Specify your gem's dependencies in hydra-transcoder.gemspec
 gemspec
 
-gem 'addressable'
 gem 'aws-sdk-elastictranscoder'
 gem 'aws-sdk-s3'
 gem 'byebug'
