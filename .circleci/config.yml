@@ -25,11 +25,12 @@ jobs:
     steps:
       - run: 
           command: |
+            sudo apt-get update
             sudo apt-get install libmms0
-            sudo wget -P /tmp/ https://mediaarea.net/download/binary/libzen0/0.4.37/libzen0v5_0.4.37-1_amd64.Debian_9.0.deb
-            sudo wget -P /tmp/ https://mediaarea.net/download/binary/libmediainfo0/19.04/libmediainfo0v5_19.04-1_amd64.Debian_9.0.deb
-            sudo wget -P /tmp/ https://mediaarea.net/download/binary/mediainfo/19.04/mediainfo_19.04-1_amd64.Debian_9.0.deb
-            sudo dpkg -i /tmp/libzen0v5_0.4.37-1_amd64.Debian_9.0.deb /tmp/libmediainfo0v5_19.04-1_amd64.Debian_9.0.deb /tmp/mediainfo_19.04-1_amd64.Debian_9.0.deb
+            sudo wget -P /tmp/ https://mediaarea.net/download/binary/libzen0/0.4.39/libzen0v5_0.4.39-1_amd64.Debian_11.deb
+            sudo wget -P /tmp/ https://mediaarea.net/download/binary/libmediainfo0/22.03/libmediainfo0v5_22.03-1_amd64.Debian_11.deb
+            sudo wget -P /tmp/ https://mediaarea.net/download/binary/mediainfo/22.03/mediainfo_22.03-1_amd64.Debian_11.deb
+            sudo dpkg -i /tmp/libzen0v5_0.4.39-1_amd64.Debian_11.deb /tmp/libmediainfo0v5_22.03-1_amd64.Debian_11.deb /tmp/mediainfo_22.03-1_amd64.Debian_11.deb
 
       - restore_cache:
           keys:
