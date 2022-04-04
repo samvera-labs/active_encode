@@ -14,7 +14,7 @@ module ActiveEncode
         # Decode file uris for ffmpeg (mediainfo works either way)
         case input_url
         when /^file\:\/\/\//
-          input_url = URI.decode(input_url)
+          input_url = Addressable::URI.unencode(input_url)
         when /^s3\:\/\//
           require 'file_locator'
 

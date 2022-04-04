@@ -11,7 +11,7 @@ require 'active_encode/global_id'
 require 'active_encode/persistence'
 require 'active_encode/polling'
 
-module ActiveEncode #:nodoc:
+module ActiveEncode # :nodoc:
   class Base
     include Core
     include Status

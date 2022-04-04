@@ -1,15 +1,13 @@
 version: 2.1
 orbs:
-  samvera: samvera/circleci-orb@0.3.2
+  samvera: samvera/circleci-orb@1
 jobs:
   bundle_and_test:
     parameters:
       ruby_version:
         type: string
-        default: 2.6.3
       rails_version:
         type: string
-        default: 5.2.3
       bundler_version:
         type: string
         default: 2.0.2
@@ -27,11 +25,12 @@ jobs:
     steps:
       - run: 
           command: |
+            sudo apt-get update
             sudo apt-get install libmms0
-            sudo wget -P /tmp/ https://mediaarea.net/download/binary/libzen0/0.4.37/libzen0v5_0.4.37-1_amd64.Debian_9.0.deb
-            sudo wget -P /tmp/ https://mediaarea.net/download/binary/libmediainfo0/19.04/libmediainfo0v5_19.04-1_amd64.Debian_9.0.deb
-            sudo wget -P /tmp/ https://mediaarea.net/download/binary/mediainfo/19.04/mediainfo_19.04-1_amd64.Debian_9.0.deb
-            sudo dpkg -i /tmp/libzen0v5_0.4.37-1_amd64.Debian_9.0.deb /tmp/libmediainfo0v5_19.04-1_amd64.Debian_9.0.deb /tmp/mediainfo_19.04-1_amd64.Debian_9.0.deb
+            sudo wget -P /tmp/ https://mediaarea.net/download/binary/libzen0/0.4.39/libzen0v5_0.4.39-1_amd64.Debian_11.deb
+            sudo wget -P /tmp/ https://mediaarea.net/download/binary/libmediainfo0/22.03/libmediainfo0v5_22.03-1_amd64.Debian_11.deb
+            sudo wget -P /tmp/ https://mediaarea.net/download/binary/mediainfo/22.03/mediainfo_22.03-1_amd64.Debian_11.deb
+            sudo dpkg -i /tmp/libzen0v5_0.4.39-1_amd64.Debian_11.deb /tmp/libmediainfo0v5_22.03-1_amd64.Debian_11.deb /tmp/mediainfo_22.03-1_amd64.Debian_11.deb
 
       - restore_cache:
           keys:
@@ -65,16 +64,26 @@ workflows:
   ci:
     jobs:
       - bundle_and_test:
+          name: "ruby3-0_rails7-0"
+          ruby_version: "3.0.3"
+          rails_version: "7.0.1"
+      - bundle_and_test:
+          name: "ruby3-0_rails6-1"
+          ruby_version: "3.0.3"
+          rails_version: "6.1.4.4"
+      - bundle_and_test:
+          name: "ruby3-0_rails6-0"
+          ruby_version: "3.0.3"
+          rails_version: "6.0.4.4"
+      - bundle_and_test:
+          name: "ruby2-7_rails6-0"
+          ruby_version: "2.7.5"
+          rails_version: "6.0.4.4"
+      - bundle_and_test:
+          name: "ruby2-7_rails5-2"
+          ruby_version: "2.7.5"
+          rails_version: "5.2.6"
+      - bundle_and_test:
           name: "ruby2-6_rails5-2"
-          ruby_version: "2.6.3"
-      - bundle_and_test:
-          name: "ruby2-5_rails5-2"
-          ruby_version: "2.5.5"
-      - bundle_and_test:
-          name: "ruby2-6_rails5-1"
-          ruby_version: "2.6.3"
-          rails_version: "5.1.7"
-      - bundle_and_test:
-          name: "ruby2-5_rails5-1"
-          ruby_version: "2.5.5"
-          rails_version: "5.1.7"
+          ruby_version: "2.6.9"
+          rails_version: "5.2.6"

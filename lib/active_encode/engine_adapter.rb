@@ -6,7 +6,7 @@ require 'active_support/core_ext/string/inflections'
 module ActiveEncode
   # The <tt>ActiveEncode::EngineAdapter</tt> module is used to load the
   # correct adapter. The default engine adapter is the :active_job engine.
-  module EngineAdapter #:nodoc:
+  module EngineAdapter # :nodoc:
     extend ActiveSupport::Concern
 
     included do

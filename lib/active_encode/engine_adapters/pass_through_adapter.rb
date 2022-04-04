@@ -18,7 +18,7 @@ module ActiveEncode
 
       def create(input_url, options = {})
         # Decode file uris for ffmpeg (mediainfo works either way)
-        input_url = URI.decode(input_url) if input_url.starts_with? "file:///"
+        input_url = Addressable::URI.unencode(input_url) if input_url.starts_with? "file:///"
 
         new_encode = ActiveEncode::Base.new(input_url, options)
         new_encode.id = SecureRandom.uuid
