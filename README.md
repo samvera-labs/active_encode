@@ -11,7 +11,7 @@ Jump in: [![Slack Status](http://slack.samvera.org/badge.svg)](http://slack.samv
 
 # What is ActiveEncode?
 
-ActiveEncode serves as the basis for the interface between a Ruby (Rails) application and a provider of encoding services such as [FFmpeg](https://www.ffmpeg.org/), [Amazon Elastic Transcoder](http://aws.amazon.com/elastictranscoder/), and [Zencoder](http://zencoder.com).
+ActiveEncode serves as the basis for the interface between a Ruby (Rails) application and a provider of encoding services such as [FFmpeg](https://www.ffmpeg.org/), [Amazon Elastic Transcoder](http://aws.amazon.com/elastictranscoder/), [AWS Elemental MediaConvert](https://aws.amazon.com/mediaconvert/), and [Zencoder](http://zencoder.com).
 
 # Help
 
@@ -104,6 +104,37 @@ file = 'file:///path/to/file/fireworks.mp4' # or 's3://my-bucket/fireworks.mp4'
 encode = ActiveEncode::Base.create(file, options)
 ```
 
+### AWS Elemental MediaCovert
+
+[MediaConvert](https://aws.amazon.com/mediaconvert/) is a newer AWS service than Elastic Transcoder. The MediaConvert adapter works using [output presets]((https://docs.aws.amazon.com/mediaconvert/latest/ug/creating-preset-from-scratch.html)) defined in the MediaConvert service for your account. Some additional dependencies will need to be added to your project, see [Guide](./guides/media_convert_adapter.md).
+
+```ruby
+ActiveEncode::Base.engine_adapter = :media_convert
+ActiveEncode::Base.engine_adapter.role = 'arn:aws:iam::111111111111:role/name-of-role'
+ActiveEncode::Base.engine_adapter.output_bucket = 'name-of-bucket'
+
+# will create CloudWatch/EventBridge resources necessary to capture outputs,
+# only needs to be called once although is safe to call redundantly.
+ActiveEncode::Base.engine_adapter.setup!
+
+encode = ActiveEncode::Base.create(
+  "file://path/to/file.mp4",
+  {
+    masterfile_bucket: "name-of-my-masterfile_bucket"
+    output_prefix: "path/to/output/base_name_of_outputs",
+    use_original_url: true,
+    outputs: [
+      { preset: "my-hls-preset-high", modifier: "_high" },
+      { preset: "my-hls-preset-medium", modifier: "_medium" },
+      { preset: "my-hls-preset-low", modifier: "_low" },
+    ]
+  }
+)
+```
+
+See more details and guidance in our [longer guide](./guides/media_convert_adapter.md), or in comment docs in [adapter class](./lib/active_encode/engine_adapters/media_convert_adapter.rb).
+
+
 ### Custom jobs
 
 Subclass ActiveEncode::Base to add custom callbacks or default options.  Available callbacks are before, after, and around the create and cancel actions.
@@ -136,7 +167,7 @@ module ActiveEncode
         # locally queued job.
 
         # Return an instance ActiveEncode::Base (or subclass) that represents
-        # the encoding job that was just started.        
+        # the encoding job that was just started.
       end
 
       def find(id, opts = {})
