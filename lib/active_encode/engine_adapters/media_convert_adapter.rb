@@ -12,32 +12,66 @@ require 'active_support/time'
 
 module ActiveEncode
   module EngineAdapters
+    # An adapter for using [AWS Elemental MediaConvert](https://aws.amazon.com/mediaconvert/) to
+    # encode.
+    #
+    # Note: this adapter does not perform input characterization, does not provide technical
+    # metadata on inputs.
+    #
+    # ## Configuration
+    #
+    #     ActiveEncode::Base.engine_adapter = :media_convert
+    #
+    #     ActiveEncode::Base.engine_adapter.role = 'arn:aws:iam::123456789012:role/service-role/MediaConvert_Default_Role'
+    #     ActiveEncode::Base.engine_adapter.output_bucket = 'output-bucket'
+    #
+    #     # optionally and probably not needed
+    #
+    #     ActiveEncode::Base.engine_adapter.queue = my_mediaconvert_queue_name
+    #     ActiveEncode::Base.engine_adapter.log_group = my_log_group_name
+    #
+    # ## Capturing output information
+    #
+    # [AWS Elemental MediaConvert](https://aws.amazon.com/mediaconvert/) doesn't provide detailed
+    # output information in the job description that can be pulled directly from the service.
+    # Instead, it provides that information along with the job status notification when the job
+    # status changes to `COMPLETE`. The only way to capture that notification is through an [Amazon
+    # Eventbridge](https://aws.amazon.com/eventbridge/) rule that forwards the a MediaWatch job
+    # status change on `COMPLETE` to another service, such as [CloudWatch Logs]
+    # (https://aws.amazon.com/cloudwatch/) log group
+    #
+    # This adapter is written to get output information from a CloudWatch log group that has had
+    # MediaWatch complete events forwarded to it by an EventBridge group. The `setup!` method
+    # can be used to create these for you, at conventional names the adapter will be default use.
+    #
+    #      ActiveEncode::Base.engine_adapter.setup!
+    #
+    # ## Example
+    #
+    #     ActiveEncode::Base.engine_adapter = :media_convert
+    #     ActiveEncode::Base.engine_adapter.role = 'arn:aws:iam::123456789012:role/service-role/MediaConvert_Default_Role'
+    #     ActiveEncode::Base.engine_adapter.output_bucket = 'output-bucket'
+    #
+    #     ActiveEncode::Base.engine_adapter.setup!
+    #
+    #     encode = ActiveEncode::Base.create(
+    #       "file://path/to/file.mp4",
+    #       {
+    #         masterfile_bucket: "name-of-my-masterfile_bucket"
+    #         output_prefix: "path/to/output/base_name_of_outputs",
+    #         use_original_url: true,
+    #         outputs: [
+    #           { preset: "my-hls-preset-high", modifier: "_high" },
+    #           { preset: "my-hls-preset-medium", modifier: "_medium" },
+    #           { preset: "my-hls-preset-low", modifier: "_low" },
+    #         ]
+    #       }
+    #     )
+    #
+    # ## More info
+    #
+    # A more detailed guide is available in the repo at [guides/media_convert_adapter.md](../../../guides/media_convert_adapter.md)
     class MediaConvertAdapter
-      # [AWS Elemental MediaConvert](https://aws.amazon.com/mediaconvert/) doesn't provide detailed
-      # output information in the job description that can be pulled directly from the service.
-      # Instead, it provides that information along with the job status notification when the job
-      # status changes to `COMPLETE`. The only way to capture that notification is through an [Amazon
-      # Eventbridge](https://aws.amazon.com/eventbridge/) rule that forwards the status change
-      # notification to another service for capture and/or handling.
-      #
-      # `ActiveEncode::EngineAdapters::MediaConvert` does this by creating a [CloudWatch Logs]
-      # (https://aws.amazon.com/cloudwatch/) log group and an EventBridge rule to forward status
-      # change notifications to the log group. It can then find the log entry containing the output
-      # details later when the job is complete. This is accomplished by calling the idempotent
-      # `#setup!` method.
-      #
-      # The AWS user/role calling the `#setup!` method will require permissions to create the
-      # necessary CloudWatch and EventBridge resources, and the role passed to the engine adapter
-      # will need access to any S3 buckets where files will be read from or written to during
-      # transcoding.
-      #
-      # Configuration example:
-      #
-      #     ActiveEncode::Base.engine_adapter = :media_convert
-      #     ActiveEncode::Base.engine_adapter.role = 'arn:aws:iam::123456789012:role/service-role/MediaConvert_Default_Role'
-      #     ActiveEncode::Base.engine_adapter.output_bucket = 'output-bucket'
-      #     ActiveEncode::Base.engine_adapter.setup!
-
       JOB_STATES = {
         "SUBMITTED" => :running, "PROGRESSING" => :running, "CANCELED" => :cancelled,
         "ERROR" => :failed, "COMPLETE" => :completed
@@ -62,9 +96,26 @@ module ActiveEncode
         end
       end
 
+      # @!attribute [rw] role simple name of AWS role to pass to MediaConvert, eg `my-role-name`
+      # @!attribute [rw] output_bucket simple bucket name to write output to
       attr_accessor :role, :output_bucket
+
+      # @!attribute [w] log_group log_group_name that is being used to capture output
+      # @!attribute [w] queue name of MediaConvert queue to use.
       attr_writer :log_group, :queue
 
+      # Creates a [CloudWatch Logs]
+      # (https://aws.amazon.com/cloudwatch/) log group and an EventBridge rule to forward status
+      # change notifications to the log group, to catch result information from MediaConvert jobs.
+      #
+      # Will use the configured `queue` and `log_group` values.
+      #
+      # The active AWS user/role when calling the `#setup!` method will require permissions to create the
+      # necessary CloudWatch and EventBridge resources
+      #
+      # This method chooses a conventional name for the EventBridge rule, if a rule by that
+      # name already exists, it will silently exit. So this method can be called in a boot process,
+      # to check if this infrastructure already exists, and create it only if it does not.
       def setup!
         rule_name = "active-encode-mediaconvert-#{queue}"
         return true if event_rule_exists?(rule_name)
@@ -107,17 +158,30 @@ module ActiveEncode
       #
       # * `output_prefix`: The S3 key prefix to use as the base for all outputs.
       #
-      # * `outputs`: An array of `{preset, modifier}` options defining how to transcode and name the outputs.
+      # * `outputs`: An array of `{preset, modifier}` options defining how to transcode and
+      #              name the outputs. The "modifier" option will be passed as `name_modifier`
+      #              to AWS, to be added as a suffix on to `output_prefix` to create the
+      #              filenames for each output.
       #
       # Optional options:
       #
-      # * `masterfile_bucket`: The bucket to which file-based inputs will be copied before
-      #                        being passed to MediaConvert. Also used for S3-based inputs
-      #                        unless `use_original_url` is specified.
+      # * `masterfile_bucket`: All input will first be copied to this bucket, before being passed
+      #                        to MediaConvert. You can skip this copy by passing `use_original_url`
+      #                        option, and an S3-based input. `masterfile_bucket` **is** required
+      #                        unless use_original_url is true and an S3 input source.
       #
       # * `use_original_url`: If `true`, any S3 URL passed in as input will be passed directly to
       #                       MediaConvert as the file input instead of copying the source to
       #                       the `masterfile_bucket`.
+      #
+      # * `media_type`: `audio` or `video`. Default `video`. Triggers use of a correspoinding
+      #                  template for arguments sent to AWS create_job API.
+      #
+      #
+      # * `output_type`: One of: `hls`, `dash_iso`, `file`, `ms_smooth`, `cmaf`. Default `hls`.
+      #                  Triggers use of a corresponding template for arguments sent to AWS
+      #                  create_job API.
+      #
       #
       # Example:
       # {
