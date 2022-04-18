@@ -155,7 +155,7 @@ The IAM identity, in order to issue MediaConvert jobs and get output information
 }
 ```
 
-Where the `iamPassRole` resource is the role you will pass in the `role` configuration. The logs: permissions could probably additionally be limited to the specific CloudWatch log group.
+Where the `iamPassRole` resource is the role you will pass in the `role` configuration. The `logsStartQuery` and `logsGetQuery` permissions could probably additionally be limited to the specific CloudWatch log group.
 
 MediaConvert necessarily [requires you to pass a separate IAM role](https://docs.aws.amazon.com/mediaconvert/latest/ug/iam-role.html) that will be used by the actual MediaConvert operation -- the `role` config for this adapter. That role will need this permission:
 
