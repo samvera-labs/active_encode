@@ -95,7 +95,7 @@ encode.cancel!
 encode.cancelled?  # true
 ```
 
-An encode object job is meant to be the record of the work of the encoding engine and not the current state of the outputs.  Therefore moved or deleted outputs will not be reflected in the encoding job.
+An encode object is meant to be the record of the work of the encoding engine and not the current state of the outputs.  Therefore moved or deleted outputs will not be reflected in the encode object.
 
 ### AWS ElasticTranscoder
 
