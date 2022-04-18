@@ -60,7 +60,7 @@ Some parameters are set as (typically global) configuration, while others are pa
 
 * `output_bucket`. Required.  An S3 bucket name, all output will be written to this bucket, at a path prefix specified in the `create` call.
 
-* `log_group`. Optional, unusual. Specify the name name of the CloudWatch log group to use for logging. By default, will be constructed automatically from the MediaConvert queue to use.
+* `log_group`. Optional, unusual. Specify the name of the CloudWatch log group to use for logging. By default, will be constructed automatically from the MediaConvert queue to use.
 
 * `queue`. Optional, unusual. Specify the name of the [MediaConvert queue](https://docs.aws.amazon.com/mediaconvert/latest/ug/working-with-queues.html) to use. By default it will use the MediaConvert default, called `"Default"`. Ordinarily there is no reason to set this.
 
