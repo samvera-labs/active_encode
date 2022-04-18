@@ -39,31 +39,54 @@ FFmpeg (tested with version 4+) and mediainfo (version 17.10+) need to be instal
 
 ## Usage
 
-Set the engine adapter (default: test), configure it (if neccessary), then submit encoding jobs!
+Set the engine adapter (default: test), configure it (if neccessary), then submit encoding jobs. The outputs option specifies the output(s) to create in an adapter-specific way, see individual adapter documentation.
 
 ```ruby
 ActiveEncode::Base.engine_adapter = :ffmpeg
 file = "file://#{File.absolute_path "spec/fixtures/fireworks.mp4"}"
 ActiveEncode::Base.create(file, { outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: "mp4"}, { label: "high", ffmpeg_opt: "-s 1280x720", extension: "mp4"}] })
 ```
-Create returns an encoding job that has been submitted to the adapter for processing.  At this point it will have an id, a state, the input, and any additional information the adapter returns.
 
-```ruby
-#<ActiveEncode::Base:0x007f8ef3b2ae88 @input=#<ActiveEncode::Input:0x007f8ef3b23188 @url="file:///Users/cjcolvar/Documents/Code/samvera-labs/active_encode/spec/fixtures/fireworks.mp4", @width=960.0, @height=540.0, @frame_rate=29.671, @duration=6024, @file_size=1629578, @audio_codec="mp4a-40-2", @video_codec="avc1", @audio_bitrate=69737, @video_bitrate=2092780, @created_at=2018-12-03 14:22:05 -0500, @updated_at=2018-12-03 14:22:05 -0500, @id=7653>, @options={:outputs=>[{:label=>"low", :ffmpeg_opt=>"-s 640x480", :extension=>"mp4"}, {:label=>"high", :ffmpeg_opt=>"-s 1280x720", :extension=>"mp4"}]}, @id="1e4a907a-ccff-494f-ad70-b1c5072c2465", @created_at=2018-12-03 14:22:05 -0500, @updated_at=2018-12-03 14:22:05 -0500, @current_operations=[], @output=[], @state=:running, @percent_complete=1, @errors=[]>
-```
+Create returns an encoding job (which we sometimes call "an encode object") that has been submitted to the adapter for processing.  At this point it will have an id, a state, the input url, and possibly additional adapter-specific metadata.
+
 ```ruby
 encode.id  # "1e4a907a-ccff-494f-ad70-b1c5072c2465"
 encode.state  # :running
+encode.input.url
 ```
 
-This encode can be looked back up later using #find.  Alternatively, use #reload to refresh an instance with the latest information from the adapter:
+At this point the encode is not complete. You can check on status by looking up the encode by id, or by calling #reload on an existing encode object to refresh it:
 
 ```ruby
 encode = ActiveEncode::Base.find("1e4a907a-ccff-494f-ad70-b1c5072c2465")
+# or
 encode.reload
+
+encode.percent_complete
+encode.status # running, cancelled, failed, completed
+encode.errors # array of errors in case of status `failed`
 ```
 
-Progress of a running encode is shown with current operations (multiple are possible when outputs are generated in parallel) and percent complete.  Technical metadata about the input file may be added by the adapter.  This should include a mime type, checksum, duration, and basic technical details of the audio and video content of the file (codec, audio channels, bitrate, frame rate, and dimensions).  Outputs are added once they are created and should include the same technical metadata along with an id, label, and url.
+Progress of a running encode is shown with current operations (multiple are possible when outputs are generated in parallel) and percent complete.
+
+Technical metadata about the input file may be added by some adapters, and may be available before completion.  This should include a mime type, checksum, duration, and basic technical details of the audio and video content of the file (codec, audio channels, bitrate, frame rate, and dimensions).
+
+```ruby
+encode.input.url
+encode.input.height
+encode.input.width
+encode.input.checksum
+# etc
+```
+
+Outputs are added once they are created and should include the same technical metadata along with an id, label, and url.
+
+```ruby
+output = encode.outputs.first
+output.url
+output.id
+output.width
+```
 
 If you want to stop the encoding job call cancel:
 
@@ -72,7 +95,7 @@ encode.cancel!
 encode.cancelled?  # true
 ```
 
-An encoding job is meant to be the record of the work of the encoding engine and not the current state of the outputs.  Therefore moved or deleted outputs will not be reflected in the encoding job.
+An encode object is meant to be the record of the work of the encoding engine and not the current state of the outputs.  Therefore moved or deleted outputs will not be reflected in the encode object.
 
 ### AWS ElasticTranscoder
 
