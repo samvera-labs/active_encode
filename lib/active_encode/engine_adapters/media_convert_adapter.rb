@@ -46,6 +46,12 @@ module ActiveEncode
     #
     #      ActiveEncode::Base.engine_adapter.setup!
     #
+    # **OR**, there is experimental functionality to get what we can directly from the job without
+    # requiring a CloudWatch log -- this is expected to be complete only for  HLS output at present.
+    # It seems to work well for HLS output. To opt-in, and not require CloudWatch logs:
+    #
+    #     ActiveEncode::Base.engine_adapter.direct_output_lookup = true
+    #
     # ## Example
     #
     #     ActiveEncode::Base.engine_adapter = :media_convert
@@ -98,6 +104,9 @@ module ActiveEncode
 
       # @!attribute [rw] role simple name of AWS role to pass to MediaConvert, eg `my-role-name`
       # @!attribute [rw] output_bucket simple bucket name to write output to
+      # @!attribute [rw] direct_output_lookup if true, do NOT get output information from cloudwatch,
+      #                  instead retrieve and construct it only from job itself. Currently
+      #                  working only for HLS output. default false.
       attr_accessor :role, :output_bucket, :direct_output_lookup
 
       # @!attribute [w] log_group log_group_name that is being used to capture output
@@ -289,18 +298,88 @@ module ActiveEncode
       end
 
       # extracts and looks up output information from an AWS MediaConvert job.
+      # Will also lookup corresponding CloudWatch log entry unless
+      # direct_output_lookup config is true.
       #
       # @param job [Aws::MediaConvert::Types::Job]
       #
       # @return [Array<ActiveEncode::Output>,nil]
       def convert_output(job)
         if direct_output_lookup
-          build_output_from_job(job)
+          build_output_from_only_job(job)
         else
           logged_results = get_encode_results(job)
           return nil if logged_results.nil?
           build_output_from_logged_results(job, logged_results)
         end
+      end
+
+      def build_output_from_only_job(job)
+        # we need to compile info from two places in job output, two arrays of things,
+        # that correspond.
+        output_group          = job.dig("settings", "output_groups", 0)
+        output_group_settings = output_group.dig("output_group_settings")
+        output_settings       = output_group.dig("outputs")
+
+        output_group_details  = job.dig("output_group_details", 0, "output_details")
+        file_input_url        = job.dig("settings", "inputs", 0, "file_input")
+
+        outputs = output_group_details.map.with_index do |output_group_detail, index|
+          # Right now we only know how to get a URL for hls output, although
+          # the others should be possible and very analagous, just not familiar with them.
+          if output_group_settings.type == "HLS_GROUP_SETTINGS"
+            output_url = MediaConvertOutput.construct_output_url(
+              destination: output_group_settings.hls_group_settings.destination,
+              file_input_url: file_input_url,
+              name_modifier: output_settings[index].name_modifier,
+              file_suffix: "m3u8"
+            )
+          end
+
+          tech_md = MediaConvertOutput.tech_metadata_from_settings(
+            output_url: output_url,
+            output_settings: output_settings[index],
+            output_detail_settings: output_group_detail
+          )
+
+          output = ActiveEncode::Output.new
+
+          output.created_at = job.timing.submit_time
+          output.updated_at = job.timing.finish_time || job.timing.start_time || output.created_at
+
+          [:width, :height, :frame_rate, :duration, :checksum, :audio_codec, :video_codec,
+           :audio_bitrate, :video_bitrate, :file_size, :label, :url, :id].each do |field|
+            output.send("#{field}=", tech_md[field])
+          end
+          output.id ||= "#{job.id}-output#{tech_md[:suffix]}"
+          output
+        end
+
+        # For HLS, we need to add on the single master adaptive playlist URL, which
+        # we can predict what it will be. At the moment, we don't know what to do
+        # for other types.
+        if output_group_settings.type == "HLS_GROUP_SETTINGS"
+          adaptive_playlist_url = MediaConvertOutput.construct_output_url(
+            destination: output_group_settings.hls_group_settings.destination,
+            file_input_url: file_input_url,
+            name_modifier: nil,
+            file_suffix: "m3u8"
+          )
+
+          output = ActiveEncode::Output.new
+          output.created_at = job.timing.submit_time
+          output.updated_at = job.timing.finish_time || job.timing.start_time || output.created_at
+          output.id = "#{job.id}-output-auto"
+
+          [:duration, :audio_codec, :video_codec].each do |field|
+            output.send("#{field}=", outputs.first.send(field))
+          end
+          output.label = File.basename(adaptive_playlist_url)
+          output.url = adaptive_playlist_url
+          outputs << output
+        end
+
+        outputs
       end
 
       # Takes an AWS MediaConvert job object, and the fetched CloudWatch log results

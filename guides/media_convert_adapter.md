@@ -25,17 +25,17 @@ or `video_codec` will be nil.
 
 ## CloudWatch and EventBridge setup, optionally with setup!
 
-[AWS Elemental MediaConvert](https://aws.amazon.com/mediaconvert/) doesn't provide detailed
-output information in the job description that can be pulled directly from the service.
-Instead, it provides that information in a job status notification when the job
-status changes to `COMPLETE`. The only way to capture that notification is through an [Amazon
-Eventbridge](https://aws.amazon.com/eventbridge/) rule that forwards the status change
+[AWS Elemental MediaConvert](https://aws.amazon.com/mediaconvert/) makes it difficult to acesss
+detailed output information in the job description that can be pulled directly from the service. One way to work around this is capture the MediaConvert job status notification
+when the job status changes to `COMPLETE`, via an
+[Amazon Eventbridge](https://aws.amazon.com/eventbridge/) rule that forwards the status change
 notification to another service for capture and/or handling -- for instance a CloudWatch Logs]
 (https://aws.amazon.com/cloudwatch/) log group.
 
 `ActiveEncode::EngineAdapters::MediaConvert` is written to get detailed output information from just such a setup, a CloudWatch log group that has been set up to receive MediaConvert job status `COMPLETE` notifications via an EventBridge rule.
 
 We proide a method to create this CloudWatch and EventBridge infrastructure for you, the `#setup!` method.
+
 
 ```ruby
 ActiveEncode::Base.engine_adapter = :media_convert
@@ -50,6 +50,14 @@ The `setup!` task will create an EventBridge rule name and CloudWatch log group 
 * Log group name: `/aws/events/active-encode/mediaconvert/Default`
 
 The names chosen will respect the `log_group` and `queue` config though, if set.
+
+
+**Alternately**, we have an experimental flag to get and derive what output information we can
+directly from the job without requiring a CloudWatch log -- this is expected to be complete
+only for  HLS output at present. It seems to work well for HLS output. To opt-in, and not require CloudWatch logs, try:
+
+    ActiveEncode::Base.engine_adapter.direct_output_lookup = true
+
 
 ## Configuration
 
