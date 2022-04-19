@@ -98,7 +98,7 @@ module ActiveEncode
 
       # @!attribute [rw] role simple name of AWS role to pass to MediaConvert, eg `my-role-name`
       # @!attribute [rw] output_bucket simple bucket name to write output to
-      attr_accessor :role, :output_bucket
+      attr_accessor :role, :output_bucket, :direct_output_lookup
 
       # @!attribute [w] log_group log_group_name that is being used to capture output
       # @!attribute [w] queue name of MediaConvert queue to use.
@@ -255,13 +255,20 @@ module ActiveEncode
         encode
       end
 
+      # Called when job is complete to add output details, will mutate the encode object
+      # passed in to add #output details, an array of `ActiveEncode::Output` objects.
+      #
+      # @param encode [ActiveEncode::Output] encode object to mutate
+      # @param job [Aws::MediaConvert::Types::Job] corresponding MediaConvert Job object already looked up
+      #
+      # @return ActiveEncode::Output the same encode object passed in.
       def complete_encode(encode, job)
-        result = convert_output(job)
-        if result.nil?
+        output_result = convert_output(job)
+        if output_result.nil?
           raise ResultsNotAvailable.new("Unable to load progress for job #{job.id}", encode) if job.timing.finish_time < 10.minutes.ago
           encode.state = :running
         else
-          encode.output = result
+          encode.output = output_result
         end
         encode
       end
@@ -269,7 +276,7 @@ module ActiveEncode
       def convert_percent_complete(job)
         case job.status
         when "SUBMITTED"
-          5
+          0
         when "PROGRESSING"
           job.job_percent_complete
         when "CANCELED", "ERROR"
@@ -281,17 +288,34 @@ module ActiveEncode
         end
       end
 
+      # extracts and looks up output information from an AWS MediaConvert job.
+      #
+      # @param job [Aws::MediaConvert::Types::Job]
+      #
+      # @return [Array<ActiveEncode::Output>,nil]
       def convert_output(job)
-        results = get_encode_results(job)
-        return nil if results.nil?
-        convert_encode_results(job, results)
+        if direct_output_lookup
+          build_output_from_job(job)
+        else
+          logged_results = get_encode_results(job)
+          return nil if logged_results.nil?
+          build_output_from_logged_results(job, logged_results)
+        end
       end
 
-      def convert_encode_results(job, results)
-        settings = job.settings.output_groups.first.outputs
+      # Takes an AWS MediaConvert job object, and the fetched CloudWatch log results
+      # of MediaConvert completion event, and builds and returns ActiveEncode output
+      # from extracted data.
+      #
+      # @param job [Aws::MediaConvert::Types::Job]
+      # @param results [Hash] relevant AWS MediaConvert completion event, fetched from CloudWatch.
+      #
+      # @return [Array<ActiveEncode::Output>,nil]
+      def build_output_from_logged_results(job, logged_results)
+        output_settings = job.settings.output_groups.first.outputs
 
-        outputs = results.dig('detail', 'outputGroupDetails', 0, 'outputDetails').map.with_index do |detail, index|
-          tech_md = MediaConvertOutput.tech_metadata(settings[index], detail)
+        outputs = logged_results.dig('detail', 'outputGroupDetails', 0, 'outputDetails').map.with_index do |logged_detail, index|
+          tech_md = MediaConvertOutput.tech_metadata_from_logged(output_settings[index], logged_detail)
           output = ActiveEncode::Output.new
 
           output.created_at = job.timing.submit_time
@@ -305,7 +329,7 @@ module ActiveEncode
           output
         end
 
-        adaptive_playlist = results.dig('detail', 'outputGroupDetails', 0, 'playlistFilePaths', 0)
+        adaptive_playlist = logged_results.dig('detail', 'outputGroupDetails', 0, 'playlistFilePaths', 0)
         unless adaptive_playlist.nil?
           output = ActiveEncode::Output.new
           output.created_at = job.timing.submit_time
@@ -322,6 +346,10 @@ module ActiveEncode
         outputs
       end
 
+      # gets complete notification data from CloudWatch logs, returns the CloudWatch
+      # log value as a parsed hash.
+      #
+      # @return [Hash] parsed AWS Cloudwatch data from MediaConvert COMPLETE event.
       def get_encode_results(job)
         start_time = job.timing.submit_time
         end_time = (job.timing.finish_time || Time.now.utc) + 10.minutes

@@ -30,13 +30,13 @@ module ActiveEncode
           "XAVC" => :xavc_settings
         }.freeze
 
-        def tech_metadata(settings, output)
-          url = output.dig('outputFilePaths', 0)
+        def tech_metadata_from_logged(settings, logged_output)
+          url = logged_output.dig('outputFilePaths', 0)
           {
-            width: output.dig('videoDetails', 'widthInPx'),
-            height: output.dig('videoDetails', 'heightInPx'),
+            width: logged_output.dig('videoDetails', 'widthInPx'),
+            height: logged_output.dig('videoDetails', 'heightInPx'),
             frame_rate: extract_video_frame_rate(settings),
-            duration: output['durationInMs'],
+            duration: logged_output['durationInMs'],
             audio_codec: extract_audio_codec(settings),
             video_codec: extract_video_codec(settings),
             audio_bitrate: extract_audio_bitrate(settings),
