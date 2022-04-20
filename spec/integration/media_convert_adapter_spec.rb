@@ -123,6 +123,29 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
 
   it_behaves_like "an ActiveEncode::EngineAdapter"
 
+  describe "output location specification" do
+    let(:operations) { mediaconvert.api_requests(exclude_presign: true) }
+    before do
+      mediaconvert.stub_responses(:create_job, reconstitute_response("media_convert/job_created.json"))
+    end
+
+    it "can use output_bucket and output_prefix" do
+      ActiveEncode::Base.create(
+        "s3://input-bucket/test_files/source_file.mp4",
+        output_prefix: "active-encode-test/output",
+        outputs: [],
+        use_original_url: true
+      )
+      create_job_operation = operations.find {|o| o[:operation_name] == :create_job}
+      expect(create_job_operation).to be_present
+
+      destination = create_job_operation.dig(:params, :settings, :output_groups, 0,
+        :output_group_settings, :hls_group_settings, :destination)
+
+      expect(destination).to eq("s3://output-bucket/active-encode-test/output")
+    end
+  end
+
   describe "queue" do
     let(:operations) { mediaconvert.api_requests(exclude_presign: true) }
 
