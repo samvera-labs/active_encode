@@ -136,13 +136,29 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
         outputs: [],
         use_original_url: true
       )
-      create_job_operation = operations.find {|o| o[:operation_name] == :create_job}
+      create_job_operation = operations.find { |o| o[:operation_name] == :create_job }
       expect(create_job_operation).to be_present
 
       destination = create_job_operation.dig(:params, :settings, :output_groups, 0,
         :output_group_settings, :hls_group_settings, :destination)
 
       expect(destination).to eq("s3://output-bucket/active-encode-test/output")
+    end
+
+    it "can use destination arg" do
+      ActiveEncode::Base.create(
+        "s3://input-bucket/test_files/source_file.mp4",
+        destination: "s3://alternate-output-bucket/my-path/output",
+        outputs: [],
+        use_original_url: true
+      )
+      create_job_operation = operations.find { |o| o[:operation_name] == :create_job }
+      expect(create_job_operation).to be_present
+
+      destination = create_job_operation.dig(:params, :settings, :output_groups, 0,
+        :output_group_settings, :hls_group_settings, :destination)
+
+      expect(destination).to eq("s3://alternate-output-bucket/my-path/output")
     end
   end
 
