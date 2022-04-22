@@ -354,8 +354,10 @@ module ActiveEncode
       end
 
       def mediaconvert
-        endpoint = Aws::MediaConvert::Client.new.describe_endpoints.endpoints.first.url
-        @mediaconvert ||= Aws::MediaConvert::Client.new(endpoint: endpoint)
+        @mediaconvert ||= begin
+          endpoint = Aws::MediaConvert::Client.new.describe_endpoints.endpoints.first.url
+          Aws::MediaConvert::Client.new(endpoint: endpoint)
+        end
       end
 
       def s3_uri(url, options = {})
