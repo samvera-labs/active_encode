@@ -11,10 +11,10 @@ To use active_encode with MediaConvert, you will need:
 * EventBridge/Cloudfront setup to store output (can be automatically created by code we include here)
 * You have to add these gems to your project Gemfile, that are required for
  the mediaconvert adapter but not included as active_encode dependencies:
- * aws-sdk-cloudwatchevents
- * aws-sdk-cloudwatchlogs
- * aws-sdk-mediaconvert
- * aws-sdk-s3
+  * aws-sdk-cloudwatchevents
+  * aws-sdk-cloudwatchlogs
+  * aws-sdk-mediaconvert
+  * aws-sdk-s3
 
 You may find this tutorial helpful to create the AWS resources you need, or debug the process: https://github.com/aws-samples/aws-media-services-simple-vod-workflow (mainly the firsst two modules).
 
