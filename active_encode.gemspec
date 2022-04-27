@@ -37,7 +37,4 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec"
   spec.add_development_dependency 'rspec_junit_formatter'
   spec.add_development_dependency "rspec-rails"
-
-  # Pin sprockets to < 4 so it works with ruby 2.5+
-  spec.add_dependency 'sprockets', '< 4'
 end
