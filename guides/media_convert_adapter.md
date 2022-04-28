@@ -80,7 +80,7 @@ ActiveEncode::Base.engine_adapter.output_bucket = 'my-bucket-name'
 ```
 
 
-## Input options, and the masterfile_bucket
+## Input and output options, and the masterfile_bucket
 
 The adapter can take a local file as argument (via `file://` URL or any other standard way for ActiveEncode), _or_ an `s3://` URL.
 
@@ -123,7 +123,25 @@ ActiveEncode::Base.create(
 # it will not be copied to the masterfile_bucket first.
 ```
 
-Only in this case of `use_original_url` and an `s3://` input source, the `masterfile_bucket` argumetn can be ommitted, since it will be used.
+Only in this case of `use_original_url` and an `s3://` input source, the `masterfile_bucket` argument can be ommitted, since it will be used.
+
+You can also use `destination` instead of `output_prefix`, to supply a complete `s3://` url,
+ignoring `output_bucket` config. With `use_original_url` you can now supply inputs and
+outputs as simple s3 urls.
+
+```ruby
+ActiveEncode::Base.create(
+  "s3://some-other-bucket/path/to/file.mp4",
+  {
+    use_original_url: true,
+    destination: "s3://my-output-bucket/path/to/output/base_name_of_outputs",
+    outputs: [
+      { preset: "my-hls-preset-high", modifier: "_high" },
+      { preset: "my-hls-preset-medium", modifier: "_medium" },
+    ]
+  }
+)
+```
 
 ## AWS Auth Credentials
 

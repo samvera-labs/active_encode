@@ -165,7 +165,16 @@ module ActiveEncode
 
       # Required options:
       #
-      # * `output_prefix`: The S3 key prefix to use as the base for all outputs.
+      # * `output_prefix`: The S3 key prefix to use as the base for all outputs. Will be
+      #                    combined with configured `output_bucket` to be passed to MediaConvert
+      #                    `destination`. Alternately see `destination` arg; one or the other
+      #                    is required.
+      #
+      # * `destination`: The full s3:// URL to be passed to MediaConvert `destination` as output
+      #                  location an filename base.  `output_bucket` config is ignored if you
+      #                  pass `destination`. Alternately see `output_prefix` arg; one or the
+      #                  other is required.
+      #
       #
       # * `outputs`: An array of `{preset, modifier}` options defining how to transcode and
       #              name the outputs. The "modifier" option will be passed as `name_modifier`
@@ -561,7 +570,9 @@ module ActiveEncode
         output_type = options[:output_type] || :hls
         raise ArgumentError, "Unknown output type: #{output_type.inspect}" unless OUTPUT_GROUP_TEMPLATES.keys.include?(output_type)
         output_group_settings_key = "#{output_type}_group_settings".to_sym
-        output_group_settings = OUTPUT_GROUP_TEMPLATES[output_type].merge(destination: "s3://#{output_bucket}/#{options[:output_prefix]}")
+
+        destination = options[:destination] || "s3://#{output_bucket}/#{options[:output_prefix]}"
+        output_group_settings = OUTPUT_GROUP_TEMPLATES[output_type].merge(destination: destination)
 
         outputs = options[:outputs].map do |output|
           {
