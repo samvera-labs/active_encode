@@ -176,4 +176,26 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
       end
     end
   end
+
+  describe "direct_output_lookup" do
+    before do
+      ActiveEncode::Base.engine_adapter.direct_output_lookup = true
+    end
+
+    it "contains all expected outputs" do
+      completed_output.each do |expected_output|
+        found_output = completed_job.output.find { |output| output.id == expected_output[:id] }
+        expected_output.each_pair do |key, value|
+          expect(found_output.send(key)).to eq(value)
+        end
+      end
+    end
+
+    it "does not make cloudwatch queries" do
+      expect(cloudwatch_logs).not_to receive(:start_query)
+      expect(cloudwatch_logs).not_to receive(:get_query_results)
+
+      completed_job
+    end
+  end
 end
