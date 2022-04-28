@@ -117,7 +117,7 @@ ActiveEncode::Base.create(
 
 Only in this case of `use_original_url` and an `s3://` input source, the `masterfile_bucket` argument can be ommitted, since it will be used.
 
-You can also use `desitnation` instead of `output_prefix`, to supply a complete `s3://` url,
+You can also use `destination` instead of `output_prefix`, to supply a complete `s3://` url,
 ignoring `output_bucket` config. With `use_original_url` you can now supply inputs and
 outputs as simple s3 urls.
 
