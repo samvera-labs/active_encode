@@ -201,6 +201,12 @@ module ActiveEncode
       #                  create_job API.
       #
       #
+      # * `output_group_destination_settings`: A hash of additional `destination_settings` to be
+      #                  sent to MediaConvert with the output_group.  Can include `s3_settings` key
+      #                  with  `access_control` and `encryption` settings. See examples at:
+      #                  https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/MediaConvert/Client.html#create_job-instance_method
+      #
+      #
       # Example:
       # {
       #   output_prefix: "path/to/output/files",
@@ -573,6 +579,10 @@ module ActiveEncode
 
         destination = options[:destination] || "s3://#{output_bucket}/#{options[:output_prefix]}"
         output_group_settings = OUTPUT_GROUP_TEMPLATES[output_type].merge(destination: destination)
+
+        if options[:output_group_destination_settings]
+          output_group_settings[:destination_settings] = options[:output_group_destination_settings]
+        end
 
         outputs = options[:outputs].map do |output|
           {

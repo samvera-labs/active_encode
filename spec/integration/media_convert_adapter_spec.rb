@@ -162,6 +162,36 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
     end
   end
 
+  describe "output_group_destination_settings" do
+    let(:operations) { mediaconvert.api_requests(exclude_presign: true) }
+    before do
+      mediaconvert.stub_responses(:create_job, reconstitute_response("media_convert/job_created.json"))
+    end
+
+    it "are sent to MediaConvert" do
+      ActiveEncode::Base.create(
+        "s3://input-bucket/test_files/source_file.mp4",
+        destination: "s3://alternate-output-bucket/my-path/output",
+        outputs: [],
+        use_original_url: true,
+        output_group_destination_settings: {
+          s3_settings: {
+            access_control: {
+              canned_acl: "PUBLIC_READ"
+            }
+          }
+        }
+      )
+
+      create_job_operation = operations.find { |o| o[:operation_name] == :create_job }
+      expect(create_job_operation).to be_present
+
+      destination_settings = create_job_operation.dig(:params, :settings, :output_groups, 0,
+        :output_group_settings, :hls_group_settings, :destination_settings)
+      expect(destination_settings).to eq({ s3_settings: { access_control: { canned_acl: "PUBLIC_READ" } } })
+    end
+  end
+
   describe "queue" do
     let(:operations) { mediaconvert.api_requests(exclude_presign: true) }
 
