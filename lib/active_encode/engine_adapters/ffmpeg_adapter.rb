@@ -2,6 +2,7 @@
 require 'fileutils'
 require 'nokogiri'
 require 'shellwords'
+require 'addressable/uri'
 
 module ActiveEncode
   module EngineAdapters
@@ -63,6 +64,9 @@ module ActiveEncode
 
         # Run the ffmpeg command and save its pid
         command = ffmpeg_command(input_url, new_encode.id, options)
+        # Capture the exit status in a file in order to differentiate warning output in stderr between real process failure
+        exit_status_file = working_path("exit_status.code", new_encode.id)
+        command = "#{command}; echo $? > #{exit_status_file}"
         pid = Process.spawn(command, err: working_path('error.log', new_encode.id))
         File.open(working_path("pid", new_encode.id), 'w') { |file| file.write pid }
         new_encode.input.id = pid
@@ -96,7 +100,8 @@ module ActiveEncode
         encode.current_operations = []
         encode.created_at, encode.updated_at = get_times encode.id
         encode.errors = read_errors(id)
-        if encode.errors.present?
+        exit_code = read_exit_code(id)
+        if exit_code.present? && exit_code != 0 && exit_code != 143
           encode.state = :failed
         elsif running? pid
           encode.state = :running
@@ -169,6 +174,12 @@ module ActiveEncode
         else
           []
         end
+      end
+
+      def read_exit_code(id)
+        exit_path = working_path("exit_status.code", id)
+        exit_status = File.read(exit_path) if File.file? exit_path
+        exit_status.present? ? exit_status.to_i : nil # process still running
       end
 
       def build_input(encode)

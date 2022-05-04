@@ -1,0 +1,3 @@
+[mpeg2video @ 0x6e48440] slice mismatch
+[mpeg2video @ 0x6e48440] Warning MVs not available
+[mpeg2video @ 0x8f89a0] concealing 45 DC, 45 AC, 45 MV errors in P frame

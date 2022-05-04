@@ -37,6 +37,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
     encode
   end
   let(:completed_job) { find_encode "completed-id" }
+  let(:completed_with_warnings_job) { find_encode "completed-with-warnings-id" }
   let(:failed_job) { find_encode 'failed-id' }
   let(:completed_tech_metadata) do
     {
@@ -163,6 +164,54 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
 
     it "has a progress file" do
       expect(File).to exist("#{work_dir}/#{subject.id}/progress")
+    end
+
+    it "does not have an exit code file" do
+      expect(File).not_to exist("#{work_dir}/#{subject.id}/exit_status.code")
+    end
+
+    context "completed job" do
+      subject { completed_job }
+
+      it { is_expected.to be_completed }
+      it "has an exit code of 0" do
+        expect(File).to exist("#{work_dir}/#{subject.id}/exit_status.code")
+        expect(File.read("#{work_dir}/#{subject.id}/exit_status.code").to_i).to eq 0
+      end
+    end
+
+    context "completed with warnings job" do
+      subject { completed_with_warnings_job }
+
+      it { is_expected.to be_completed }
+      it "has an exit code of 0" do
+        expect(File).to exist("#{work_dir}/#{subject.id}/exit_status.code")
+        expect(File.read("#{work_dir}/#{subject.id}/exit_status.code").to_i).to eq 0
+      end
+      it "has warnings in the error log" do
+        expect(File).to exist("#{work_dir}/#{subject.id}/error.log")
+        expect(File.read("#{work_dir}/#{subject.id}/error.log")).not_to be_empty
+      end
+    end
+
+    context "cancelled job" do
+      subject { canceled_job }
+
+      it { is_expected.to be_cancelled }
+      it "has an exit code of 143" do
+        expect(File).to exist("#{work_dir}/#{subject.id}/exit_status.code")
+        expect(File.read("#{work_dir}/#{subject.id}/exit_status.code").to_i).to eq 143
+      end
+    end
+
+    context "failed job" do
+      subject { failed_job }
+
+      it { is_expected.to be_failed }
+      it "has an exit code of -22" do
+        expect(File).to exist("#{work_dir}/#{subject.id}/exit_status.code")
+        expect(File.read("#{work_dir}/#{subject.id}/exit_status.code").to_i).to eq(-22)
+      end
     end
   end
 
