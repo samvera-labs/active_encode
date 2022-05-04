@@ -13,3 +13,6 @@ AllCops:
 
 Rails/RakeEnvironment:
   Enabled: false
+
+Style/IfUnlessModifier:
+  Enabled: false
