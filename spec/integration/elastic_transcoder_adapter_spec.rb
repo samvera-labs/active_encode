@@ -137,6 +137,53 @@ describe ActiveEncode::EngineAdapters::ElasticTranscoderAdapter do
     end
   end
 
+  describe "#copy_to_input_bucket" do
+    context "when filename has no special characters" do
+      context "non-s3 file" do
+        let(:input_url) { "spec/fixtures/fireworks.mp4" }
+        let(:source_bucket) { "bucket1" }
+
+        it "calls the #upload_to_s3 method" do
+          allow(SecureRandom).to receive(:uuid).and_return("randomstring")
+          expect(described_class.new.send(:copy_to_input_bucket, input_url, source_bucket)).to eq "randomstring/fireworks.mp4"
+        end
+      end
+      context "s3 file" do
+        let(:input_url) { "s3://bucket1/file.mp4" }
+        let(:source_bucket) { "bucket1" }
+
+        it "calls the #check_s3_bucket method" do
+          expect(described_class.new.send(:copy_to_input_bucket, input_url, source_bucket)).to eq "file.mp4"
+        end
+      end
+    end
+    context "when filename has special characters" do
+      context "non-s3 file" do
+        let(:input) { ["'file_with_single_quote'.mp4", '"file_with_double_quote".mp4', "file with space.mp4", "file.with...periods.mp4", "file.with :=+%sp3c!l-ch4cts().mp4"] }
+        let(:clean) { ["_file_with_single_quote_.mp4", "_file_with_double_quote_.mp4", "file_with_space.mp4", "filewithperiods.mp4", "filewith_____sp3c_l-ch4cts__.mp4"] }
+        let(:source_bucket) { "bucket1" }
+
+        it "calls the #upload_to_s3 method" do
+          allow(SecureRandom).to receive(:uuid).and_return("randomstring")
+          input.each_with_index do |url, index|
+            expect(described_class.new.send(:copy_to_input_bucket, "spec/fixtures/#{url}", source_bucket)).to eq "randomstring/#{clean[index]}"
+          end
+        end
+      end
+      context "s3 file" do
+        let(:input_urls) { ["s3://bucket1/'file_with_single_quote'.mp4", 's3://bucket1/"file_with_double_quote".mp4', "s3://bucket1/file with space.mp4", "s3://bucket1/file.with...periods.mp4", "s3://bucket1/file.with :=+%sp3c!l-ch4cts().mp4"] }
+        let(:clean) { ["_file_with_single_quote_.mp4", "_file_with_double_quote_.mp4", "file_with_space.mp4", "filewithperiods.mp4", "filewith_____sp3c_l-ch4cts__.mp4"] }
+        let(:source_bucket) { "bucket1" }
+
+        it "calls the #check_s3_bucket method" do
+          input_urls.each_with_index do |url, index|
+            expect(described_class.new.send(:copy_to_input_bucket, url, source_bucket)).to eq clean[index]
+          end
+        end
+      end
+    end
+  end
+
   describe "#check_s3_bucket" do
     context "when file exists in masterfile_bucket" do
       let(:input_url) { "s3://bucket1/file.mp4" }

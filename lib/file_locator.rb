@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 require 'addressable/uri'
 require 'aws-sdk-s3'
+require 'active_encode/filename_sanitizer'
 
 class FileLocator
   attr_reader :source
 
   class S3File
+    include ActiveEncode::FilenameSanitizer
+
     attr_reader :bucket, :key
 
     def initialize(uri)
@@ -15,7 +18,7 @@ class FileLocator
     end
 
     def object
-      @object ||= Aws::S3::Object.new(bucket_name: bucket, key: key)
+      @object ||= Aws::S3::Object.new(bucket_name: bucket, key: sanitize_filename(key))
     end
   end
 

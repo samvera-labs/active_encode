@@ -3,6 +3,7 @@ require 'fileutils'
 require 'nokogiri'
 require 'shellwords'
 require 'addressable/uri'
+require 'active_encode/filename_sanitizer'
 
 module ActiveEncode
   module EngineAdapters
@@ -11,11 +12,14 @@ module ActiveEncode
       MEDIAINFO_PATH = ENV["MEDIAINFO_PATH"] || "mediainfo"
       FFMPEG_PATH = ENV["FFMPEG_PATH"] || "ffmpeg"
 
+      include ActiveEncode::FilenameSanitizer
+
       def create(input_url, options = {})
         # Decode file uris for ffmpeg (mediainfo works either way)
         case input_url
         when /^file\:\/\/\//
           input_url = Addressable::URI.unencode(input_url)
+          input_url = sanitize_input(input_url)
         when /^s3\:\/\//
           require 'file_locator'
 
@@ -228,14 +232,6 @@ module ActiveEncode
         end.join
         header_opt = "-headers '#{header_opt}'" if header_opt.present?
         "#{FFMPEG_PATH} #{header_opt} -y -loglevel level+fatal -progress #{working_path('progress', id)} -i \"#{input_url}\" #{output_opt}"
-      end
-
-      def sanitize_base(input_url)
-        if input_url.is_a? URI::HTTP
-          File.basename(input_url.path, File.extname(input_url.path))
-        else
-          File.basename(input_url, File.extname(input_url)).gsub(/[^0-9A-Za-z.\-]/, '_')
-        end
       end
 
       def get_pid(id)

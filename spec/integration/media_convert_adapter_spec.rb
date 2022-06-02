@@ -40,12 +40,15 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
   let(:cloudwatch_events) { Aws::CloudWatchEvents::Client.new(stub_responses: true) }
   let(:cloudwatch_logs) { Aws::CloudWatchLogs::Client.new(stub_responses: true) }
 
+  let(:s3client) { Aws::S3::Client.new(stub_responses: true) }
+
   before do
     mediaconvert.stub_responses(:describe_endpoints, reconstitute_response("media_convert/endpoints.json"))
 
     allow(Aws::MediaConvert::Client).to receive(:new).and_return(mediaconvert)
     allow(Aws::CloudWatchEvents::Client).to receive(:new).and_return(cloudwatch_events)
     allow(Aws::CloudWatchLogs::Client).to receive(:new).and_return(cloudwatch_logs)
+    allow(Aws::S3::Client).to receive(:new).and_return(s3client)
   end
 
   let(:created_job) do
@@ -265,6 +268,53 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
       expect(cloudwatch_logs).not_to receive(:get_query_results)
 
       completed_job
+    end
+  end
+
+  describe "#s3_uri" do
+    context "when filename has no special characters" do
+      context "non-s3 file" do
+        let(:input_url) { "spec/fixtures/fireworks.mp4" }
+        let(:source_bucket) { "bucket1" }
+
+        it "calls the #upload_to_s3 method" do
+          allow(SecureRandom).to receive(:uuid).and_return("randomstring")
+          expect(described_class.new.send(:s3_uri, input_url, { masterfile_bucket: source_bucket })).to eq "randomstring/fireworks.mp4"
+        end
+      end
+      context "s3 file" do
+        let(:input_url) { "s3://bucket1/file.mp4" }
+        let(:source_bucket) { "bucket1" }
+
+        it "calls the #check_s3_bucket method" do
+          expect(described_class.new.send(:s3_uri, input_url, { masterfile_bucket: source_bucket })).to eq "file.mp4"
+        end
+      end
+    end
+    context "when filename has special characters" do
+      context "non-s3 file" do
+        let(:input) { ["'file_with_single_quote'.mp4", '"file_with_double_quote".mp4', "file with space.mp4", "file.with...periods.mp4", "file.with :=+%sp3c!l-ch4cts().mp4"] }
+        let(:clean) { ["_file_with_single_quote_.mp4", "_file_with_double_quote_.mp4", "file_with_space.mp4", "filewithperiods.mp4", "filewith_____sp3c_l-ch4cts__.mp4"] }
+        let(:source_bucket) { "bucket1" }
+
+        it "calls the #upload_to_s3 method" do
+          allow(SecureRandom).to receive(:uuid).and_return("randomstring")
+          input.each_with_index do |url, index|
+            expect(described_class.new.send(:s3_uri, "spec/fixtures/#{url}", { masterfile_bucket: source_bucket })).to eq "randomstring/#{clean[index]}"
+          end
+        end
+      end
+      context "s3 file" do
+        let(:input_urls) { ["s3://bucket1/'file_with_single_quote'.mp4", 's3://bucket1/"file_with_double_quote".mp4', "s3://bucket1/file with space.mp4", "s3://bucket1/file.with...periods.mp4", "s3://bucket1/file.with :=+%sp3c!l-ch4cts().mp4"] }
+        let(:clean) { ["_file_with_single_quote_.mp4", "_file_with_double_quote_.mp4", "file_with_space.mp4", "filewithperiods.mp4", "filewith_____sp3c_l-ch4cts__.mp4"] }
+        let(:source_bucket) { "bucket1" }
+
+        it "calls the #check_s3_bucket method" do
+          input_urls.each_with_index do |url, index|
+            expect(described_class.new.send(:s3_uri, url, { masterfile_bucket: source_bucket })).to eq clean[index]
+          end
+        end
+      end
     end
   end
 end
