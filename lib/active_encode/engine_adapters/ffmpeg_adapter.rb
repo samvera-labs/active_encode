@@ -111,7 +111,7 @@ module ActiveEncode
         elsif cancelled? encode.id
           encode.state = :cancelled
         elsif encode.percent_complete < 100
-          encode.errors << "Encoding has completed but the output duration is shorter than the input"
+          encode.errors.prepend("Encoding has completed but the output duration is shorter than the input")
           encode.state = :failed
         end
 
@@ -170,7 +170,7 @@ module ActiveEncode
         err_path = working_path("error.log", id)
         error = File.read(err_path) if File.file? err_path
         if error.present?
-          [error]
+          ["Error encountered during encoding. Check ffmpeg log for more details.", error]
         else
           []
         end
@@ -227,7 +227,7 @@ module ActiveEncode
           "#{k}: #{v}\r\n"
         end.join
         header_opt = "-headers '#{header_opt}'" if header_opt.present?
-        "#{FFMPEG_PATH} #{header_opt} -y -loglevel error -progress #{working_path('progress', id)} -i \"#{input_url}\" #{output_opt}"
+        "#{FFMPEG_PATH} #{header_opt} -y -loglevel level+fatal -progress #{working_path('progress', id)} -i \"#{input_url}\" #{output_opt}"
       end
 
       def sanitize_base(input_url)
