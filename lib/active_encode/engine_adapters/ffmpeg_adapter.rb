@@ -3,7 +3,6 @@ require 'fileutils'
 require 'nokogiri'
 require 'shellwords'
 require 'addressable/uri'
-require 'active_encode/filename_sanitizer'
 
 module ActiveEncode
   module EngineAdapters
@@ -12,14 +11,12 @@ module ActiveEncode
       MEDIAINFO_PATH = ENV["MEDIAINFO_PATH"] || "mediainfo"
       FFMPEG_PATH = ENV["FFMPEG_PATH"] || "ffmpeg"
 
-      include ActiveEncode::FilenameSanitizer
-
       def create(input_url, options = {})
         # Decode file uris for ffmpeg (mediainfo works either way)
         case input_url
         when /^file\:\/\/\//
           input_url = Addressable::URI.unencode(input_url)
-          input_url = sanitize_input(input_url)
+          input_url = ActiveEncode.sanitize_input(input_url)
         when /^s3\:\/\//
           require 'file_locator'
 
@@ -204,7 +201,7 @@ module ActiveEncode
         Dir["#{File.absolute_path(working_path('outputs', id))}/*"].each do |file_path|
           output = ActiveEncode::Output.new
           output.url = "file://#{file_path}"
-          sanitized_filename = sanitize_base encode.input.url
+          sanitized_filename = ActiveEncode.sanitize_base encode.input.url
           output.label = file_path[/#{Regexp.quote(sanitized_filename)}\-(.*?)#{Regexp.quote(File.extname(file_path))}$/, 1]
           output.id = "#{encode.input.id}-#{output.label}"
           output.created_at = encode.created_at
@@ -223,7 +220,7 @@ module ActiveEncode
 
       def ffmpeg_command(input_url, id, opts)
         output_opt = opts[:outputs].collect do |output|
-          sanitized_filename = sanitize_base input_url
+          sanitized_filename = ActiveEncode.sanitize_base input_url
           file_name = "outputs/#{sanitized_filename}-#{output[:label]}.#{output[:extension]}"
           " #{output[:ffmpeg_opt]} #{working_path(file_name, id)}"
         end.join(" ")

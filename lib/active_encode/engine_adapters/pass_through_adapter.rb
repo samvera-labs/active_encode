@@ -3,7 +3,6 @@ require 'fileutils'
 require 'nokogiri'
 require 'shellwords'
 require 'file_locator'
-require 'active_encode/filename_sanitizer'
 
 # PassThroughAdapter accepts an input file url and a number of derivative urls in the options
 # E.g. `create(input, outputs: [{ label: 'low',  url: 'file:///derivatives/low.mp4' }, { label: 'high', url: 'file:///derivatives/high.mp4' }])`
@@ -14,7 +13,6 @@ require 'active_encode/filename_sanitizer'
 module ActiveEncode
   module EngineAdapters
     class PassThroughAdapter
-      include ActiveEncode::FilenameSanitizer
 
       WORK_DIR = ENV["ENCODE_WORK_DIR"] || "encodes" # Should read from config
       MEDIAINFO_PATH = ENV["MEDIAINFO_PATH"] || "mediainfo"
@@ -58,7 +56,7 @@ module ActiveEncode
         # Copy derivatives to work directory
         options[:outputs].each do |opt|
           url = opt[:url]
-          output_path = working_path("outputs/#{sanitize_base opt[:url]}#{File.extname opt[:url]}", new_encode.id)
+          output_path = working_path("outputs/#{ActiveEncode.sanitize_base opt[:url]}#{File.extname opt[:url]}", new_encode.id)
           FileUtils.cp FileLocator.new(url).location, output_path
           filename_label_hash[output_path] = opt[:label]
         end

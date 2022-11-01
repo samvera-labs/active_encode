@@ -6,7 +6,6 @@ require 'aws-sdk-cloudwatchevents'
 require 'aws-sdk-cloudwatchlogs'
 require 'aws-sdk-mediaconvert'
 require 'file_locator'
-require 'active_encode/filename_sanitizer'
 
 require 'active_support/json'
 require 'active_support/time'
@@ -79,7 +78,6 @@ module ActiveEncode
     #
     # A more detailed guide is available in the repo at [guides/media_convert_adapter.md](../../../guides/media_convert_adapter.md)
     class MediaConvertAdapter
-      include ActiveEncode::FilenameSanitizer
 
       JOB_STATES = {
         "SUBMITTED" => :running, "PROGRESSING" => :running, "CANCELED" => :cancelled,
@@ -512,7 +510,7 @@ module ActiveEncode
         else
           s3_key = File.join(SecureRandom.uuid, s3_object.key)
           # logger.info("Copying to `#{source_bucket}/#{input_url}'")
-          target = Aws::S3::Object.new(bucket_name: source_bucket, key: sanitize_filename(input_url))
+          target = Aws::S3::Object.new(bucket_name: source_bucket, key: ActiveEncode.sanitize_filename(input_url))
           target.copy_from(s3_object, multipart_copy: s3_object.size > 15_728_640) # 15.megabytes
           s3_key
         end
@@ -522,7 +520,7 @@ module ActiveEncode
         # original_input = input_url
         bucket = Aws::S3::Resource.new(client: s3client).bucket(source_bucket)
         filename = FileLocator.new(input_url).location
-        cleaned_url = sanitize_filename input_url
+        cleaned_url = ActiveEncode.sanitize_filename input_url
         s3_key = File.join(SecureRandom.uuid, File.basename(cleaned_url))
         # logger.info("Copying `#{original_input}' to `#{source_bucket}/#{input_url}'")
         obj = bucket.object(s3_key)

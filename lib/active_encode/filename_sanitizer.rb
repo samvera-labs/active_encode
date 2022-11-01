@@ -7,22 +7,16 @@ module ActiveEncode
     end
 
     def sanitize_base(input_url)
+      filepath = input_url.is_a?(URI::HTTP) ? input_url.path : input_url
       # Replace special characters with underscores and remove excess periods.
-      if input_url.is_a? URI::HTTP
-        # This removes the extension before processing so it is safe to delete all detected periods.
-        File.basename(input_url.path, File.extname(input_url.path)).gsub(/[^0-9A-Za-z.\-\/]/, '_').delete('.')
-      else
-        File.basename(input_url, File.extname(input_url)).gsub(/[^0-9A-Za-z.\-\/]/, '_').delete('.')
-      end
+      # This removes the extension before processing so it is safe to delete all detected periods.
+      File.basename(filepath, File.extname(filepath)).gsub(/[^0-9A-Za-z.\-\/]/, '_').delete('.')
     end
 
     def sanitize_filename(input_url)
+      filepath = input_url.is_a?(URI::HTTP) ? input_url.path : input_url
       # Replace special characters with underscores and remove excess periods.
-      if input_url.is_a? URI::HTTP
-        File.basename(input_url.path).gsub(/[^0-9A-Za-z.\-\/]/, '_').gsub(/\.(?=.*\.)/, '')
-      else
-        File.basename(input_url).gsub(/[^0-9A-Za-z.\-\/]/, '_').gsub(/\.(?=.*\.)/, '')
-      end
+      File.basename(filepath).gsub(/[^0-9A-Za-z.\-\/]/, '_').gsub(/\.(?=.*\.)/, '')
     end
   end
 end
