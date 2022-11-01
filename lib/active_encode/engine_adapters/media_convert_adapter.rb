@@ -78,7 +78,6 @@ module ActiveEncode
     #
     # A more detailed guide is available in the repo at [guides/media_convert_adapter.md](../../../guides/media_convert_adapter.md)
     class MediaConvertAdapter
-
       JOB_STATES = {
         "SUBMITTED" => :running, "PROGRESSING" => :running, "CANCELED" => :cancelled,
         "ERROR" => :failed, "COMPLETE" => :completed

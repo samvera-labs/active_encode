@@ -13,7 +13,6 @@ require 'file_locator'
 module ActiveEncode
   module EngineAdapters
     class PassThroughAdapter
-
       WORK_DIR = ENV["ENCODE_WORK_DIR"] || "encodes" # Should read from config
       MEDIAINFO_PATH = ENV["MEDIAINFO_PATH"] || "mediainfo"
 

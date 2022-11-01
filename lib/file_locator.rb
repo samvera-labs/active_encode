@@ -6,7 +6,6 @@ class FileLocator
   attr_reader :source
 
   class S3File
-
     attr_reader :bucket, :key
 
     def initialize(uri)

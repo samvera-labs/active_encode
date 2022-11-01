@@ -6,7 +6,6 @@ require 'file_locator'
 module ActiveEncode
   module EngineAdapters
     class ElasticTranscoderAdapter
-
       JOB_STATES = {
         "Submitted" => :running, "Progressing" => :running, "Canceled" => :cancelled,
         "Error" => :failed, "Complete" => :completed
