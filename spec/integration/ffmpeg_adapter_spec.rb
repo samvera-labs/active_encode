@@ -38,6 +38,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
   end
   let(:completed_job) { find_encode "completed-id" }
   let(:completed_with_warnings_job) { find_encode "completed-with-warnings-id" }
+  let(:incomplete_job) { find_encode "incomplete-id" }
   let(:failed_job) { find_encode 'failed-id' }
   let(:completed_tech_metadata) do
     {
@@ -211,6 +212,21 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       it "has an exit code of -22" do
         expect(File).to exist("#{work_dir}/#{subject.id}/exit_status.code")
         expect(File.read("#{work_dir}/#{subject.id}/exit_status.code").to_i).to eq(-22)
+      end
+
+      context 'with less than 100 percent completeness' do
+        subject { incomplete_job }
+
+        it { is_expected.to be_failed }
+        it 'has an error' do
+          expect(incomplete_job.errors).to include "Encoding has completed but the output duration is shorter than the input"
+        end
+
+        it 'succeeds with a configured completeness threshold' do
+          allow(ActiveEncode::EngineAdapters::FfmpegAdapter).to receive(:completeness_threshold).and_return(95)
+          expect(incomplete_job).not_to be_failed
+          expect(incomplete_job.errors).to be_empty
+        end
       end
     end
   end

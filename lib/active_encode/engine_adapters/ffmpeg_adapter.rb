@@ -11,6 +11,8 @@ module ActiveEncode
       MEDIAINFO_PATH = ENV["MEDIAINFO_PATH"] || "mediainfo"
       FFMPEG_PATH = ENV["FFMPEG_PATH"] || "ffmpeg"
 
+      class_attribute :completeness_threshold
+
       def create(input_url, options = {})
         # Decode file uris for ffmpeg (mediainfo works either way)
         case input_url
@@ -110,7 +112,7 @@ module ActiveEncode
           encode.state = :completed
         elsif cancelled? encode.id
           encode.state = :cancelled
-        elsif encode.percent_complete < 100
+        elsif encode.percent_complete < (completeness_threshold || 100)
           encode.errors.prepend("Encoding has completed but the output duration is shorter than the input")
           encode.state = :failed
         end
