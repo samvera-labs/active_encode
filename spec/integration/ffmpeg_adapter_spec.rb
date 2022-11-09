@@ -147,6 +147,114 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       end
     end
 
+    context "input filename with single quotes" do
+      let(:file_with_single_quote) { "file://" + Rails.root.join('..', 'spec', 'fixtures', "'file_with_single_quote'.mp4").to_s }
+      let!(:create_single_quote_job) { ActiveEncode::Base.create(file_with_single_quote, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }
+      let(:find_single_quote_job) { ActiveEncode::Base.find create_single_quote_job.id }
+
+      it "does not have errors" do
+        sleep 2
+        expect(find_single_quote_job.errors).to be_empty
+      end
+
+      it "has the input technical metadata in a file" do
+        expect(File.read("#{work_dir}/#{create_single_quote_job.id}/input_metadata")).not_to be_empty
+      end
+
+      it "has the pid in a file" do
+        expect(File.read("#{work_dir}/#{create_single_quote_job.id}/pid")).not_to be_empty
+      end
+
+      context 'when uri encoded' do
+        let(:file_with_single_quote) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', "'file_with_single_quote'.mp4").to_s) }
+
+        it "does not have errors" do
+          sleep 2
+          expect(find_single_quote_job.errors).to be_empty
+        end
+
+        it "has the input technical metadata in a file" do
+          expect(File.read("#{work_dir}/#{create_single_quote_job.id}/input_metadata")).not_to be_empty
+        end
+
+        it "has the pid in a file" do
+          expect(File.read("#{work_dir}/#{create_single_quote_job.id}/pid")).not_to be_empty
+        end
+      end
+    end
+
+    context "input filename with double quotes" do
+      let(:file_with_double_quote) { "file://" + Rails.root.join('..', 'spec', 'fixtures', '"file_with_double_quote".mp4').to_s }
+      let!(:create_double_quote_job) { ActiveEncode::Base.create(file_with_double_quote, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }
+      let(:find_double_quote_job) { ActiveEncode::Base.find create_double_quote_job.id }
+
+      it "does not have errors" do
+        sleep 2
+        expect(find_double_quote_job.errors).to be_empty
+      end
+
+      it "has the input technical metadata in a file" do
+        expect(File.read("#{work_dir}/#{create_double_quote_job.id}/input_metadata")).not_to be_empty
+      end
+
+      it "has the pid in a file" do
+        expect(File.read("#{work_dir}/#{create_double_quote_job.id}/pid")).not_to be_empty
+      end
+
+      context 'when uri encoded' do
+        let(:file_with_double_quote) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', '"file_with_double_quote".mp4').to_s) }
+
+        it "does not have errors" do
+          sleep 2
+          expect(find_double_quote_job.errors).to be_empty
+        end
+
+        it "has the input technical metadata in a file" do
+          expect(File.read("#{work_dir}/#{create_double_quote_job.id}/input_metadata")).not_to be_empty
+        end
+
+        it "has the pid in a file" do
+          expect(File.read("#{work_dir}/#{create_double_quote_job.id}/pid")).not_to be_empty
+        end
+      end
+    end
+
+    context "input filename with other special characters" do
+      let(:file_with_special_characters) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file.with :=+%sp3c!l-ch4cts().mp4').to_s }
+      let!(:create_special_characters_job) { ActiveEncode::Base.create(file_with_special_characters, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }
+      let(:find_special_characters_job) { ActiveEncode::Base.find create_special_characters_job.id }
+
+      it "does not have errors" do
+        sleep 2
+        expect(find_special_characters_job.errors).to be_empty
+      end
+
+      it "has the input technical metadata in a file" do
+        expect(File.read("#{work_dir}/#{create_special_characters_job.id}/input_metadata")).not_to be_empty
+      end
+
+      it "has the pid in a file" do
+        expect(File.read("#{work_dir}/#{create_special_characters_job.id}/pid")).not_to be_empty
+      end
+
+      context 'when uri encoded' do
+        let(:file_with_special_characters) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file.with :=+%sp3c!l-ch4cts().mp4').to_s) }
+
+        it "does not have errors" do
+          sleep 2
+          expect(find_special_characters_job.errors).to be_empty
+        end
+
+        it "has the input technical metadata in a file" do
+          expect(File.read("#{work_dir}/#{create_special_characters_job.id}/input_metadata")).not_to be_empty
+        end
+
+        it "has the pid in a file" do
+          expect(File.read("#{work_dir}/#{create_special_characters_job.id}/pid")).not_to be_empty
+        end
+      end
+    end
+
     context 'when failed' do
       subject { created_job }
 

@@ -55,7 +55,7 @@ module ActiveEncode
         # Copy derivatives to work directory
         options[:outputs].each do |opt|
           url = opt[:url]
-          output_path = working_path("outputs/#{sanitize_base opt[:url]}#{File.extname opt[:url]}", new_encode.id)
+          output_path = working_path("outputs/#{ActiveEncode.sanitize_base opt[:url]}#{File.extname opt[:url]}", new_encode.id)
           FileUtils.cp FileLocator.new(url).location, output_path
           filename_label_hash[output_path] = opt[:label]
         end
@@ -204,10 +204,6 @@ module ActiveEncode
         File.write(working_path("completed", id), "")
 
         outputs
-      end
-
-      def sanitize_base(input_url)
-        File.basename(input_url, File.extname(input_url)).gsub(/[^0-9A-Za-z.\-]/, '_')
       end
 
       def working_path(path, id)

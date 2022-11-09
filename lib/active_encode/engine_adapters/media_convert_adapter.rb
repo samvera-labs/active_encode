@@ -482,6 +482,10 @@ module ActiveEncode
         end
       end
 
+      def s3client
+        Aws::S3::Client.new
+      end
+
       def s3_uri(url, options = {})
         bucket = options[:masterfile_bucket]
 
@@ -503,9 +507,10 @@ module ActiveEncode
           # logger.info("Already in bucket `#{source_bucket}'")
           s3_object.key
         else
-          s3_key = File.join(SecureRandom.uuid, s3_object.key)
+          cleaned_url = ActiveEncode.sanitize_filename input_url
+          s3_key = File.join(SecureRandom.uuid, File.basename(cleaned_url))
           # logger.info("Copying to `#{source_bucket}/#{input_url}'")
-          target = Aws::S3::Object.new(bucket_name: source_bucket, key: input_url)
+          target = Aws::S3::Object.new(bucket_name: source_bucket, key: s3_key)
           target.copy_from(s3_object, multipart_copy: s3_object.size > 15_728_640) # 15.megabytes
           s3_key
         end
@@ -515,7 +520,8 @@ module ActiveEncode
         # original_input = input_url
         bucket = Aws::S3::Resource.new(client: s3client).bucket(source_bucket)
         filename = FileLocator.new(input_url).location
-        s3_key = File.join(SecureRandom.uuid, File.basename(filename))
+        cleaned_url = ActiveEncode.sanitize_filename input_url
+        s3_key = File.join(SecureRandom.uuid, File.basename(cleaned_url))
         # logger.info("Copying `#{original_input}' to `#{source_bucket}/#{input_url}'")
         obj = bucket.object(s3_key)
         obj.upload_file filename
