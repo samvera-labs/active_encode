@@ -507,9 +507,10 @@ module ActiveEncode
           # logger.info("Already in bucket `#{source_bucket}'")
           s3_object.key
         else
-          s3_key = File.join(SecureRandom.uuid, s3_object.key)
+          cleaned_url = ActiveEncode.sanitize_filename input_url
+          s3_key = File.join(SecureRandom.uuid, File.basename(cleaned_url))
           # logger.info("Copying to `#{source_bucket}/#{input_url}'")
-          target = Aws::S3::Object.new(bucket_name: source_bucket, key: ActiveEncode.sanitize_filename(input_url))
+          target = Aws::S3::Object.new(bucket_name: source_bucket, key: s3_key)
           target.copy_from(s3_object, multipart_copy: s3_object.size > 15_728_640) # 15.megabytes
           s3_key
         end

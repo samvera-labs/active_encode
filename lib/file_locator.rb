@@ -15,7 +15,7 @@ class FileLocator
     end
 
     def object
-      @object ||= Aws::S3::Object.new(bucket_name: bucket, key: ActiveEncode.sanitize_filename(key))
+      @object ||= Aws::S3::Object.new(bucket_name: bucket, key: key)
     end
   end
 

@@ -307,11 +307,12 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
       context "s3 file" do
         let(:input_urls) { ["s3://bucket1/'file_with_single_quote'.mp4", 's3://bucket1/"file_with_double_quote".mp4', "s3://bucket1/file with space.mp4", "s3://bucket1/file.with...periods.mp4", "s3://bucket1/file.with :=+%sp3c!l-ch4cts().mp4"] }
         let(:clean) { ["_file_with_single_quote_.mp4", "_file_with_double_quote_.mp4", "file_with_space.mp4", "filewithperiods.mp4", "filewith_____sp3c_l-ch4cts__.mp4"] }
-        let(:source_bucket) { "bucket1" }
+        let(:source_bucket) { "bucket2" }
 
         it "calls the #check_s3_bucket method" do
+          allow(SecureRandom).to receive(:uuid).and_return("randomstring")
           input_urls.each_with_index do |url, index|
-            expect(described_class.new.send(:s3_uri, url, { masterfile_bucket: source_bucket })).to eq clean[index]
+            expect(described_class.new.send(:s3_uri, url, { masterfile_bucket: source_bucket })).to eq "randomstring/#{clean[index]}"
           end
         end
       end
