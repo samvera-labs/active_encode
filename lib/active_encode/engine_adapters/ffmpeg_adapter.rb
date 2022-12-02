@@ -204,7 +204,7 @@ module ActiveEncode
           output = ActiveEncode::Output.new
           output.url = "file://#{file_path}"
           sanitized_filename = ActiveEncode.sanitize_base encode.input.url
-          output.label = file_path[/#{Regexp.quote(sanitized_filename)}\-(.*?)#{Regexp.quote(File.extname(file_path))}$/, 1]
+          output.label = file_path[/#{Regexp.quote(sanitized_filename)}.*\-(.*?)#{Regexp.quote(File.extname(file_path))}$/, 1]
           output.id = "#{encode.input.id}-#{output.label}"
           output.created_at = encode.created_at
           output.updated_at = File.mtime file_path
