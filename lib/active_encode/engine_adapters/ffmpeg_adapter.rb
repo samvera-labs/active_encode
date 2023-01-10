@@ -44,7 +44,8 @@ module ActiveEncode
                       else
                         ""
                       end
-        `#{MEDIAINFO_PATH} #{curl_option} --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} "#{input_url}"`
+
+        system(MEDIAINFO_PATH, curl_option, "--Output=XML", "--LogFile=#{working_path("input_metadata", new_encode.id)}", input_url.shellescape)
         new_encode.input = build_input new_encode
 
         if new_encode.input.duration.blank?
