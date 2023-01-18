@@ -11,7 +11,7 @@ class FileLocator
     def initialize(uri)
       uri = Addressable::URI.parse(uri)
       @bucket = Addressable::URI.unencode(uri.host)
-      @key = Addressable::URI.unencode(uri.path).sub(%r{^/*(.+)/*$}, '\1')
+      @key = Addressable::URI.unencode(uri.to_s.gsub(/#{uri.normalized_site}/, '')).sub(%r{^/*(.+)/*$}, '\1')
     end
 
     def object
