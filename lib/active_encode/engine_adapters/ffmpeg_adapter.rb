@@ -45,7 +45,7 @@ module ActiveEncode
                         ""
                       end
 
-        clean_url = input_url.is_a?(String) ? input_url.gsub(/file:\/\//, '') : input_url
+        clean_url = input_url.is_a?(String) ? ActiveEncode.sanitize_uri(input_url) : input_url
 
         `#{MEDIAINFO_PATH} #{curl_option} --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} "#{clean_url}"`
 

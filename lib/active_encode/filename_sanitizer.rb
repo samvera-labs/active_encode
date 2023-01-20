@@ -18,5 +18,14 @@ module ActiveEncode
       # Replace special characters with underscores and remove excess periods.
       File.basename(filepath).gsub(/[^0-9A-Za-z.\-\/]/, '_').gsub(/\.(?=.*\.)/, '')
     end
+
+    def sanitize_uri(input_url)
+      case input_url
+      when /^file\:\/\/\//
+        input_url.to_s.gsub(/file:\/\//, '')
+      when /^s3\:\/\//
+        input_url.to_s.gsub(/#{input_url.normalized_site}/, '')
+      end
+    end
   end
 end
