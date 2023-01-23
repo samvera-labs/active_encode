@@ -19,6 +19,7 @@ module ActiveEncode
       def create(input_url, options = {})
         # Decode file uris for ffmpeg (mediainfo works either way)
         input_url = Addressable::URI.unencode(input_url) if input_url.starts_with? "file:///"
+        input_url = ActiveEncode.sanitize_input(input_url)
 
         new_encode = ActiveEncode::Base.new(input_url, options)
         new_encode.id = SecureRandom.uuid
@@ -30,7 +31,7 @@ module ActiveEncode
         FileUtils.mkdir_p working_path("outputs", new_encode.id)
 
         # Extract technical metadata from input file
-        `#{MEDIAINFO_PATH} --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} #{input_url.shellescape}`
+        `#{MEDIAINFO_PATH} --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} "#{ActiveEncode.sanitize_uri(input_url)}"`
         new_encode.input = build_input new_encode
         new_encode.input.id = new_encode.id
         new_encode.created_at, new_encode.updated_at = get_times new_encode.id
@@ -196,7 +197,7 @@ module ActiveEncode
 
           # Extract technical metadata from output file
           metadata_path = working_path("output_metadata-#{output.label}", id)
-          `#{MEDIAINFO_PATH} --Output=XML --LogFile=#{metadata_path} #{output.url}` unless File.file? metadata_path
+          `#{MEDIAINFO_PATH} --Output=XML --LogFile=#{metadata_path} #{ActiveEncode.sanitize_uri(output.url)}` unless File.file? metadata_path
           output.assign_tech_metadata(get_tech_metadata(metadata_path))
 
           outputs << output

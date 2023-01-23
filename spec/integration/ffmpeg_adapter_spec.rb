@@ -224,34 +224,44 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       let(:file_with_special_characters) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file.with :=+%sp3c!l-ch4cts().mp4').to_s }
       let!(:create_special_characters_job) { ActiveEncode::Base.create(file_with_special_characters, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }
       let(:find_special_characters_job) { ActiveEncode::Base.find create_special_characters_job.id }
+      let(:file_with_more_special_characters) { "file://" + Rails.root.join('..', 'spec', 'fixtures', '@ወዳጅህ ማር ቢ. ሆን ጨርስ. ህ አትላሰ!@#$^^&$%&.mov').to_s }
+      let!(:create_more_special_characters_job) { ActiveEncode::Base.create(file_with_more_special_characters, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }
+      let(:find_more_special_characters_job) { ActiveEncode::Base.find create_more_special_characters_job.id }
 
       it "does not have errors" do
         sleep 2
         expect(find_special_characters_job.errors).to be_empty
+        expect(find_more_special_characters_job.errors).to be_empty
       end
 
       it "has the input technical metadata in a file" do
         expect(File.read("#{work_dir}/#{create_special_characters_job.id}/input_metadata")).not_to be_empty
+        expect(File.read("#{work_dir}/#{create_more_special_characters_job.id}/input_metadata")).not_to be_empty
       end
 
       it "has the pid in a file" do
         expect(File.read("#{work_dir}/#{create_special_characters_job.id}/pid")).not_to be_empty
+        expect(File.read("#{work_dir}/#{create_more_special_characters_job.id}/pid")).not_to be_empty
       end
 
       context 'when uri encoded' do
         let(:file_with_special_characters) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file.with :=+%sp3c!l-ch4cts().mp4').to_s) }
+        let(:file_with_more_special_characters) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', '@ወዳጅህ ማር ቢ. ሆን ጨርስ. ህ አትላሰ!@#$^^&$%&.mov').to_s) }
 
         it "does not have errors" do
           sleep 2
           expect(find_special_characters_job.errors).to be_empty
+          expect(find_more_special_characters_job.errors).to be_empty
         end
 
         it "has the input technical metadata in a file" do
           expect(File.read("#{work_dir}/#{create_special_characters_job.id}/input_metadata")).not_to be_empty
+          expect(File.read("#{work_dir}/#{create_more_special_characters_job.id}/input_metadata")).not_to be_empty
         end
 
         it "has the pid in a file" do
           expect(File.read("#{work_dir}/#{create_special_characters_job.id}/pid")).not_to be_empty
+          expect(File.read("#{work_dir}/#{create_more_special_characters_job.id}/pid")).not_to be_empty
         end
       end
     end

@@ -11,7 +11,7 @@ class FileLocator
     def initialize(uri)
       uri = Addressable::URI.parse(uri)
       @bucket = Addressable::URI.unencode(uri.host)
-      @key = Addressable::URI.unencode(uri.path).sub(%r{^/*(.+)/*$}, '\1')
+      @key = Addressable::URI.unencode(ActiveEncode.sanitize_uri(uri)).sub(%r{^/*(.+)/*$}, '\1')
     end
 
     def object
@@ -51,7 +51,7 @@ class FileLocator
     when 's3'
       S3File.new(uri).object.presigned_url(:get)
     when 'file'
-      Addressable::URI.unencode(uri.path)
+      Addressable::URI.unencode(ActiveEncode.sanitize_uri(uri))
     else
       @uri.to_s
     end

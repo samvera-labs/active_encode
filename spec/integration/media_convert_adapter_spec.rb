@@ -293,8 +293,8 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
     end
     context "when filename has special characters" do
       context "non-s3 file" do
-        let(:input) { ["'file_with_single_quote'.mp4", '"file_with_double_quote".mp4', "file with space.mp4", "file.with...periods.mp4", "file.with :=+%sp3c!l-ch4cts().mp4"] }
-        let(:clean) { ["_file_with_single_quote_.mp4", "_file_with_double_quote_.mp4", "file_with_space.mp4", "filewithperiods.mp4", "filewith_____sp3c_l-ch4cts__.mp4"] }
+        let(:input) { ["'file_with_single_quote'.mp4", '"file_with_double_quote".mp4', "file with space.mp4", "file.with...periods.mp4", "file.with :=+%sp3c!l-ch4cts().mp4", '@ወዳጅህ ማር ቢ. ሆን ጨርስ. ህ አትላሰ!@#$^^&$%&.mov'] }
+        let(:clean) { ["_file_with_single_quote_.mp4", "_file_with_double_quote_.mp4", "file_with_space.mp4", "filewithperiods.mp4", "filewith_____sp3c_l-ch4cts__.mp4", '__________________________________.mov'] }
         let(:source_bucket) { "bucket1" }
 
         it "calls the #upload_to_s3 method" do
@@ -305,8 +305,8 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
         end
       end
       context "s3 file" do
-        let(:input_urls) { ["s3://bucket1/'file_with_single_quote'.mp4", 's3://bucket1/"file_with_double_quote".mp4', "s3://bucket1/file with space.mp4", "s3://bucket1/file.with...periods.mp4", "s3://bucket1/file.with :=+%sp3c!l-ch4cts().mp4"] }
-        let(:clean) { ["_file_with_single_quote_.mp4", "_file_with_double_quote_.mp4", "file_with_space.mp4", "filewithperiods.mp4", "filewith_____sp3c_l-ch4cts__.mp4"] }
+        let(:input_urls) { ["s3://bucket1/'file_with_single_quote'.mp4", 's3://bucket1/"file_with_double_quote".mp4', "s3://bucket1/file with space.mp4", "s3://bucket1/file.with...periods.mp4", "s3://bucket1/file.with :=+%sp3c!l-ch4cts().mp4", 's3://bucket1/@ወዳጅህ ማር ቢ. ሆን ጨርስ. ህ አትላሰ!@#$^^&$%&.mov'] }
+        let(:clean) { ["_file_with_single_quote_.mp4", "_file_with_double_quote_.mp4", "file_with_space.mp4", "filewithperiods.mp4", "filewith_____sp3c_l-ch4cts__.mp4", '__________________________________.mov'] }
         let(:source_bucket) { "bucket2" }
 
         it "calls the #check_s3_bucket method" do
