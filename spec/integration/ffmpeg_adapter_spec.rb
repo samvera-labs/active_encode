@@ -112,6 +112,52 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       end
     end
 
+    context "input file format does not match extension" do
+      let(:improper_format_file) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_without_metadata.mp4').to_s }
+      let(:improper_format_job) { ActiveEncode::Base.create(improper_format_file, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }
+
+      it "returns the encode with correct error" do
+        expect(improper_format_job.errors).to include("Error inspecting input: #{improper_format_file}")
+        expect(improper_format_job.percent_complete).to be 1
+      end
+    end
+
+    context "input file with missing metadata" do
+      let(:file_without_metadata) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_without_metadata.webm').to_s }
+      let!(:create_without_metadata_job) { ActiveEncode::Base.create(file_without_metadata, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }
+      let(:find_without_metadata_job) { ActiveEncode::Base.find create_without_metadata_job.id }
+
+      it "does not have errors" do
+        sleep 2
+        expect(find_without_metadata_job.errors).to be_empty
+      end
+
+      it "has the input technical metadata in a file" do
+        expect(File.read("#{work_dir}/#{create_without_metadata_job.id}/input_metadata")).not_to be_empty
+      end
+
+      it "has the pid in a file" do
+        expect(File.read("#{work_dir}/#{create_without_metadata_job.id}/pid")).not_to be_empty
+      end
+
+      context 'when uri encoded' do
+        let(:file_without_metadata) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_without_metadata.webm').to_s) }
+
+        it "does not have errors" do
+          sleep 2
+          expect(find_without_metadata_job.errors).to be_empty
+        end
+
+        it "has the input technical metadata in a file" do
+          expect(File.read("#{work_dir}/#{create_without_metadata_job.id}/input_metadata")).not_to be_empty
+        end
+
+        it "has the pid in a file" do
+          expect(File.read("#{work_dir}/#{create_without_metadata_job.id}/pid")).not_to be_empty
+        end
+      end
+    end
+
     context "input filename with spaces" do
       let(:file_with_space) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file with space.mp4').to_s }
       let!(:create_space_job) { ActiveEncode::Base.create(file_with_space, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }

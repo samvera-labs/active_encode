@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require 'English'
 require 'fileutils'
 require 'nokogiri'
 require 'shellwords'
@@ -51,18 +52,33 @@ module ActiveEncode
 
         new_encode.input = build_input new_encode
 
-        if new_encode.input.duration.blank?
-          new_encode.state = :failed
-          new_encode.percent_complete = 1
-
-          new_encode.errors = if new_encode.input.file_size.blank?
-                                ["#{input_url} does not exist or is not accessible"]
-                              else
-                                ["Error inspecting input: #{input_url}"]
-                              end
-
-          write_errors new_encode
+        # Log error if file is empty or inaccessible
+        if new_encode.input.duration.blank? && new_encode.input.file_size.blank?
+          file_error(new_encode, input_url)
           return new_encode
+        # If file is not empty, try copying file to generate missing metadata
+        elsif new_encode.input.duration.blank? && new_encode.input.file_size.present?
+          filepath = clean_url.is_a?(URI::HTTP) ? clean_url.path : clean_url
+          copy_url = clean_url.to_s.gsub(/#{clean_url}/, "#{File.basename(filepath, File.extname(filepath))}_temp#{File.extname(filepath)}")
+          copy_path = working_path(copy_url, new_encode.id).to_s
+
+          # -map 0 sets ffmpeg to copy all available streams.
+          # -y automatically overwrites the temp file if one already exists
+          `#{FFMPEG_PATH} -loglevel level+fatal -i \"#{input_url}\" -map 0 -c copy -y \"#{copy_path}\"`
+
+          # If ffmpeg copy fails, log error because file is either not a media file
+          # or the file extension is not compatible with the format the file is encoded in
+          unless $CHILD_STATUS.success?
+            file_error(new_encode, input_url)
+            return new_encode
+          end
+
+          `#{MEDIAINFO_PATH} #{curl_option} --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} "#{copy_path}"`
+
+          new_encode.input = build_input new_encode
+          new_encode.input.url = clean_url.to_s
+
+          new_encode
         end
 
         new_encode.state = :running
@@ -301,6 +317,20 @@ module ActiveEncode
 
       def get_xpath_text(doc, xpath, cast_method)
         doc.xpath(xpath).first&.text&.send(cast_method)
+      end
+
+      def file_error(new_encode, input_url)
+        new_encode.state = :failed
+        new_encode.percent_complete = 1
+
+        new_encode.errors = if new_encode.input.file_size.blank?
+                              ["#{input_url} does not exist or is not accessible"]
+                            else
+                              ["Error inspecting input: #{input_url}"]
+                            end
+
+        write_errors new_encode
+        new_encode
       end
     end
   end
