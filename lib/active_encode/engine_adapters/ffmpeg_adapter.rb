@@ -58,8 +58,8 @@ module ActiveEncode
           return new_encode
         # If file is not empty, try copying file to generate missing metadata
         elsif new_encode.input.duration.blank? && new_encode.input.file_size.present?
-          filepath = clean_url.to_s
-          copy_url = filepath.gsub("#{filepath}", "#{File.basename(filepath, File.extname(filepath))}_temp#{File.extname(filepath)}")
+          filepath = clean_url.to_s.gsub(/\?.*/, '')
+          copy_url = filepath.gsub(filepath, "#{File.basename(filepath, File.extname(filepath))}_temp#{File.extname(filepath)}")
           copy_path = working_path(copy_url, new_encode.id)
 
           # -map 0 sets ffmpeg to copy all available streams.
@@ -69,7 +69,7 @@ module ActiveEncode
           # If ffmpeg copy fails, log error because file is either not a media file
           # or the file extension is not compatible with the format the file is encoded in
           unless $CHILD_STATUS.success?
-            file_error(new_encode, copy_url)
+            file_error(new_encode, copy_path)
             return new_encode
           end
 
