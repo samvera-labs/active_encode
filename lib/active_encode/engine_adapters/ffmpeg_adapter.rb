@@ -69,15 +69,15 @@ module ActiveEncode
           # If ffmpeg copy fails, log error because file is either not a media file
           # or the file extension is not compatible with the format the file is encoded in
           unless $CHILD_STATUS.success?
-            file_error(new_encode, copy_path)
+            file_error(new_encode, input_url)
             return new_encode
           end
 
-          `#{MEDIAINFO_PATH} #{curl_option} --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} "#{copy_path}"`
+          `#{MEDIAINFO_PATH} #{curl_option} --Output=XML --LogFile=#{working_path("temp_input_metadata", new_encode.id)} "#{copy_path}"`
 
-          new_encode.input = build_input new_encode
+          @fixed_duration = get_tech_metadata(working_path("temp_input_metadata", new_encode.id))[:duration]
 
-          new_encode
+          new_encode.input.duration = @fixed_duration
         end
 
         new_encode.state = :running
@@ -114,6 +114,7 @@ module ActiveEncode
         encode.output = []
         encode.created_at, encode.updated_at = get_times encode.id
         encode.input = build_input encode
+        encode.input.duration ||= @fixed_duration if @fixed_duration.present?
         encode.percent_complete = calculate_percent_complete encode
 
         pid = get_pid(id)
