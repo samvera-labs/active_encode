@@ -63,20 +63,23 @@ module ActiveEncode
           copy_path = working_path(copy_url, new_encode.id)
 
           # -map 0 sets ffmpeg to copy all available streams.
+          # -c copy sets ffmpeg to copy all codecs
           # -y automatically overwrites the temp file if one already exists
           `#{FFMPEG_PATH} -loglevel level+fatal -i \"#{input_url}\" -map 0 -c copy -y \"#{copy_path}\"`
 
           # If ffmpeg copy fails, log error because file is either not a media file
-          # or the file extension is not compatible with the format the file is encoded in
+          # or the file extension does not match the codecs used to encode the file
           unless $CHILD_STATUS.success?
             file_error(new_encode, input_url)
             return new_encode
           end
 
+          # Write the mediainfo output to a temp file to preserve metadata from original file
           `#{MEDIAINFO_PATH} #{curl_option} --Output=XML --LogFile=#{working_path("temp_input_metadata", new_encode.id)} "#{copy_path}"`
 
           @fixed_duration = get_tech_metadata(working_path("temp_input_metadata", new_encode.id))[:duration]
 
+          # Assign duration to the encode created for the original file.
           new_encode.input.duration = @fixed_duration
         end
 
