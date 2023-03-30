@@ -76,9 +76,12 @@ module ActiveEncode
 
           `#{MEDIAINFO_PATH} #{curl_option} --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} "#{copy_path}"`
 
+          fixed_duration = get_tech_metadata(working_path("input_metadata", new_encode.id))[:duration]
+
           File.delete(copy_path)
-          
-          new_encode.input = build_input new_encode
+
+          # Assign duration to the encode created for the original file.
+          new_encode.input.duration = fixed_duration
         end
 
         new_encode.state = :running
