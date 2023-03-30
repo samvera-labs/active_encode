@@ -74,14 +74,13 @@ module ActiveEncode
             return new_encode
           end
 
-          `#{MEDIAINFO_PATH} #{curl_option} --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} "#{copy_path}"`
-
-          fixed_duration = get_tech_metadata(working_path("input_metadata", new_encode.id))[:duration]
+          # Write the mediainfo output to a temp file to preserve metadata from original file
+          `#{MEDIAINFO_PATH} #{curl_option} --Output=XML --LogFile=#{working_path("temp_input_metadata", new_encode.id)} "#{copy_path}"`
 
           File.delete(copy_path)
 
           # Assign duration to the encode created for the original file.
-          new_encode.input.duration = fixed_duration
+          new_encode.input.duration = fixed_duration(working_path("temp_input_metadata", new_encode.id))
         end
 
         new_encode.state = :running
@@ -118,7 +117,7 @@ module ActiveEncode
         encode.output = []
         encode.created_at, encode.updated_at = get_times encode.id
         encode.input = build_input encode
-        # encode.input.duration ||= fixed_duration if @fixed_duration.present?
+        encode.input.duration ||= fixed_duration(working_path("temp_input_metadata", encode.id)) if File.exist?(working_path("temp_input_metadata", encode.id))
         encode.percent_complete = calculate_percent_complete encode
 
         pid = get_pid(id)
@@ -321,6 +320,10 @@ module ActiveEncode
 
       def get_xpath_text(doc, xpath, cast_method)
         doc.xpath(xpath).first&.text&.send(cast_method)
+      end
+
+      def fixed_duration(path)
+        get_tech_metadata(path)[:duration]
       end
 
       def file_error(new_encode, input_url)
