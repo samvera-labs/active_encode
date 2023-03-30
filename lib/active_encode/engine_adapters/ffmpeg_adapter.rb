@@ -74,13 +74,11 @@ module ActiveEncode
             return new_encode
           end
 
-          # Write the mediainfo output to a temp file to preserve metadata from original file
-          `#{MEDIAINFO_PATH} #{curl_option} --Output=XML --LogFile=#{working_path("temp_input_metadata", new_encode.id)} "#{copy_path}"`
+          `#{MEDIAINFO_PATH} #{curl_option} --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} "#{copy_path}"`
 
-          @fixed_duration = get_tech_metadata(working_path("temp_input_metadata", new_encode.id))[:duration]
-
-          # Assign duration to the encode created for the original file.
-          new_encode.input.duration = @fixed_duration
+          File.delete(copy_path)
+          
+          new_encode.input = build_input new_encode
         end
 
         new_encode.state = :running
@@ -117,7 +115,7 @@ module ActiveEncode
         encode.output = []
         encode.created_at, encode.updated_at = get_times encode.id
         encode.input = build_input encode
-        encode.input.duration ||= @fixed_duration if @fixed_duration.present?
+        # encode.input.duration ||= fixed_duration if @fixed_duration.present?
         encode.percent_complete = calculate_percent_complete encode
 
         pid = get_pid(id)
