@@ -140,6 +140,11 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
         expect(File.read("#{work_dir}/#{create_without_metadata_job.id}/pid")).not_to be_empty
       end
 
+      it "assigns the correct duration to the encode" do
+        expect(create_without_metadata_job.input.duration).to eq 68653
+        expect(find_without_metadata_job.input.duration).to eq 68653
+      end
+
       context 'when uri encoded' do
         let(:file_without_metadata) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_without_metadata.webm').to_s) }
 
@@ -154,6 +159,11 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
 
         it "has the pid in a file" do
           expect(File.read("#{work_dir}/#{create_without_metadata_job.id}/pid")).not_to be_empty
+        end
+
+        it "assigns the correct duration to the encode" do
+          expect(create_without_metadata_job.input.duration).to eq 68653
+          expect(find_without_metadata_job.input.duration).to eq 68653
         end
       end
     end
