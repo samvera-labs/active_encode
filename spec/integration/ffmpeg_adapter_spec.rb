@@ -141,8 +141,8 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       end
 
       it "assigns the correct duration to the encode" do
-        expect(create_without_metadata_job.input.duration).to eq 68653
-        expect(find_without_metadata_job.input.duration).to eq 68653
+        expect(create_without_metadata_job.input.duration).to eq 68_653
+        expect(find_without_metadata_job.input.duration).to eq 68_653
       end
 
       context 'when uri encoded' do
@@ -162,8 +162,8 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
         end
 
         it "assigns the correct duration to the encode" do
-          expect(create_without_metadata_job.input.duration).to eq 68653
-          expect(find_without_metadata_job.input.duration).to eq 68653
+          expect(create_without_metadata_job.input.duration).to eq 68_653
+          expect(find_without_metadata_job.input.duration).to eq 68_653
         end
       end
     end
