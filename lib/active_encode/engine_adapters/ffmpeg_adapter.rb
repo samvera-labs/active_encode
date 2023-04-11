@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require 'English'
 require 'fileutils'
 require 'nokogiri'
 require 'shellwords'
@@ -51,18 +52,35 @@ module ActiveEncode
 
         new_encode.input = build_input new_encode
 
-        if new_encode.input.duration.blank?
-          new_encode.state = :failed
-          new_encode.percent_complete = 1
-
-          new_encode.errors = if new_encode.input.file_size.blank?
-                                ["#{input_url} does not exist or is not accessible"]
-                              else
-                                ["Error inspecting input: #{input_url}"]
-                              end
-
-          write_errors new_encode
+        # Log error if file is empty or inaccessible
+        if new_encode.input.duration.blank? && new_encode.input.file_size.blank?
+          file_error(new_encode, input_url)
           return new_encode
+        # If file is not empty, try copying file to generate missing metadata
+        elsif new_encode.input.duration.blank? && new_encode.input.file_size.present?
+          filepath = clean_url.to_s.gsub(/\?.*/, '')
+          copy_url = filepath.gsub(filepath, "#{File.basename(filepath, File.extname(filepath))}_temp#{File.extname(filepath)}")
+          copy_path = working_path(copy_url, new_encode.id)
+
+          # -map 0 sets ffmpeg to copy all available streams.
+          # -c copy sets ffmpeg to copy all codecs
+          # -y automatically overwrites the temp file if one already exists
+          `#{FFMPEG_PATH} -loglevel level+fatal -i \"#{input_url}\" -map 0 -c copy -y \"#{copy_path}\"`
+
+          # If ffmpeg copy fails, log error because file is either not a media file
+          # or the file extension does not match the codecs used to encode the file
+          unless $CHILD_STATUS.success?
+            file_error(new_encode, input_url)
+            return new_encode
+          end
+
+          # Write the mediainfo output to a temp file to preserve metadata from original file
+          `#{MEDIAINFO_PATH} #{curl_option} --Output=XML --LogFile=#{working_path("duration_input_metadata", new_encode.id)} "#{copy_path}"`
+
+          File.delete(copy_path)
+
+          # Assign duration to the encode created for the original file.
+          new_encode.input.duration = fixed_duration(working_path("duration_input_metadata", new_encode.id))
         end
 
         new_encode.state = :running
@@ -99,6 +117,7 @@ module ActiveEncode
         encode.output = []
         encode.created_at, encode.updated_at = get_times encode.id
         encode.input = build_input encode
+        encode.input.duration ||= fixed_duration(working_path("duration_input_metadata", encode.id)) if File.exist?(working_path("duration_input_metadata", encode.id))
         encode.percent_complete = calculate_percent_complete encode
 
         pid = get_pid(id)
@@ -301,6 +320,24 @@ module ActiveEncode
 
       def get_xpath_text(doc, xpath, cast_method)
         doc.xpath(xpath).first&.text&.send(cast_method)
+      end
+
+      def fixed_duration(path)
+        get_tech_metadata(path)[:duration]
+      end
+
+      def file_error(new_encode, input_url)
+        new_encode.state = :failed
+        new_encode.percent_complete = 1
+
+        new_encode.errors = if new_encode.input.file_size.blank?
+                              ["#{input_url} does not exist or is not accessible"]
+                            else
+                              ["Error inspecting input: #{input_url}"]
+                            end
+
+        write_errors new_encode
+        new_encode
       end
     end
   end
