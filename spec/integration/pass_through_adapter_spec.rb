@@ -133,6 +133,11 @@ describe ActiveEncode::EngineAdapters::PassThroughAdapter do
         expect(File.read("#{work_dir}/#{create_without_metadata_job.id}/input_metadata")).not_to be_empty
       end
 
+      it "assigns the correct duration to the encode" do
+        expect(create_without_metadata_job.input.duration).to eq 68_653
+        expect(find_without_metadata_job.input.duration).to eq 68_653
+      end
+
       context 'when uri encoded' do
         let(:file_without_metadata) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_without_metadata.webm').to_s) }
         let(:file_without_metadata_derivative) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_without_metadata.low.webm').to_s) }
@@ -143,6 +148,11 @@ describe ActiveEncode::EngineAdapters::PassThroughAdapter do
 
         it "has the input technical metadata in a file" do
           expect(File.read("#{work_dir}/#{create_without_metadata_job.id}/input_metadata")).not_to be_empty
+        end
+
+        it "assigns the correct duration to the encode" do
+          expect(create_without_metadata_job.input.duration).to eq 68_653
+          expect(find_without_metadata_job.input.duration).to eq 68_653
         end
       end
     end

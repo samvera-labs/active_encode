@@ -43,8 +43,11 @@ module ActiveEncode
           return new_encode
         # If file is not empty, try copying file to generate missing metadata
         elsif new_encode.input.duration.blank? && new_encode.input.file_size.present?
-          # filepath = clean_url.to_s.gsub(/\?.*/, '')
-          copy_url = input_url.gsub(input_url, "#{File.basename(input_url, File.extname(input_url))}_temp#{File.extname(input_url)}")
+
+          # This regex removes the query string from URIs. This is necessary to
+          # properly process files originating from S3 or similar providers.
+          filepath = input_url.to_s.gsub(/\?.*/, '')
+          copy_url = filepath.gsub(filepath, "#{File.basename(filepath, File.extname(filepath))}_temp#{File.extname(input_url)}")
           copy_path = working_path(copy_url, new_encode.id)
 
           # -map 0 sets ffmpeg to copy all available streams.
@@ -59,8 +62,8 @@ module ActiveEncode
             return new_encode
           end
 
-          # Write the mediainfo output to a temp file to preserve metadata from original file
-          `#{MEDIAINFO_PATH} --Output=XML --LogFile=#{working_path("duration_input_metadata", new_encode.id)} "#{ActiveEncode.sanitize_uri(copy_path)}"`
+          # Write the mediainfo output to a separate file to preserve metadata from original file
+          `#{MEDIAINFO_PATH} --Output=XML --LogFile=#{working_path("duration_input_metadata", new_encode.id)} \"#{copy_path}\"`
 
           File.delete(copy_path)
 
@@ -104,6 +107,7 @@ module ActiveEncode
         encode.created_at, encode.updated_at = get_times encode.id
         encode.input = build_input encode
         encode.input.id = encode.id
+        encode.input.duration ||= fixed_duration(working_path("duration_input_metadata", encode.id)) if File.exist?(working_path("duration_input_metadata", encode.id))
         encode.output = []
         encode.current_operations = []
 
