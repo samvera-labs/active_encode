@@ -58,6 +58,9 @@ module ActiveEncode
           return new_encode
         # If file is not empty, try copying file to generate missing metadata
         elsif new_encode.input.duration.blank? && new_encode.input.file_size.present?
+
+          # This regex removes the query string from URIs. This is necessary to
+          # properly process files originating from S3 or similar providers.
           filepath = clean_url.to_s.gsub(/\?.*/, '')
           copy_url = filepath.gsub(filepath, "#{File.basename(filepath, File.extname(filepath))}_temp#{File.extname(filepath)}")
           copy_path = working_path(copy_url, new_encode.id)
@@ -74,7 +77,7 @@ module ActiveEncode
             return new_encode
           end
 
-          # Write the mediainfo output to a temp file to preserve metadata from original file
+          # Write the mediainfo output to a separate file to preserve metadata from original file
           `#{MEDIAINFO_PATH} #{curl_option} --Output=XML --LogFile=#{working_path("duration_input_metadata", new_encode.id)} "#{copy_path}"`
 
           File.delete(copy_path)

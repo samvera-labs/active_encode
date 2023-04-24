@@ -109,6 +109,54 @@ describe ActiveEncode::EngineAdapters::PassThroughAdapter do
       end
     end
 
+    context "input file format does not match extension" do
+      let(:improper_format_file) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_without_metadata.mp4').to_s }
+      let(:improper_format_job) { ActiveEncode::Base.create(improper_format_file, outputs: [{ label: "low", url: improper_format_file }]) }
+
+      it "returns the encode with correct error" do
+        expect(improper_format_job.errors).to include("Error inspecting input: #{improper_format_file}")
+        expect(improper_format_job.percent_complete).to be 1
+      end
+    end
+
+    context "input file without metadata" do
+      let(:file_without_metadata) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_without_metadata.webm').to_s }
+      let(:file_without_metadata_derivative) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_without_metadata.low.webm').to_s }
+      let(:create_without_metadata_job) { ActiveEncode::Base.create(file_without_metadata, outputs: [{ label: "low", url: file_without_metadata_derivative }]) }
+      let(:find_without_metadata_job) { ActiveEncode::Base.find create_without_metadata_job.id }
+
+      it "does not have errors" do
+        expect(find_without_metadata_job.errors).to be_empty
+      end
+
+      it "has the input technical metadata in a file" do
+        expect(File.read("#{work_dir}/#{create_without_metadata_job.id}/input_metadata")).not_to be_empty
+      end
+
+      it "assigns the correct duration to the encode" do
+        expect(create_without_metadata_job.input.duration).to eq 68_653
+        expect(find_without_metadata_job.input.duration).to eq 68_653
+      end
+
+      context 'when uri encoded' do
+        let(:file_without_metadata) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_without_metadata.webm').to_s) }
+        let(:file_without_metadata_derivative) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_without_metadata.low.webm').to_s) }
+
+        it "does not have errors" do
+          expect(find_without_metadata_job.errors).to be_empty
+        end
+
+        it "has the input technical metadata in a file" do
+          expect(File.read("#{work_dir}/#{create_without_metadata_job.id}/input_metadata")).not_to be_empty
+        end
+
+        it "assigns the correct duration to the encode" do
+          expect(create_without_metadata_job.input.duration).to eq 68_653
+          expect(find_without_metadata_job.input.duration).to eq 68_653
+        end
+      end
+    end
+
     context "input filename with spaces" do
       let(:file_with_space) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file with space.mp4').to_s }
       let(:file_with_space_derivative) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file with space.low.mp4').to_s }

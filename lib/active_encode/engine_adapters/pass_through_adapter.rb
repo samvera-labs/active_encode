@@ -15,6 +15,7 @@ module ActiveEncode
     class PassThroughAdapter
       WORK_DIR = ENV["ENCODE_WORK_DIR"] || "encodes" # Should read from config
       MEDIAINFO_PATH = ENV["MEDIAINFO_PATH"] || "mediainfo"
+      FFMPEG_PATH = ENV["FFMPEG_PATH"] || "ffmpeg"
 
       def create(input_url, options = {})
         # Decode file uris for ffmpeg (mediainfo works either way)
@@ -36,18 +37,38 @@ module ActiveEncode
         new_encode.input.id = new_encode.id
         new_encode.created_at, new_encode.updated_at = get_times new_encode.id
 
-        if new_encode.input.duration.blank?
-          new_encode.state = :failed
-          new_encode.percent_complete = 1
-
-          new_encode.errors = if new_encode.input.file_size.blank?
-                                ["#{input_url} does not exist or is not accessible"]
-                              else
-                                ["Error inspecting input: #{input_url}"]
-                              end
-
-          write_errors new_encode
+        # Log error if file is empty or inaccessible
+        if new_encode.input.duration.blank? && new_encode.input.file_size.blank?
+          file_error(new_encode, input_url)
           return new_encode
+        # If file is not empty, try copying file to generate missing metadata
+        elsif new_encode.input.duration.blank? && new_encode.input.file_size.present?
+
+          # This regex removes the query string from URIs. This is necessary to
+          # properly process files originating from S3 or similar providers.
+          filepath = input_url.to_s.gsub(/\?.*/, '')
+          copy_url = filepath.gsub(filepath, "#{File.basename(filepath, File.extname(filepath))}_temp#{File.extname(input_url)}")
+          copy_path = working_path(copy_url, new_encode.id)
+
+          # -map 0 sets ffmpeg to copy all available streams.
+          # -c copy sets ffmpeg to copy all codecs
+          # -y automatically overwrites the temp file if one already exists
+          `#{FFMPEG_PATH} -loglevel level+fatal -i \"#{input_url}\" -map 0 -c copy -y \"#{copy_path}\"`
+
+          # If ffmpeg copy fails, log error because file is either not a media file
+          # or the file extension does not match the codecs used to encode the file
+          unless $CHILD_STATUS.success?
+            file_error(new_encode, input_url)
+            return new_encode
+          end
+
+          # Write the mediainfo output to a separate file to preserve metadata from original file
+          `#{MEDIAINFO_PATH} --Output=XML --LogFile=#{working_path("duration_input_metadata", new_encode.id)} \"#{copy_path}\"`
+
+          File.delete(copy_path)
+
+          # Assign duration to the encode created for the original file.
+          new_encode.input.duration = fixed_duration(working_path("duration_input_metadata", new_encode.id))
         end
 
         # For saving filename to label map used to find the label when building outputs
@@ -86,6 +107,7 @@ module ActiveEncode
         encode.created_at, encode.updated_at = get_times encode.id
         encode.input = build_input encode
         encode.input.id = encode.id
+        encode.input.duration ||= fixed_duration(working_path("duration_input_metadata", encode.id)) if File.exist?(working_path("duration_input_metadata", encode.id))
         encode.output = []
         encode.current_operations = []
 
@@ -230,6 +252,24 @@ module ActiveEncode
 
       def get_xpath_text(doc, xpath, cast_method)
         doc.xpath(xpath).first&.text&.send(cast_method)
+      end
+
+      def fixed_duration(path)
+        get_tech_metadata(path)[:duration]
+      end
+
+      def file_error(new_encode, input_url)
+        new_encode.state = :failed
+        new_encode.percent_complete = 1
+
+        new_encode.errors = if new_encode.input.file_size.blank?
+                              ["#{input_url} does not exist or is not accessible"]
+                            else
+                              ["Error inspecting input: #{input_url}"]
+                            end
+
+        write_errors new_encode
+        new_encode
       end
     end
   end
