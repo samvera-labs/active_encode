@@ -177,6 +177,22 @@ module ActiveEncode
         raise CancelError
       end
 
+      # This method is to clean up files leftover from the ffmpeg encode process.
+      # File names for the pass_through adapter are the same, so this will clean up
+      # pass_through encodes as well.
+      def self.clean_up(older_than = 2.weeks)
+        file_names = ['input_metadata', 'duration_input_metadata', 'error.log', 'exit_status.code', 'progress', 'completed', 'pid', 'output_metadata-*']
+        files = []
+        file_names.each do |fn|
+          path = File.join(WORK_DIR, "**", fn)
+          files += Dir.glob(path)
+        end
+        files = files.collect do |f|
+                  f if File.mtime(f) < DateTime.now - older_than  && File.file?(f)
+                end.compact
+        FileUtils.rm(files) unless files.empty?
+      end
+
     private
 
       def get_times(id)
