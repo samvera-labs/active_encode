@@ -432,7 +432,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
   describe "#clean_up" do
     subject { created_job }
     let(:filenames) { ['input_metadata', 'error.log', 'pid'] }
-    let(:pathnames) { filenames.each_with_index { |fn,i| filenames[i] = fn.dup.prepend("#{work_dir}/#{subject.id}/") } }
+    let(:pathnames) { filenames.each_with_index { |fn, i| filenames[i] = fn.dup.prepend("#{work_dir}/#{subject.id}/") } }
     let(:date) { DateTime.now + 3.weeks }
 
     it "deletes files created from encode process older than 2 weeks" do

@@ -188,8 +188,8 @@ module ActiveEncode
           files += Dir.glob(path)
         end
         files = files.collect do |f|
-                  f if File.mtime(f) < DateTime.now - older_than  && File.file?(f)
-                end.compact
+          f if File.mtime(f) < DateTime.now - older_than && File.file?(f)
+        end.compact
         FileUtils.rm(files) unless files.empty?
       end
 
