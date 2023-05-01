@@ -180,12 +180,12 @@ module ActiveEncode
       # This method is to clean up files leftover from the ffmpeg encode process.
       # File names for the pass_through adapter are the same, so this will clean up
       # pass_through encodes as well.
-      def self.remove_old_files!(options={})
+      def self.remove_old_files!(options = {})
         default_options = {
-          :older_than => 2.weeks,
-          :no_outputs => ['input_metadata', 'duration_input_metadata', 'error.log', 'exit_status.code', 'progress', 'completed', 'pid', 'output_metadata-*'],
-          :outputs => false,
-          :all => false
+          older_than: 2.weeks,
+          no_outputs: ['input_metadata', 'duration_input_metadata', 'error.log', 'exit_status.code', 'progress', 'completed', 'pid', 'output_metadata-*'],
+          outputs: false,
+          all: false
         }
         options.reverse_merge!(default_options)
 

@@ -442,7 +442,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
             .and change { File.exist?(pathnames[1]) }.from(true).to(false)
             .and change { File.exist?(pathnames[2]) }.from(true).to(false)
             .and not_change { Dir.entries("#{work_dir}/#{subject.id}/outputs").count }.from(2)
-          end
+        end
       end
 
       it "does not delete files younger than 2 weeks" do
@@ -457,16 +457,16 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
     context ":outputs" do
       it "deletes outputs created from encode process older than 2 weeks" do
         travel 3.weeks do
-          expect { described_class.remove_old_files!(:outputs => true) }
+          expect { described_class.remove_old_files!(outputs: true) }
             .to not_change { File.exist?(pathnames[0]) }.from(true)
             .and not_change { File.exist?(pathnames[1]) }.from(true)
             .and not_change { File.exist?(pathnames[2]) }.from(true)
             .and change { Dir.exist?("#{work_dir}/#{subject.id}/outputs") }.from(true).to(false)
-          end
+        end
       end
 
       it "does not delete outputs younger than 2 weeks" do
-        expect { described_class.remove_old_files!(:outputs => true) }
+        expect { described_class.remove_old_files!(outputs: true) }
           .to not_change { File.exist?(pathnames[0]) }.from(true)
           .and not_change { File.exist?(pathnames[1]) }.from(true)
           .and not_change { File.exist?(pathnames[2]) }.from(true)
@@ -477,13 +477,13 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
     context ":all" do
       it "deletes all files and directories older than 2 weeks" do
         travel 3.weeks do
-          expect { described_class.remove_old_files!(:all => true) }
+          expect { described_class.remove_old_files!(all: true) }
             .to change { Dir.exist?("#{work_dir}/#{subject.id}") }.from(true).to(false)
         end
       end
 
       it "does not delete files and directories younger than 2 weeks" do
-        expect { described_class.remove_old_files!(:all => true) }
+        expect { described_class.remove_old_files!(all: true) }
           .to not_change { Dir.exist?("#{work_dir}/#{subject.id}") }.from(true)
       end
     end
