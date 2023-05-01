@@ -429,27 +429,63 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
     end
   end
 
-  describe "#clean_up" do
+  describe "#remove_old_files!" do
     subject { created_job }
     let(:filenames) { ['input_metadata', 'error.log', 'pid'] }
     let(:pathnames) { filenames.each_with_index { |fn, i| filenames[i] = fn.dup.prepend("#{work_dir}/#{subject.id}/") } }
-    let(:date) { DateTime.now + 3.weeks }
 
-    it "deletes files created from encode process older than 2 weeks" do
-      allow(DateTime).to receive(:now).and_return(date)
-      expect { described_class.clean_up }
-        .to change { File.exist?(pathnames[0]) }.from(true).to(false)
-        .and change { File.exist?(pathnames[1]) }.from(true).to(false)
-        .and change { File.exist?(pathnames[2]) }.from(true).to(false)
-        .and not_change { Dir.exist?("#{work_dir}/#{subject.id}/outputs") }.from(true)
+    context ":no_outputs" do
+      it "deletes files created from encode process older than 2 weeks" do
+        travel 3.weeks do
+          expect { described_class.remove_old_files! }
+            .to change { File.exist?(pathnames[0]) }.from(true).to(false)
+            .and change { File.exist?(pathnames[1]) }.from(true).to(false)
+            .and change { File.exist?(pathnames[2]) }.from(true).to(false)
+            .and not_change { Dir.entries("#{work_dir}/#{subject.id}/outputs").count }.from(2)
+          end
+      end
+
+      it "does not delete files younger than 2 weeks" do
+        expect { described_class.remove_old_files! }
+          .to not_change { File.exist?(pathnames[0]) }.from(true)
+          .and not_change { File.exist?(pathnames[1]) }.from(true)
+          .and not_change { File.exist?(pathnames[2]) }.from(true)
+          .and not_change { Dir.entries("#{work_dir}/#{subject.id}/outputs").count }.from(2)
+      end
     end
 
-    it "does not delete files younger than 2 weeks" do
-      expect { described_class.clean_up }
-        .to not_change { File.exist?(pathnames[0]) }.from(true)
-        .and not_change { File.exist?(pathnames[1]) }.from(true)
-        .and not_change { File.exist?(pathnames[2]) }.from(true)
-        .and not_change { Dir.exist?("#{work_dir}/#{subject.id}/outputs") }.from(true)
+    context ":outputs" do
+      it "deletes outputs created from encode process older than 2 weeks" do
+        travel 3.weeks do
+          expect { described_class.remove_old_files!(:outputs => true) }
+            .to not_change { File.exist?(pathnames[0]) }.from(true)
+            .and not_change { File.exist?(pathnames[1]) }.from(true)
+            .and not_change { File.exist?(pathnames[2]) }.from(true)
+            .and change { Dir.exist?("#{work_dir}/#{subject.id}/outputs") }.from(true).to(false)
+          end
+      end
+
+      it "does not delete outputs younger than 2 weeks" do
+        expect { described_class.remove_old_files!(:outputs => true) }
+          .to not_change { File.exist?(pathnames[0]) }.from(true)
+          .and not_change { File.exist?(pathnames[1]) }.from(true)
+          .and not_change { File.exist?(pathnames[2]) }.from(true)
+          .and not_change { Dir.exist?("#{work_dir}/#{subject.id}/outputs") }.from(true)
+      end
+    end
+
+    context ":all" do
+      it "deletes all files and directories older than 2 weeks" do
+        travel 3.weeks do
+          expect { described_class.remove_old_files!(:all => true) }
+            .to change { Dir.exist?("#{work_dir}/#{subject.id}") }.from(true).to(false)
+        end
+      end
+
+      it "does not delete files and directories younger than 2 weeks" do
+        expect { described_class.remove_old_files!(:all => true) }
+          .to not_change { Dir.exist?("#{work_dir}/#{subject.id}") }.from(true)
+      end
     end
   end
 end

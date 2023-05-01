@@ -180,17 +180,35 @@ module ActiveEncode
       # This method is to clean up files leftover from the ffmpeg encode process.
       # File names for the pass_through adapter are the same, so this will clean up
       # pass_through encodes as well.
-      def self.clean_up(older_than = 2.weeks)
-        file_names = ['input_metadata', 'duration_input_metadata', 'error.log', 'exit_status.code', 'progress', 'completed', 'pid', 'output_metadata-*']
-        files = []
-        file_names.each do |fn|
-          path = File.join(WORK_DIR, "**", fn)
-          files += Dir.glob(path)
+      def self.remove_old_files!(options={})
+        default_options = {
+          :older_than => 2.weeks,
+          :no_outputs => ['input_metadata', 'duration_input_metadata', 'error.log', 'exit_status.code', 'progress', 'completed', 'pid', 'output_metadata-*'],
+          :outputs => false,
+          :all => false
+        }
+        options.reverse_merge!(default_options)
+
+        if options[:all]
+          path = File.join(WORK_DIR, "*")
+          files = Dir.glob(path)
+          files_to_delete = files.select { |f| File.mtime(f) < DateTime.now - options[:older_than] }
+          FileUtils.rm_r(files_to_delete, secure: true) unless files_to_delete.empty?
+        elsif options[:outputs]
+          path = File.join(WORK_DIR, "**", "outputs")
+          files = Dir.glob(path)
+          files_to_delete = files.select { |f| File.mtime(f) < DateTime.now - options[:older_than] && File.directory?(f) }
+          FileUtils.rm_r(files_to_delete, secure: true) unless files_to_delete.empty?
+        else
+          file_names = options[:no_outputs]
+          files = []
+          file_names.each do |fn|
+            path = File.join(WORK_DIR, "**", fn)
+            files += Dir.glob(path)
+          end
+          files_to_delete = files.select { |f| File.mtime(f) < DateTime.now - options[:older_than] && File.file?(f) }
+          FileUtils.rm(files_to_delete) unless files_to_delete.empty?
         end
-        files = files.collect do |f|
-          f if File.mtime(f) < DateTime.now - older_than && File.file?(f)
-        end.compact
-        FileUtils.rm(files) unless files.empty?
       end
 
     private
