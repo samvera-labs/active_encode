@@ -492,8 +492,8 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
         travel 3.weeks do
           allow(File).to receive(:mtime).and_call_original
           allow(File).to receive(:mtime).with("#{work_dir}/#{subject.id}/outputs/fireworks-low.mp4").and_return(DateTime.now)
-          expect { described_class.remove_old_files!(outputs:true) }
-            .to not_change { Dir.exist?("#{work_dir}/#{subject.id}/outputs") }.from (true)
+          expect { described_class.remove_old_files!(outputs: true) }
+            .to not_change { Dir.exist?("#{work_dir}/#{subject.id}/outputs") }.from(true)
           expect(Dir.children("#{work_dir}/#{subject.id}/outputs")).to eq(["fireworks-low.mp4"])
         end
       end
@@ -520,8 +520,8 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
         travel 3.weeks do
           allow(File).to receive(:mtime).and_call_original
           allow(File).to receive(:mtime).with("#{work_dir}/#{subject.id}/input_metadata").and_return(DateTime.now)
-          expect { described_class.remove_old_files!(all:true) }
-            .to not_change { Dir.exist?("#{work_dir}/#{subject.id}") }.from (true)
+          expect { described_class.remove_old_files!(all: true) }
+            .to not_change { Dir.exist?("#{work_dir}/#{subject.id}") }.from(true)
           expect(Dir.children("#{work_dir}/#{subject.id}")).to eq(["input_metadata"])
         end
       end
