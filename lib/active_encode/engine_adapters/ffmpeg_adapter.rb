@@ -190,24 +190,25 @@ module ActiveEncode
         options.reverse_merge!(default_options)
 
         if options[:all]
-          path = File.join(WORK_DIR, "*")
-          files = Dir.glob(path)
-          files_to_delete = files.select { |f| File.mtime(f) < DateTime.now - options[:older_than] }
-          FileUtils.rm_r(files_to_delete, secure: true) unless files_to_delete.empty?
+          files = ActiveEncode.build_file_list(WORK_DIR, "*")
+          ActiveEncode.remove_files(files, options[:older_than])
+
+          # The files array includes directories such as "/tmp/.."
+          # We need to make sure they are not included in the attempted removal.
+          directories = files.select { |f| File.directory?(f) unless f.end_with?(".") }
+          ActiveEncode.remove_empty_directories(directories)
         elsif options[:outputs]
-          path = File.join(WORK_DIR, "**", "outputs")
-          files = Dir.glob(path)
-          files_to_delete = files.select { |f| File.mtime(f) < DateTime.now - options[:older_than] && File.directory?(f) }
-          FileUtils.rm_r(files_to_delete, secure: true) unless files_to_delete.empty?
+          output_directories = ActiveEncode.build_file_list(WORK_DIR, "outputs")
+          ActiveEncode.remove_child_files(output_directories, options[:older_than])
+
+          directories_to_delete = output_directories.select { |od| Dir.children(od) == [] }
+          FileUtils.rmdir(directories_to_delete) unless directories_to_delete.empty?
         else
-          file_names = options[:no_outputs]
           files = []
-          file_names.each do |fn|
-            path = File.join(WORK_DIR, "**", fn)
-            files += Dir.glob(path)
+          options[:no_outputs].each do |fn|
+            files += ActiveEncode.build_file_list(WORK_DIR, fn)
           end
-          files_to_delete = files.select { |f| File.mtime(f) < DateTime.now - options[:older_than] && File.file?(f) }
-          FileUtils.rm(files_to_delete) unless files_to_delete.empty?
+          ActiveEncode.remove_files(files, options[:older_than])
         end
       end
 
