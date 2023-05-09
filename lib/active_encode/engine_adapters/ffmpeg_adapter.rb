@@ -4,10 +4,13 @@ require 'fileutils'
 require 'nokogiri'
 require 'shellwords'
 require 'addressable/uri'
+require 'active_encode/engine_adapters/ffmpeg_adapter/cleaner'
 
 module ActiveEncode
   module EngineAdapters
     class FfmpegAdapter
+      extend ActiveEncode::EngineAdapters::FfmpegAdapter::Cleaner
+
       WORK_DIR = ENV["ENCODE_WORK_DIR"] || "encodes" # Should read from config
       MEDIAINFO_PATH = ENV["MEDIAINFO_PATH"] || "mediainfo"
       FFMPEG_PATH = ENV["FFMPEG_PATH"] || "ffmpeg"
@@ -175,41 +178,6 @@ module ActiveEncode
         raise NotRunningError
       rescue StandardError
         raise CancelError
-      end
-
-      # This method is to clean up files leftover from the ffmpeg encode process.
-      # File names for the pass_through adapter are the same, so this will clean up
-      # pass_through encodes as well.
-      def self.remove_old_files!(options = {})
-        default_options = {
-          older_than: 2.weeks,
-          no_outputs: ['input_metadata', 'duration_input_metadata', 'error.log', 'exit_status.code', 'progress', 'completed', 'pid', 'output_metadata-*'],
-          outputs: false,
-          all: false
-        }
-        options.reverse_merge!(default_options)
-
-        if options[:all]
-          files = ActiveEncode.build_file_list(WORK_DIR, "*")
-          ActiveEncode.remove_files(files, options[:older_than])
-
-          # The files array includes directories such as "/tmp/.."
-          # We need to make sure they are not included in the attempted removal.
-          directories = files.select { |f| File.directory?(f) unless f.end_with?(".") }
-          ActiveEncode.remove_empty_directories(directories)
-        elsif options[:outputs]
-          output_directories = ActiveEncode.build_file_list(WORK_DIR, "outputs")
-          ActiveEncode.remove_child_files(output_directories, options[:older_than])
-
-          directories_to_delete = output_directories.select { |od| Dir.children(od) == [] }
-          FileUtils.rmdir(directories_to_delete) unless directories_to_delete.empty?
-        else
-          files = []
-          options[:no_outputs].each do |fn|
-            files += ActiveEncode.build_file_list(WORK_DIR, fn)
-          end
-          ActiveEncode.remove_files(files, options[:older_than])
-        end
       end
 
     private

@@ -434,8 +434,13 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
     # 'exit_status.code' and 'progress' seem to be hidden files so rspec does not see them.
     # That is why they are not explicitly included in the tests even though they are in the filenames list.
     # If they were not being deleted they would cause other tests to fail.
-    let(:filenames) { ['input_metadata', 'error.log', 'pid', 'exit_status.code', 'progress'] }
-    let(:pathnames) { filenames.each_with_index { |fn, i| filenames[i] = fn.dup.prepend("#{work_dir}/#{subject.id}/") } }
+    let(:base_path) { "#{work_dir}/#{subject.id}" }
+    let(:input_metadata_file) { "#{base_path}/input_metadata" }
+    let(:error_log_file) { "#{base_path}/error.log" }
+    let(:pid_file) { "#{base_path}/pid" }
+    let(:exit_status_file) { "#{base_path}/exit_status.code" }
+    let(:progress_file) { "#{base_path}/progress" }
+    let(:pathnames) { [input_metadata_file, error_log_file, pid_file, exit_status_file, progress_file] }
 
     # There was some flaky behavior with the file creation for created_job that
     # would cause tests to fail. This ensures the files are created.
@@ -449,9 +454,9 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
         sleep 1
         travel 3.weeks do
           expect { described_class.remove_old_files! }
-            .to change { File.exist?(pathnames[0]) }.from(true).to(false)
-            .and change { File.exist?(pathnames[1]) }.from(true).to(false)
-            .and change { File.exist?(pathnames[2]) }.from(true).to(false)
+            .to change { File.exist?(input_metadata_file) }.from(true).to(false)
+            .and change { File.exist?(error_log_file) }.from(true).to(false)
+            .and change { File.exist?(pid_file) }.from(true).to(false)
             .and not_change { Dir.children("#{work_dir}/#{subject.id}/outputs").count }.from(2)
         end
       end
@@ -459,9 +464,9 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       it "does not delete files younger than 2 weeks" do
         sleep 1
         expect { described_class.remove_old_files! }
-          .to not_change { File.exist?(pathnames[0]) }.from(true)
-          .and not_change { File.exist?(pathnames[1]) }.from(true)
-          .and not_change { File.exist?(pathnames[2]) }.from(true)
+          .to not_change { File.exist?(input_metadata_file) }.from(true)
+          .and not_change { File.exist?(error_log_file) }.from(true)
+          .and not_change { File.exist?(pid_file) }.from(true)
           .and not_change { Dir.children("#{work_dir}/#{subject.id}/outputs").count }.from(2)
       end
     end
@@ -471,9 +476,9 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
         sleep 1
         travel 3.weeks do
           expect { described_class.remove_old_files!(outputs: true) }
-            .to not_change { File.exist?(pathnames[0]) }.from(true)
-            .and not_change { File.exist?(pathnames[1]) }.from(true)
-            .and not_change { File.exist?(pathnames[2]) }.from(true)
+            .to not_change { File.exist?(input_metadata_file) }.from(true)
+            .and not_change { File.exist?(error_log_file) }.from(true)
+            .and not_change { File.exist?(pid_file) }.from(true)
             .and change { Dir.exist?("#{work_dir}/#{subject.id}/outputs") }.from(true).to(false)
         end
       end
@@ -481,9 +486,9 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       it "does not delete outputs younger than 2 weeks" do
         sleep 1
         expect { described_class.remove_old_files!(outputs: true) }
-          .to not_change { File.exist?(pathnames[0]) }.from(true)
-          .and not_change { File.exist?(pathnames[1]) }.from(true)
-          .and not_change { File.exist?(pathnames[2]) }.from(true)
+          .to not_change { File.exist?(input_metadata_file) }.from(true)
+          .and not_change { File.exist?(error_log_file) }.from(true)
+          .and not_change { File.exist?(pid_file) }.from(true)
           .and not_change { Dir.children("#{work_dir}/#{subject.id}/outputs").count }.from(2)
       end
 
