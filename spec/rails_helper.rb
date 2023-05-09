@@ -20,4 +20,6 @@ RSpec.configure do |config|
   config.after do |example|
     DatabaseCleaner.clean if example.metadata[:db_clean]
   end
+
+  config.include ActiveSupport::Testing::TimeHelpers
 end

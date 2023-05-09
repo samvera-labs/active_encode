@@ -428,4 +428,108 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       expect { running_job.cancel! }.to raise_error(ActiveEncode::CancelError)
     end
   end
+
+  describe "#remove_old_files!" do
+    subject { created_job }
+    # 'exit_status.code' and 'progress' seem to be hidden files so rspec does not see them.
+    # That is why they are not explicitly included in the tests even though they are in the filenames list.
+    # If they were not being deleted they would cause other tests to fail.
+    let(:base_path) { "#{work_dir}/#{subject.id}" }
+    let(:input_metadata_file) { "#{base_path}/input_metadata" }
+    let(:error_log_file) { "#{base_path}/error.log" }
+    let(:pid_file) { "#{base_path}/pid" }
+    let(:exit_status_file) { "#{base_path}/exit_status.code" }
+    let(:progress_file) { "#{base_path}/progress" }
+    let(:pathnames) { [input_metadata_file, error_log_file, pid_file, exit_status_file, progress_file] }
+
+    # There was some flaky behavior with the file creation for created_job that
+    # would cause tests to fail. This ensures the files are created.
+    before :each do
+      FileUtils.touch(pathnames)
+    end
+
+    context ":no_outputs" do
+      it "deletes files created from encode process older than 2 weeks" do
+        # Another measure to give files time to be created.
+        sleep 1
+        travel 3.weeks do
+          expect { described_class.remove_old_files! }
+            .to change { File.exist?(input_metadata_file) }.from(true).to(false)
+            .and change { File.exist?(error_log_file) }.from(true).to(false)
+            .and change { File.exist?(pid_file) }.from(true).to(false)
+            .and not_change { Dir.children("#{work_dir}/#{subject.id}/outputs").count }.from(2)
+        end
+      end
+
+      it "does not delete files younger than 2 weeks" do
+        sleep 1
+        expect { described_class.remove_old_files! }
+          .to not_change { File.exist?(input_metadata_file) }.from(true)
+          .and not_change { File.exist?(error_log_file) }.from(true)
+          .and not_change { File.exist?(pid_file) }.from(true)
+          .and not_change { Dir.children("#{work_dir}/#{subject.id}/outputs").count }.from(2)
+      end
+    end
+
+    context ":outputs" do
+      it "deletes outputs created from encode process older than 2 weeks" do
+        sleep 1
+        travel 3.weeks do
+          expect { described_class.remove_old_files!(outputs: true) }
+            .to not_change { File.exist?(input_metadata_file) }.from(true)
+            .and not_change { File.exist?(error_log_file) }.from(true)
+            .and not_change { File.exist?(pid_file) }.from(true)
+            .and change { Dir.exist?("#{work_dir}/#{subject.id}/outputs") }.from(true).to(false)
+        end
+      end
+
+      it "does not delete outputs younger than 2 weeks" do
+        sleep 1
+        expect { described_class.remove_old_files!(outputs: true) }
+          .to not_change { File.exist?(input_metadata_file) }.from(true)
+          .and not_change { File.exist?(error_log_file) }.from(true)
+          .and not_change { File.exist?(pid_file) }.from(true)
+          .and not_change { Dir.children("#{work_dir}/#{subject.id}/outputs").count }.from(2)
+      end
+
+      it "does not delete outputs directory containing files younger than 2 weeks" do
+        sleep 1
+        travel 3.weeks do
+          allow(File).to receive(:mtime).and_call_original
+          allow(File).to receive(:mtime).with("#{work_dir}/#{subject.id}/outputs/fireworks-low.mp4").and_return(DateTime.now)
+          expect { described_class.remove_old_files!(outputs: true) }
+            .to not_change { Dir.exist?("#{work_dir}/#{subject.id}/outputs") }.from(true)
+          expect(Dir.children("#{work_dir}/#{subject.id}/outputs")).to eq(["fireworks-low.mp4"])
+        end
+      end
+    end
+
+    context ":all" do
+      it "deletes all files and directories older than 2 weeks" do
+        sleep 1
+        travel 3.weeks do
+          expect { described_class.remove_old_files!(all: true) }
+            .to change { Dir.exist?("#{work_dir}/#{subject.id}") }.from(true).to(false)
+        end
+      end
+
+      it "does not delete files and directories younger than 2 weeks" do
+        sleep 1
+        expect { described_class.remove_old_files!(all: true) }
+          .to not_change { Dir.exist?("#{work_dir}/#{subject.id}") }.from(true)
+          .and not_change { Dir.children("#{work_dir}/#{subject.id}").count }
+      end
+
+      it "does not delete directories containing files younger than 2 weeks" do
+        sleep 1
+        travel 3.weeks do
+          allow(File).to receive(:mtime).and_call_original
+          allow(File).to receive(:mtime).with("#{work_dir}/#{subject.id}/input_metadata").and_return(DateTime.now)
+          expect { described_class.remove_old_files!(all: true) }
+            .to not_change { Dir.exist?("#{work_dir}/#{subject.id}") }.from(true)
+          expect(Dir.children("#{work_dir}/#{subject.id}")).to eq(["input_metadata"])
+        end
+      end
+    end
+  end
 end

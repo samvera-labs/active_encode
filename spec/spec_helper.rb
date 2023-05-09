@@ -16,3 +16,5 @@ RSpec::Matchers.define :be_the_same_time_as do |expected|
     expect(Time.parse(expected).utc).to eq(Time.parse(actual).utc)
   end
 end
+
+RSpec::Matchers.define_negated_matcher :not_change, :change

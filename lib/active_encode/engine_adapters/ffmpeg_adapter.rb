@@ -4,10 +4,13 @@ require 'fileutils'
 require 'nokogiri'
 require 'shellwords'
 require 'addressable/uri'
+require 'active_encode/engine_adapters/ffmpeg_adapter/cleaner'
 
 module ActiveEncode
   module EngineAdapters
     class FfmpegAdapter
+      extend ActiveEncode::EngineAdapters::FfmpegAdapter::Cleaner
+
       WORK_DIR = ENV["ENCODE_WORK_DIR"] || "encodes" # Should read from config
       MEDIAINFO_PATH = ENV["MEDIAINFO_PATH"] || "mediainfo"
       FFMPEG_PATH = ENV["FFMPEG_PATH"] || "ffmpeg"

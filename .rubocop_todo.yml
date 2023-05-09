@@ -37,6 +37,7 @@ Layout/LineLength:
 Metrics/MethodLength:
   Exclude:
     - 'lib/active_encode/engine_adapters/*'
+    - 'lib/active_encode/engine_adapters/ffmpeg_adapter/*'
     - 'lib/file_locator.rb'
 
 Metrics/PerceivedComplexity:
