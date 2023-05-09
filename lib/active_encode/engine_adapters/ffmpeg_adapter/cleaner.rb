@@ -18,18 +18,14 @@ module ActiveEncode
           if options[:all]
             files = build_file_list(WORK_DIR, "*")
             directories = remove_files(files, options[:older_than])
-
             remove_empty_directories(directories)
           elsif options[:outputs]
             output_directories = build_file_list(WORK_DIR, "outputs")
             remove_child_files(output_directories, options[:older_than])
-
             remove_empty_directories(output_directories)
           else
             files = []
-            options[:no_outputs].each do |fn|
-              files += build_file_list(WORK_DIR, fn)
-            end
+            options[:no_outputs].each { |fn| files += build_file_list(WORK_DIR, fn) }
             remove_files(files, options[:older_than])
           end
         end
