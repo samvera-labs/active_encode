@@ -134,8 +134,8 @@ describe ActiveEncode::EngineAdapters::PassThroughAdapter do
       end
 
       it "assigns the correct duration to the encode" do
-        expect(create_without_metadata_job.input.duration).to eq 68_653
-        expect(find_without_metadata_job.input.duration).to eq 68_653
+        expect(create_without_metadata_job.input.duration).to eq 4_640
+        expect(find_without_metadata_job.input.duration).to eq 4_640
       end
 
       context 'when uri encoded' do
@@ -151,8 +151,8 @@ describe ActiveEncode::EngineAdapters::PassThroughAdapter do
         end
 
         it "assigns the correct duration to the encode" do
-          expect(create_without_metadata_job.input.duration).to eq 68_653
-          expect(find_without_metadata_job.input.duration).to eq 68_653
+          expect(create_without_metadata_job.input.duration).to eq 4_640
+          expect(find_without_metadata_job.input.duration).to eq 4_640
         end
       end
     end
@@ -246,8 +246,8 @@ describe ActiveEncode::EngineAdapters::PassThroughAdapter do
       let(:file_with_special_characters_derivative) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file.with :=+%sp3c!l-ch4cts().mp4').to_s }
       let!(:create_special_characters_job) { ActiveEncode::Base.create(file_with_special_characters, outputs: [{ label: "low", url: file_with_special_characters_derivative }]) }
       let(:find_special_characters_job) { ActiveEncode::Base.find create_special_characters_job.id }
-      let(:file_with_more_special_characters) { "file://" + Rails.root.join('..', 'spec', 'fixtures', '@ወዳጅህ ማር ቢ. ሆን ጨርስ. ህ አትላሰ!@#$^^&$%&.mov').to_s }
-      let(:file_with_more_special_characters_derivative) { "file://" + Rails.root.join('..', 'spec', 'fixtures', '@ወዳጅህ ማር ቢ. ሆን ጨርስ. ህ አትላሰ!@#$^^&$%&.mov').to_s }
+      let(:file_with_more_special_characters) { "file://" + Rails.root.join('..', 'spec', 'fixtures', '@ወዳጅህ ማር ቢ. ሆን ጨርስ. ህ አትላሰ!@#$^^&$%&.mp4').to_s }
+      let(:file_with_more_special_characters_derivative) { "file://" + Rails.root.join('..', 'spec', 'fixtures', '@ወዳጅህ ማር ቢ. ሆን ጨርስ. ህ አትላሰ!@#$^^&$%&.mp4').to_s }
       let!(:create_more_special_characters_job) { ActiveEncode::Base.create(file_with_more_special_characters, outputs: [{ label: "low", url: file_with_more_special_characters_derivative }]) }
       let(:find_more_special_characters_job) { ActiveEncode::Base.find create_more_special_characters_job.id }
 
@@ -264,8 +264,8 @@ describe ActiveEncode::EngineAdapters::PassThroughAdapter do
       context 'when uri encoded' do
         let(:file_with_special_characters) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file.with :=+%sp3c!l-ch4cts().mp4').to_s) }
         let(:file_with_special_characters_derivative) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file.with :=+%sp3c!l-ch4cts().mp4').to_s }
-        let(:file_with_more_special_characters) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', '@ወዳጅህ ማር ቢ. ሆን ጨርስ. ህ አትላሰ!@#$^^&$%&.mov').to_s) }
-        let(:file_with_more_special_characters_derivative) { "file://" + Rails.root.join('..', 'spec', 'fixtures', '@ወዳጅህ ማር ቢ. ሆን ጨርስ. ህ አትላሰ!@#$^^&$%&.mov').to_s }
+        let(:file_with_more_special_characters) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', '@ወዳጅህ ማር ቢ. ሆን ጨርስ. ህ አትላሰ!@#$^^&$%&.mp4').to_s) }
+        let(:file_with_more_special_characters_derivative) { "file://" + Rails.root.join('..', 'spec', 'fixtures', '@ወዳጅህ ማር ቢ. ሆን ጨርስ. ህ አትላሰ!@#$^^&$%&.mp4').to_s }
 
         it "does not have errors" do
           expect(find_special_characters_job.errors).to be_empty
