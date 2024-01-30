@@ -20,6 +20,7 @@ module ActiveEncode
       def create(input_url, options = {})
         # Decode file uris for ffmpeg (mediainfo works either way)
         input_url = Addressable::URI.unencode(input_url) if input_url.starts_with? "file:///"
+        input_url = FileLocator.new(input_url).location if input_url.starts_with? "s3://"
         input_url = ActiveEncode.sanitize_input(input_url)
 
         new_encode = ActiveEncode::Base.new(input_url, options)
