@@ -80,7 +80,7 @@ module ActiveEncode
           url = opt[:url]
           output_path = working_path("outputs/#{ActiveEncode.sanitize_base opt[:url]}#{File.extname opt[:url]}", new_encode.id)
           if url.start_with? "s3://"
-            FileLocator::S3File.new(url).object.download_file(output_path)
+            FileLocator::S3File.new(url).object.download_file(output_path, mode: 'single_request')
           else
             FileUtils.cp FileLocator.new(url).location, output_path
           end
