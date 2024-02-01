@@ -17,10 +17,8 @@ module ActiveEncode
       MEDIAINFO_PATH = ENV["MEDIAINFO_PATH"] || "mediainfo"
       FFMPEG_PATH = ENV["FFMPEG_PATH"] || "ffmpeg"
 
-      def create(input_url, options = {})
-        # Decode file uris for ffmpeg (mediainfo works either way)
-        input_url = Addressable::URI.unencode(input_url) if input_url.starts_with? "file:///"
-        input_url = ActiveEncode.sanitize_input(input_url)
+      def create(original_input_url, options = {})
+        input_url = sanitize_input_url(original_input_url)
 
         new_encode = ActiveEncode::Base.new(input_url, options)
         new_encode.id = SecureRandom.uuid
@@ -76,9 +74,7 @@ module ActiveEncode
 
         # Copy derivatives to work directory
         options[:outputs].each do |opt|
-          url = opt[:url]
-          output_path = working_path("outputs/#{ActiveEncode.sanitize_base opt[:url]}#{File.extname opt[:url]}", new_encode.id)
-          FileUtils.cp FileLocator.new(url).location, output_path
+          output_path = copy_derivative_to_working_path(opt[:url], new_encode.id)
           filename_label_hash[output_path] = opt[:label]
         end
 
@@ -270,6 +266,31 @@ module ActiveEncode
 
         write_errors new_encode
         new_encode
+      end
+
+      def sanitize_input_url(url)
+        input_url = if url.starts_with?("file://")
+                      # Decode file uris for ffmpeg (mediainfo works either way)
+                      Addressable::URI.unencode(url)
+                    elsif url.starts_with?("s3://")
+                      # Change s3 uris into presigned http urls
+                      FileLocator.new(url).location
+                    else
+                      url
+                    end
+        ActiveEncode.sanitize_input(input_url)
+      end
+
+      def copy_derivative_to_working_path(url, id)
+        output_path = working_path("outputs/#{ActiveEncode.sanitize_base url}#{File.extname url}", id)
+        if url.start_with? "s3://"
+          # Use aws-sdk-s3 download_file method
+          # Single request mode needed for compatibility with minio
+          FileLocator::S3File.new(url).object.download_file(output_path, mode: 'single_request')
+        else
+          FileUtils.cp FileLocator.new(url).location, output_path
+        end
+        output_path
       end
     end
   end
