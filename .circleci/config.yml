@@ -25,6 +25,7 @@ jobs:
     steps:
       - run: 
           command: |
+            sudo rm /etc/apt/sources.list.d/google-chrome.list # We don't need chrome and it is causing problems so just remove it
             sudo apt-get update
             sudo apt-get install libmms0
             sudo wget -P /tmp/ https://mediaarea.net/download/binary/libzen0/0.4.39/libzen0v5_0.4.39-1_amd64.Debian_11.deb
