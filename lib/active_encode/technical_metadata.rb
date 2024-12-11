@@ -22,11 +22,13 @@ module ActiveEncode
       attr_accessor :video_codec
       attr_accessor :audio_bitrate
       attr_accessor :video_bitrate
+
+      attr_accessor :subtitle_count
     end
 
     def assign_tech_metadata(metadata)
       [:width, :height, :frame_rate, :duration, :file_size, :checksum,
-       :audio_codec, :video_codec, :audio_bitrate, :video_bitrate].each do |field|
+       :audio_codec, :video_codec, :audio_bitrate, :video_bitrate, :subtitle_count].each do |field|
         send("#{field}=", metadata[field]) if metadata.key?(field)
       end
     end

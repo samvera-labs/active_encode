@@ -42,6 +42,7 @@ module ActiveEncode
         # Create a working directory that holds all output files related to the encode
         FileUtils.mkdir_p working_path("", new_encode.id)
         FileUtils.mkdir_p working_path("outputs", new_encode.id)
+        FileUtils.mkdir_p working_path("supplemental_files", new_encode.id)
 
         # Extract technical metadata from input file
         curl_option = if options && options[:headers]
@@ -90,6 +91,8 @@ module ActiveEncode
           # Assign duration to the encode created for the original file.
           new_encode.input.duration = fixed_duration(working_path("duration_input_metadata", new_encode.id))
         end
+
+        options[:subtitle_count] = new_encode.input.subtitle_count if new_encode.input.subtitle_count&.positive?
 
         new_encode.state = :running
         new_encode.percent_complete = 1
@@ -150,6 +153,7 @@ module ActiveEncode
         end
 
         encode.output = build_outputs encode if encode.completed?
+        encode.output += build_supplemental_outputs encode if encode.completed?
 
         encode
       end
@@ -251,17 +255,46 @@ module ActiveEncode
         outputs
       end
 
+      def build_supplemental_outputs(encode)
+        id = encode.id
+        files = []
+        Dir["#{File.absolute_path(working_path('supplemental_files', id))}/*"].each do |file_path|
+          file = ActiveEncode::Output.new
+          file.url = "file://#{file_path}"
+          file.id = "#{encode.input.id}-#{File.basename(file_path)}"
+          file.created_at = encode.created_at
+          file.updated_at = File.mtime file_path
+
+          files << file
+        end
+
+        files
+      end
+
       def ffmpeg_command(input_url, id, opts)
+        sanitized_filename = ActiveEncode.sanitize_base input_url
         output_opt = opts[:outputs].collect do |output|
-          sanitized_filename = ActiveEncode.sanitize_base input_url
           file_name = "outputs/#{sanitized_filename}-#{output[:label]}.#{output[:extension]}"
           " #{output[:ffmpeg_opt]} #{working_path(file_name, id)}"
         end.join(" ")
+
+        supplemental_file_opt = caption_extraction_options(sanitized_filename, opts[:subtitle_count], id) if opts[:subtitle_count]&.positive?
+
         header_opt = Array(opts[:headers]).map do |k, v|
           "#{k}: #{v}\r\n"
         end.join
         header_opt = "-headers '#{header_opt}'" if header_opt.present?
-        "#{FFMPEG_PATH} #{header_opt} -y -loglevel level+fatal -progress #{working_path('progress', id)} -i \"#{input_url}\" #{output_opt}"
+        "#{FFMPEG_PATH} #{header_opt} -y -loglevel level+fatal -progress #{working_path('progress', id)} -i \"#{input_url}\" #{supplemental_file_opt} #{output_opt}"
+      end
+
+      def caption_extraction_options(filename, count, id)
+        opts = ""
+        (0..count - 1).each do |i|
+          subtitle_filename = "supplemental_files/#{filename}-caption#{i}.vtt"
+          opts += " -map 0:s:#{i} -c:s webvtt #{working_path(subtitle_filename, id)}"
+        end
+
+        opts
       end
 
       def get_pid(id)
@@ -314,6 +347,7 @@ module ActiveEncode
         doc.remove_namespaces!
         duration = get_xpath_text(doc, '//Duration/text()', :to_f)
         duration *= 1000 unless duration.nil? # Convert to milliseconds
+        subtitle_count = doc.xpath('//track[@type="Text"]').length
         { url: get_xpath_text(doc, '//media/@ref', :to_s),
           width: get_xpath_text(doc, '//Width/text()', :to_f),
           height: get_xpath_text(doc, '//Height/text()', :to_f),
@@ -323,7 +357,8 @@ module ActiveEncode
           audio_codec: get_xpath_text(doc, '//track[@type="Audio"]/CodecID/text()', :to_s),
           audio_bitrate: get_xpath_text(doc, '//track[@type="Audio"]/BitRate/text()', :to_i),
           video_codec: get_xpath_text(doc, '//track[@type="Video"]/CodecID/text()', :to_s),
-          video_bitrate: get_xpath_text(doc, '//track[@type="Video"]/BitRate/text()', :to_i) }
+          video_bitrate: get_xpath_text(doc, '//track[@type="Video"]/BitRate/text()', :to_i),
+          subtitle_count: subtitle_count }
       end
 
       def get_xpath_text(doc, xpath, cast_method)

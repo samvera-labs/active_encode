@@ -53,7 +53,11 @@ module ActiveEncode
         def remove_empty_directories(directories)
           directories_to_delete = directories.select { |d| Dir.empty?(d) }
           non_empty_directories = directories - directories_to_delete
-          directories_to_delete += non_empty_directories.select { |ned| Dir.children(ned) == ["outputs"] && directories_to_delete.include?(File.join(ned, "outputs")) }
+          directories_to_delete += non_empty_directories.select do |ned|
+            Dir.children(ned).sort == ["outputs", "supplemental_files"] &&
+              directories_to_delete.include?(File.join(ned, "outputs")) &&
+              directories_to_delete.include?(File.join(ned, "supplemental_files"))
+          end
           FileUtils.rmdir(directories_to_delete) unless directories_to_delete.empty?
         end
 
