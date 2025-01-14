@@ -21,7 +21,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
   let!(:work_dir) { stub_const "ActiveEncode::EngineAdapters::FfmpegAdapter::WORK_DIR", @dir }
   let(:file) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'fireworks.mp4').to_s }
   let(:created_job) do
-    ActiveEncode::Base.create(file, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: "mp4" }, { label: "high", ffmpeg_opt: "-s 1280x720", extension: "mp4" }])
+    ActiveEncode::Base.create(file, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: "mp4" }, { label: "high", ffmpeg_opt: "-s 1280x720", extension: "mp4" }], extract_subtitles: true)
   end
   let(:running_job) do
     allow(Process).to receive(:getpgid).and_return 8888

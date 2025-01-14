@@ -92,14 +92,14 @@ module ActiveEncode
           new_encode.input.duration = fixed_duration(working_path("duration_input_metadata", new_encode.id))
         end
 
-        options[:subtitle_count] = new_encode.input.subtitle_count if new_encode.input.subtitle_count&.positive?
+        subtitle_count = new_encode.input.subtitle_count if new_encode.input.subtitle_count&.positive?
 
         new_encode.state = :running
         new_encode.percent_complete = 1
         new_encode.errors = []
 
         # Run the ffmpeg command and save its pid
-        command = ffmpeg_command(input_url, new_encode.id, options)
+        command = ffmpeg_command(input_url, new_encode.id, options, subtitle_count)
         # Capture the exit status in a file in order to differentiate warning output in stderr between real process failure
         exit_status_file = working_path("exit_status.code", new_encode.id)
         command = "#{command}; echo $? > #{exit_status_file}"
@@ -264,6 +264,15 @@ module ActiveEncode
           file.id = "#{encode.input.id}-#{File.basename(file_path)}"
           file.created_at = encode.created_at
           file.updated_at = File.mtime file_path
+          # TODO: Add handling for label and language if they are included in stream's metadata
+          # file.label = tech_metadata
+          # file.language = tech_metadata
+
+          # Subtitle metadata has to be pulled from input because subtitle tracks
+          # are not encoded into outputs.
+          metadata_path = working_path("input_metadata", encode.id)
+          subtitle_track = /(?:caption)(\d)(?:\.vtt)/.match(file_path)[1].to_i
+          file.assign_subtitle_tech_metadata(get_subtitle_tech_metadata(metadata_path, subtitle_track))
 
           files << file
         end
@@ -271,14 +280,16 @@ module ActiveEncode
         files
       end
 
-      def ffmpeg_command(input_url, id, opts)
+      def ffmpeg_command(input_url, id, opts, subtitle_count = nil)
         sanitized_filename = ActiveEncode.sanitize_base input_url
         output_opt = opts[:outputs].collect do |output|
           file_name = "outputs/#{sanitized_filename}-#{output[:label]}.#{output[:extension]}"
           " #{output[:ffmpeg_opt]} #{working_path(file_name, id)}"
         end.join(" ")
 
-        supplemental_file_opt = caption_extraction_options(sanitized_filename, opts[:subtitle_count], id) if opts[:subtitle_count]&.positive?
+        supplemental_file_opt = if opts[:extract_subtitles] && subtitle_count.present?
+                                  caption_extraction_options(sanitized_filename, subtitle_count, id)
+                                end
 
         header_opt = Array(opts[:headers]).map do |k, v|
           "#{k}: #{v}\r\n"
@@ -363,6 +374,20 @@ module ActiveEncode
 
       def get_xpath_text(doc, xpath, cast_method)
         doc.xpath(xpath).first&.text&.send(cast_method)
+      end
+
+      def get_subtitle_tech_metadata(file_path, track_number)
+        doc = Nokogiri::XML File.read(file_path)
+        doc.remove_namespaces!
+
+        # XPath starts counting from 1, not 0
+        {
+          format: get_xpath_text(doc, "//track[@type='Text'][#{track_number + 1}]/Format/text()", :to_s),
+          codec: get_xpath_text(doc, "//track[@type='Text'][#{track_number + 1}]/CodecID/text()", :to_s)
+          # duration: ,
+          # language: ,
+          # label:
+        }
       end
 
       def fixed_duration(path)
