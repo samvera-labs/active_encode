@@ -3,7 +3,6 @@ module ActiveEncode
   class Output
     include Status
     include TechnicalMetadata
-    include SubtitleTechnicalMetadata
 
     attr_accessor :id
     attr_accessor :url

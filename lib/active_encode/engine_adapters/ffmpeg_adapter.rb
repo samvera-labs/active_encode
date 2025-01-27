@@ -92,7 +92,7 @@ module ActiveEncode
           new_encode.input.duration = fixed_duration(working_path("duration_input_metadata", new_encode.id))
         end
 
-        subtitle_count = new_encode.input.subtitle_count if new_encode.input.subtitle_count&.positive?
+        subtitle_count = new_encode.input.subtitles.length if new_encode.input.subtitles.present?
 
         new_encode.state = :running
         new_encode.percent_complete = 1
@@ -267,12 +267,7 @@ module ActiveEncode
           # TODO: Add handling for label and language if they are included in stream's metadata
           # file.label = tech_metadata
           # file.language = tech_metadata
-
-          # Subtitle metadata has to be pulled from input because subtitle tracks
-          # are not encoded into outputs.
-          metadata_path = working_path("input_metadata", encode.id)
-          subtitle_track = /(?:caption)(\d)(?:\.vtt)/.match(file_path)[1].to_i
-          file.assign_subtitle_tech_metadata(get_subtitle_tech_metadata(metadata_path, subtitle_track))
+          file.format = 'vtt'
 
           files << file
         end
@@ -358,7 +353,6 @@ module ActiveEncode
         doc.remove_namespaces!
         duration = get_xpath_text(doc, '//Duration/text()', :to_f)
         duration *= 1000 unless duration.nil? # Convert to milliseconds
-        subtitle_count = doc.xpath('//track[@type="Text"]').length
         { url: get_xpath_text(doc, '//media/@ref', :to_s),
           width: get_xpath_text(doc, '//Width/text()', :to_f),
           height: get_xpath_text(doc, '//Height/text()', :to_f),
@@ -369,25 +363,22 @@ module ActiveEncode
           audio_bitrate: get_xpath_text(doc, '//track[@type="Audio"]/BitRate/text()', :to_i),
           video_codec: get_xpath_text(doc, '//track[@type="Video"]/CodecID/text()', :to_s),
           video_bitrate: get_xpath_text(doc, '//track[@type="Video"]/BitRate/text()', :to_i),
-          subtitle_count: subtitle_count }
+          subtitles: get_subtitle_tech_metadata(doc).compact }
       end
 
       def get_xpath_text(doc, xpath, cast_method)
         doc.xpath(xpath).first&.text&.send(cast_method)
       end
 
-      def get_subtitle_tech_metadata(file_path, track_number)
-        doc = Nokogiri::XML File.read(file_path)
-        doc.remove_namespaces!
-
-        # XPath starts counting from 1, not 0
-        {
-          format: get_xpath_text(doc, "//track[@type='Text'][#{track_number + 1}]/Format/text()", :to_s),
-          codec: get_xpath_text(doc, "//track[@type='Text'][#{track_number + 1}]/CodecID/text()", :to_s)
-          # duration: ,
-          # language: ,
-          # label:
-        }
+      def get_subtitle_tech_metadata(doc)
+        doc.xpath("//track[@type='Text']").collect do |track|
+          {
+            format: get_xpath_text(track, "//CodecID/text()", :to_s)
+            # TODO: Add label and language
+            # label:,
+            # language:
+          }
+        end
       end
 
       def fixed_duration(path)
