@@ -35,6 +35,8 @@ else
     end
 
     case ENV['RAILS_VERSION']
+    when /^[56]/, /^7.0/
+      gem 'concurrent-ruby', '1.3.4'
     when /^6.0/
       gem 'sass-rails', '>= 6'
       gem 'webpacker', '~> 4.0'

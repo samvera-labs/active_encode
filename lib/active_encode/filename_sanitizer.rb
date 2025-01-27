@@ -24,7 +24,7 @@ module ActiveEncode
       when /^file\:\/\/\//
         input_url.to_s.gsub(/file:\/\//, '')
       when /^s3\:\/\//
-        input_url.to_s.gsub(/#{Addressable::URI.parse(input_url).normalized_site}/, '')
+        input_url.to_s.gsub(/#{Addressable::URI.parse(input_url).site}/, '')
       when /^https?:\/\//
         input_url
       end
