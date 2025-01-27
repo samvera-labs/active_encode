@@ -21,7 +21,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
   let!(:work_dir) { stub_const "ActiveEncode::EngineAdapters::FfmpegAdapter::WORK_DIR", @dir }
   let(:file) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'fireworks.mp4').to_s }
   let(:created_job) do
-    ActiveEncode::Base.create(file, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: "mp4" }, { label: "high", ffmpeg_opt: "-s 1280x720", extension: "mp4" }])
+    ActiveEncode::Base.create(file, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: "mp4" }, { label: "high", ffmpeg_opt: "-s 1280x720", extension: "mp4" }], extract_subtitles: true)
   end
   let(:running_job) do
     allow(Process).to receive(:getpgid).and_return 8888
@@ -322,6 +322,42 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       end
     end
 
+    context 'file with embedded captions' do
+      let(:file_with_embedded_captions) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_with_embedded_captions.mp4').to_s }
+      let!(:create_embedded_captions_job) { ActiveEncode::Base.create(file_with_embedded_captions, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }
+      let(:find_embedded_captions_job) { ActiveEncode::Base.find create_embedded_captions_job.id }
+
+      it "does not have errors" do
+        sleep 2
+        expect(find_embedded_captions_job.errors).to be_empty
+      end
+
+      it "has the input technical metadata in a file" do
+        expect(File.read("#{work_dir}/#{create_embedded_captions_job.id}/input_metadata")).not_to be_empty
+      end
+
+      it "has the pid in a file" do
+        expect(File.read("#{work_dir}/#{create_embedded_captions_job.id}/pid")).not_to be_empty
+      end
+
+      context 'when uri encoded' do
+        let(:file_with_embedded_captions) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_with_embedded_captions.mp4').to_s) }
+
+        it "does not have errors" do
+          sleep 2
+          expect(find_embedded_captions_job.errors).to be_empty
+        end
+
+        it "has the input technical metadata in a file" do
+          expect(File.read("#{work_dir}/#{create_embedded_captions_job.id}/input_metadata")).not_to be_empty
+        end
+
+        it "has the pid in a file" do
+          expect(File.read("#{work_dir}/#{create_embedded_captions_job.id}/pid")).not_to be_empty
+        end
+      end
+    end
+
     context 'when failed' do
       subject { created_job }
 
@@ -505,6 +541,10 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
     end
 
     context ":all" do
+      # The cleaner removes empty directories even if they are younger than the defined :older_than param.
+      # We need to use a file that will populate the supplemental files directory for proper testing of :all behavior.
+      let(:file) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_with_embedded_captions.mp4').to_s }
+
       it "deletes all files and directories older than 2 weeks" do
         sleep 1
         travel 3.weeks do

@@ -42,6 +42,7 @@ module ActiveEncode
         # Create a working directory that holds all output files related to the encode
         FileUtils.mkdir_p working_path("", new_encode.id)
         FileUtils.mkdir_p working_path("outputs", new_encode.id)
+        FileUtils.mkdir_p working_path("supplemental_files", new_encode.id)
 
         # Extract technical metadata from input file
         curl_option = if options && options[:headers]
@@ -91,12 +92,14 @@ module ActiveEncode
           new_encode.input.duration = fixed_duration(working_path("duration_input_metadata", new_encode.id))
         end
 
+        subtitle_count = new_encode.input.subtitles.length if new_encode.input.subtitles.present?
+
         new_encode.state = :running
         new_encode.percent_complete = 1
         new_encode.errors = []
 
         # Run the ffmpeg command and save its pid
-        command = ffmpeg_command(input_url, new_encode.id, options)
+        command = ffmpeg_command(input_url, new_encode.id, options, subtitle_count)
         # Capture the exit status in a file in order to differentiate warning output in stderr between real process failure
         exit_status_file = working_path("exit_status.code", new_encode.id)
         command = "#{command}; echo $? > #{exit_status_file}"
@@ -150,6 +153,7 @@ module ActiveEncode
         end
 
         encode.output = build_outputs encode if encode.completed?
+        encode.output += build_supplemental_outputs encode if encode.completed?
 
         encode
       end
@@ -251,17 +255,52 @@ module ActiveEncode
         outputs
       end
 
-      def ffmpeg_command(input_url, id, opts)
+      def build_supplemental_outputs(encode)
+        id = encode.id
+        files = []
+        Dir["#{File.absolute_path(working_path('supplemental_files', id))}/*"].each do |file_path|
+          file = ActiveEncode::Output.new
+          file.url = "file://#{file_path}"
+          file.id = "#{encode.input.id}-#{File.basename(file_path)}"
+          file.created_at = encode.created_at
+          file.updated_at = File.mtime file_path
+          # TODO: Add handling for label and language if they are included in stream's metadata
+          # file.label = tech_metadata
+          # file.language = tech_metadata
+          file.format = 'vtt'
+
+          files << file
+        end
+
+        files
+      end
+
+      def ffmpeg_command(input_url, id, opts, subtitle_count = nil)
+        sanitized_filename = ActiveEncode.sanitize_base input_url
         output_opt = opts[:outputs].collect do |output|
-          sanitized_filename = ActiveEncode.sanitize_base input_url
           file_name = "outputs/#{sanitized_filename}-#{output[:label]}.#{output[:extension]}"
           " #{output[:ffmpeg_opt]} #{working_path(file_name, id)}"
         end.join(" ")
+
+        supplemental_file_opt = if opts[:extract_subtitles] && subtitle_count.present?
+                                  caption_extraction_options(sanitized_filename, subtitle_count, id)
+                                end
+
         header_opt = Array(opts[:headers]).map do |k, v|
           "#{k}: #{v}\r\n"
         end.join
         header_opt = "-headers '#{header_opt}'" if header_opt.present?
-        "#{FFMPEG_PATH} #{header_opt} -y -loglevel level+fatal -progress #{working_path('progress', id)} -i \"#{input_url}\" #{output_opt}"
+        "#{FFMPEG_PATH} #{header_opt} -y -loglevel level+fatal -progress #{working_path('progress', id)} -i \"#{input_url}\" #{supplemental_file_opt} #{output_opt}"
+      end
+
+      def caption_extraction_options(filename, count, id)
+        opts = ""
+        (0..count - 1).each do |i|
+          subtitle_filename = "supplemental_files/#{filename}-caption#{i}.vtt"
+          opts += " -map 0:s:#{i} -c:s webvtt #{working_path(subtitle_filename, id)}"
+        end
+
+        opts
       end
 
       def get_pid(id)
@@ -323,11 +362,23 @@ module ActiveEncode
           audio_codec: get_xpath_text(doc, '//track[@type="Audio"]/CodecID/text()', :to_s),
           audio_bitrate: get_xpath_text(doc, '//track[@type="Audio"]/BitRate/text()', :to_i),
           video_codec: get_xpath_text(doc, '//track[@type="Video"]/CodecID/text()', :to_s),
-          video_bitrate: get_xpath_text(doc, '//track[@type="Video"]/BitRate/text()', :to_i) }
+          video_bitrate: get_xpath_text(doc, '//track[@type="Video"]/BitRate/text()', :to_i),
+          subtitles: get_subtitle_tech_metadata(doc).compact }
       end
 
       def get_xpath_text(doc, xpath, cast_method)
         doc.xpath(xpath).first&.text&.send(cast_method)
+      end
+
+      def get_subtitle_tech_metadata(doc)
+        doc.xpath("//track[@type='Text']").collect do |track|
+          {
+            format: get_xpath_text(track, "//CodecID/text()", :to_s)
+            # TODO: Add label and language
+            # label:,
+            # language:
+          }
+        end
       end
 
       def fixed_duration(path)
