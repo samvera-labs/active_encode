@@ -10,7 +10,6 @@ class TestAppGenerator < Rails::Generators::Base
   # after setting up the application
 
   def install_engine
-    generate 'active_encode:install'
     rake 'active_encode:install:migrations'
   end
 end
