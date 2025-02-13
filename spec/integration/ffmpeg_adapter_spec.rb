@@ -326,6 +326,20 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       let(:file_with_embedded_captions) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_with_embedded_captions.mp4').to_s }
       let!(:create_embedded_captions_job) { ActiveEncode::Base.create(file_with_embedded_captions, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }
       let(:find_embedded_captions_job) { ActiveEncode::Base.find create_embedded_captions_job.id }
+      let(:subtitle_metadata) do
+        [
+          {
+            format: 'tx3g',
+            label: 'Test / Test',
+            language: 'en'
+          },
+          {
+            format: 'tx3g',
+            label: 'English / English',
+            language: 'en'
+          }
+        ]
+      end
 
       it "does not have errors" do
         sleep 2
@@ -338,6 +352,11 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
 
       it "has the pid in a file" do
         expect(File.read("#{work_dir}/#{create_embedded_captions_job.id}/pid")).not_to be_empty
+      end
+
+      it "assigns the subtitles to the encode" do
+        expect(create_embedded_captions_job.input.subtitles).to eq subtitle_metadata
+        expect(find_embedded_captions_job.input.subtitles).to eq subtitle_metadata
       end
 
       context 'when uri encoded' do
@@ -354,6 +373,11 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
 
         it "has the pid in a file" do
           expect(File.read("#{work_dir}/#{create_embedded_captions_job.id}/pid")).not_to be_empty
+        end
+
+        it "assigns the subtitles to the encode" do
+          expect(create_embedded_captions_job.input.subtitles).to eq subtitle_metadata
+          expect(find_embedded_captions_job.input.subtitles).to eq subtitle_metadata
         end
       end
     end

@@ -258,15 +258,14 @@ module ActiveEncode
       def build_supplemental_outputs(encode)
         id = encode.id
         files = []
-        Dir["#{File.absolute_path(working_path('supplemental_files', id))}/*"].each do |file_path|
+        Dir["#{File.absolute_path(working_path('supplemental_files', id))}/*"].each_with_index do |file_path, index|
           file = ActiveEncode::Output.new
           file.url = "file://#{file_path}"
           file.id = "#{encode.input.id}-#{File.basename(file_path)}"
           file.created_at = encode.created_at
           file.updated_at = File.mtime file_path
-          # TODO: Add handling for label and language if they are included in stream's metadata
-          # file.label = tech_metadata
-          # file.language = tech_metadata
+          file.label = encode.input.subtitles[index][:label]
+          file.language = encode.input.subtitles[index][:language]
           file.format = 'vtt'
 
           files << file
@@ -371,12 +370,11 @@ module ActiveEncode
       end
 
       def get_subtitle_tech_metadata(doc)
-        doc.xpath("//track[@type='Text']").collect do |track|
+        doc.xpath("//track[@type='Text' and Format='Timed Text']").collect do |track|
           {
-            format: get_xpath_text(track, "//CodecID/text()", :to_s)
-            # TODO: Add label and language
-            # label:,
-            # language:
+            format: get_xpath_text(track, "./CodecID/text()", :to_s),
+            label: get_xpath_text(track, "./Title/text()", :to_s),
+            language: get_xpath_text(track, "./Language/text()", :to_s)
           }
         end
       end
