@@ -10,7 +10,8 @@ module ActiveEncode
       filepath = input_url.is_a?(URI::HTTP) ? input_url.path : input_url
       # Replace special characters with underscores and remove excess periods.
       # This removes the extension before processing so it is safe to delete all detected periods.
-      File.basename(filepath, File.extname(filepath)).gsub(/[^0-9A-Za-z.\-\/]/, '_').delete('.')
+      # This explicitly handles percent encoded spaces.
+      File.basename(filepath, File.extname(filepath)).gsub(/%20/, "_").gsub(/[^0-9A-Za-z.\-\/]/, '_').delete('.')
     end
 
     def sanitize_filename(input_url)
