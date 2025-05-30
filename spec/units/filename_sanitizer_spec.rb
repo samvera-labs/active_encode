@@ -23,4 +23,11 @@ describe ActiveEncode::FilenameSanitizer do
       end
     end
   end
+
+  describe "#sanitize_base" do
+    it 'handles percent encoded spaces' do
+      uri = "file:///path%20to%20file.mov"
+      expect(ActiveEncode.sanitize_base(uri)).to eq "path_to_file"
+    end
+  end
 end

@@ -25,6 +25,7 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency "aws-sdk-cloudwatchevents"
   spec.add_development_dependency "aws-sdk-cloudwatchlogs"
+  spec.add_development_dependency "aws-sdk-core", "<= 3.220.0"
   spec.add_development_dependency "aws-sdk-elastictranscoder"
   spec.add_development_dependency "aws-sdk-mediaconvert"
   spec.add_development_dependency "aws-sdk-s3"
