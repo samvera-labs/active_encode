@@ -391,6 +391,10 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
 
       it { is_expected.to be_failed }
       it { expect(subject.errors).to be_present }
+      # The exception is triggered by the ffmpeg command at ln 81 in the adapter.
+      # This conveniently bypasses the standard exit_status.code creation at the end of #create
+      # allowing us to test the fallback file creation in #write_errors.
+      it { expect(File.read("#{work_dir}/#{subject.id}/exit_status.code")).to_not be_empty }
     end
   end
 
