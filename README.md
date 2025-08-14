@@ -11,7 +11,7 @@ Jump in: [![Slack Status](http://slack.samvera.org/badge.svg)](http://slack.samv
 
 # What is ActiveEncode?
 
-ActiveEncode serves as the basis for the interface between a Ruby (Rails) application and a provider of encoding services such as [FFmpeg](https://www.ffmpeg.org/), [Amazon Elastic Transcoder](http://aws.amazon.com/elastictranscoder/), [AWS Elemental MediaConvert](https://aws.amazon.com/mediaconvert/), and [Zencoder](http://zencoder.com).
+ActiveEncode serves as the basis for the interface between a Ruby (Rails) application and a provider of encoding services such as [FFmpeg](https://www.ffmpeg.org/), [Amazon Elastic Transcoder](http://aws.amazon.com/elastictranscoder/), and [AWS Elemental MediaConvert](https://aws.amazon.com/mediaconvert/).
 
 # Help
 

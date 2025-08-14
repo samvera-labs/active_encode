@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Michael Klein, Chris Colvard, Phuong Dinh"]
   spec.email         = ["mbklein@gmail.com, chris.colvard@gmail.com, phuongdh@gmail.com"]
   spec.summary       = 'Declare encode job classes that can be run by a variety of encoding services'
-  spec.description   = 'This gem provides an interface to transcoding services such as Ffmpeg, Amazon Elastic Transcoder, or Zencoder.'
+  spec.description   = 'This gem provides an interface to transcoding services such as Ffmpeg, Amazon Elastic Transcoder, or Amazon Elemental MediaConvert.'
   spec.homepage      = "https://github.com/samvera-labs/active_encode"
   spec.license       = "Apache-2.0"
 

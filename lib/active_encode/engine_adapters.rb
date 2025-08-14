@@ -9,8 +9,6 @@ module ActiveEncode
   module EngineAdapters
     extend ActiveSupport::Autoload
 
-    autoload :MatterhornAdapter
-    autoload :ZencoderAdapter
     autoload :ElasticTranscoderAdapter
     autoload :TestAdapter
     autoload :FfmpegAdapter
