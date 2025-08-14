@@ -202,6 +202,7 @@ module ActiveEncode
 
       def write_errors(encode)
         File.write(working_path("error.log", encode.id), encode.errors.join("\n"))
+        File.write(working_path("exit_status.code", encode.id), "1") unless File.exist?(working_path("exit_status.code", encode.id))
       end
 
       def read_errors(id)
@@ -311,6 +312,8 @@ module ActiveEncode
       end
 
       def running?(pid)
+        return false if pid.nil?
+
         Process.getpgid pid.to_i
         true
       rescue Errno::ESRCH
