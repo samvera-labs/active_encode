@@ -1,8 +1,8 @@
 # ActiveEncode
 
 Code: [![Version](https://badge.fury.io/rb/active_encode.png)](http://badge.fury.io/rb/active_encode)
-[![Build Status](https://travis-ci.org/samvera-labs/active_encode.png?branch=master)](https://travis-ci.org/samvera-labs/active_encode)
-[![Coverage Status](https://coveralls.io/repos/github/samvera-labs/active_encode/badge.svg?branch=master)](https://coveralls.io/github/samvera-labs/active_encode?branch=master)
+[![Build Status]([![CircleCI](https://dl.circleci.com/status-badge/img/gh/samvera-labs/active_encode/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/samvera-labs/active_encode/tree/main))
+[![Coverage Status](https://coveralls.io/repos/github/samvera-labs/active_encode/badge.svg?branch=main)](https://coveralls.io/github/samvera-labs/active_encode?branch=main)
 
 Docs: [![Contribution Guidelines](http://img.shields.io/badge/CONTRIBUTING-Guidelines-blue.svg)](./CONTRIBUTING.md)
 [![Apache 2.0 License](http://img.shields.io/badge/APACHE2-license-blue.svg)](./LICENSE)
@@ -246,6 +246,12 @@ RSpec.describe MyCustomAdapter do
   it_behaves_like 'an ActiveEncode::EngineAdapter'
 end
 ```
+
+## Contributing 
+
+If you're working on PR for this project, create a feature branch off of `main`. 
+
+This repository follows the [Samvera Community Code of Conduct](https://samvera.atlassian.net/wiki/spaces/samvera/pages/405212316/Code+of+Conduct) and [language recommendations](https://github.com/samvera/maintenance/blob/main/templates/CONTRIBUTING.md#language).  Please ***do not*** create a branch called `master` for this repository or as part of your pull request; the branch will either need to be removed or renamed before it can be considered for inclusion in the code base and history of this repository.
 
 # Acknowledgments
 
