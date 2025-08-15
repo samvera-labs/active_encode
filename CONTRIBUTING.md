@@ -68,7 +68,7 @@ further details.
 * Fork the repository on GitHub
 * Create a topic branch from where you want to base your work.
   * This is usually the `main` branch.
-  * To quickly create a topic branch based on `main`; `git branch fix/master/my_contribution main`
+  * To quickly create a topic branch based on `main`; `git branch fix/main/my_contribution main`
   * Then checkout the new branch with `git checkout fix/main/my_contribution`.
   * Please avoid working directly on the `main` branch.
   * Please do not create a branch called `master`. (See note below.)
