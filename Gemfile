@@ -1,15 +1,12 @@
 # frozen_string_literal: true
 source 'https://rubygems.org'
 
-# Specify your gem's dependencies in hydra-transcoder.gemspec
+# Specify your gem's dependencies in active_encode.gemspec
 gemspec
 
 gem 'aws-sdk-elastictranscoder'
 gem 'aws-sdk-s3'
 gem 'byebug'
-gem 'rubyhorn', git: "https://github.com/avalonmediasystem/rubyhorn.git"
-gem 'shingoncoder'
-gem 'zencoder'
 
 # BEGIN ENGINE_CART BLOCK
 # engine_cart: 2.4.0
