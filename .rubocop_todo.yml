@@ -26,12 +26,10 @@ Metrics/CyclomaticComplexity:
   Exclude:
     - 'lib/active_encode/engine_adapters/elastic_transcoder_adapter.rb'
     - 'lib/active_encode/engine_adapters/ffmpeg_adapter.rb'
-    - 'lib/active_encode/engine_adapters/zencoder_adapter.rb'
     - 'lib/active_encode/engine_adapters/media_convert_adapter.rb'
 
 Layout/LineLength:
   Exclude:
-    - 'lib/active_encode/engine_adapters/matterhorn_adapter.rb'
     - 'spec/**/*'
 
 Metrics/MethodLength:
@@ -61,7 +59,6 @@ RSpec/InstanceVariable:
 
 RSpec/MessageSpies:
   Exclude:
-    - 'spec/integration/matterhorn_adapter_spec.rb'
     - 'spec/integration/ffmpeg_adapter_spec.rb'
 
 RSpec/NamedSubject:
