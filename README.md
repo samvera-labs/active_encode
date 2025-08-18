@@ -1,7 +1,7 @@
 # ActiveEncode
 
 Code: [![Version](https://badge.fury.io/rb/active_encode.png)](http://badge.fury.io/rb/active_encode)
-[![Build Status]([![CircleCI](https://dl.circleci.com/status-badge/img/gh/samvera-labs/active_encode/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/samvera-labs/active_encode/tree/main))
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/samvera-labs/active_encode/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/samvera-labs/active_encode/tree/main)
 [![Coverage Status](https://coveralls.io/repos/github/samvera-labs/active_encode/badge.svg?branch=main)](https://coveralls.io/github/samvera-labs/active_encode?branch=main)
 
 Docs: [![Contribution Guidelines](http://img.shields.io/badge/CONTRIBUTING-Guidelines-blue.svg)](./CONTRIBUTING.md)
