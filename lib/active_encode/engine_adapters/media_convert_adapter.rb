@@ -274,6 +274,7 @@ module ActiveEncode
 
         encode.input.created_at = encode.created_at
         encode.input.updated_at = encode.updated_at
+        encode.input.assign_tech_metadata(get_tech_metadata(encode.input.url))
 
         encode = complete_encode(encode, job) if encode.state == :completed
         encode
@@ -349,6 +350,13 @@ module ActiveEncode
               name_modifier: output_settings[index].name_modifier,
               file_suffix: "m3u8"
             )
+          elsif output_group_settings.type == "FILE_GROUP_SETTINGS"
+            output_url = MediaConvertOutput.construct_output_url(
+              destination: output_group_settings.file_group_settings.destination,
+              file_input_url: file_input_url,
+              name_modifier: output_settings[index].name_modifier,
+              file_suffix: output_settings[index].container_settings.container.downcase
+            )
           end
 
           tech_md = MediaConvertOutput.tech_metadata_from_settings(
@@ -358,15 +366,12 @@ module ActiveEncode
           )
 
           output = ActiveEncode::Output.new
-
           output.created_at = job.timing.submit_time
           output.updated_at = job.timing.finish_time || job.timing.start_time || output.created_at
-
-          [:width, :height, :frame_rate, :duration, :checksum, :audio_codec, :video_codec,
-           :audio_bitrate, :video_bitrate, :file_size, :label, :url, :id].each do |field|
-            output.send("#{field}=", tech_md[field])
-          end
-          output.id ||= "#{job.id}-output#{tech_md[:suffix]}"
+          output.assign_tech_metadata(get_tech_metadata(output_url))
+          output.label = tech_md[:suffix]
+          output.id = "#{job.id}-#{output.label}"
+          output.url = output_url
           output
         end
 
@@ -419,7 +424,8 @@ module ActiveEncode
            :audio_bitrate, :video_bitrate, :file_size, :label, :url, :id].each do |field|
             output.send("#{field}=", tech_md[field])
           end
-          output.id ||= "#{job.id}-output#{tech_md[:suffix]}"
+          output.label = tech_md[:suffix]
+          output.id = "#{job.id}-#{output.label}"
           output
         end
 
@@ -604,6 +610,31 @@ module ActiveEncode
           },
           outputs: outputs
         }]
+      end
+
+      # TODO: expand this to run probe on input and outputs in one request?
+      def get_tech_metadata(url)
+        probe_response = mediaconvert.probe({ input_files: [{ file_url: url }] })&.probe_results&.first
+        return {} unless probe_response
+
+        # Need to determine which track has video/audio?
+        video_track = probe_response.container.tracks.find { |track| track.track_type == "video" }
+        audio_track = probe_response.container.tracks.find { |track| track.track_type == "audio" }
+        frame_rate = (video_track&.video_properties&.frame_rate&.numerator / video_track&.video_properties&.frame_rate&.denominator&.to_f).round(2) if video_track
+
+        {
+          url: url,
+          width: video_track&.video_properties&.width,
+          height: video_track&.video_properties&.height,
+          frame_rate: frame_rate,
+          duration: probe_response.container.duration * 1000, # milliseconds
+          file_size: probe_response.metadata.file_size,
+          audio_codec: audio_track&.codec,
+          audio_bitrate: audio_track&.audio_properties&.bit_rate,
+          video_codec: video_track&.codec,
+          video_bitrate: video_track&.video_properties&.bit_rate,
+          subtitles: nil
+        }
       end
     end
   end

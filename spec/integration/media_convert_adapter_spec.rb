@@ -44,6 +44,7 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
 
   before do
     mediaconvert.stub_responses(:describe_endpoints, reconstitute_response("media_convert/endpoints.json"))
+    mediaconvert.stub_responses(:probe, reconstitute_response("media_convert/input_probe.json"))
 
     allow(Aws::MediaConvert::Client).to receive(:new).and_return(mediaconvert)
     allow(Aws::CloudWatchEvents::Client).to receive(:new).and_return(cloudwatch_events)
@@ -86,6 +87,7 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
     mediaconvert.stub_responses(:get_job, reconstitute_response("media_convert/job_completed.json"))
     cloudwatch_logs.stub_responses(:start_query, reconstitute_response("media_convert/job_completed_detail_query.json"))
     cloudwatch_logs.stub_responses(:get_query_results, reconstitute_response("media_convert/job_completed_detail.json"))
+    mediaconvert.stub_responses(:probe, [reconstitute_response("media_convert/input_probe.json"), reconstitute_response("media_convert/output_probe.high.json"), reconstitute_response("media_convert/output_probe.medium.json"), reconstitute_response("media_convert/output_probe.low.json")])
 
     ActiveEncode::Base.find(job_id)
   end
@@ -110,14 +112,14 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
     [
       { id: "1625859001514-vvqfwj-output-auto", url: "s3://output-bucket/active-encode-test/output.m3u8",
         label: "output.m3u8", audio_codec: "AAC", duration: 888_020, video_codec: "H_264" },
-      { id: "1625859001514-vvqfwj-output-1080", url: "s3://output-bucket/active-encode-test/output-1080.m3u8",
-        label: "output-1080.m3u8", audio_bitrate: 128_000, audio_codec: "AAC", duration: 888_020,
+      { id: "1625859001514-vvqfwj--1080", url: "s3://output-bucket/active-encode-test/output-1080.m3u8",
+        label: "-1080", audio_bitrate: 128_000, audio_codec: "AAC", duration: 888_020,
         video_bitrate: 8_500_000, height: 1080, width: 1920, video_codec: "H_264", frame_rate: 29.97 },
-      { id: "1625859001514-vvqfwj-output-720", url: "s3://output-bucket/active-encode-test/output-720.m3u8",
-        label: "output-720.m3u8", audio_bitrate: 96_000, audio_codec: "AAC", duration: 888_020,
+      { id: "1625859001514-vvqfwj--720", url: "s3://output-bucket/active-encode-test/output-720.m3u8",
+        label: "-720", audio_bitrate: 96_000, audio_codec: "AAC", duration: 888_020,
         video_bitrate: 5_000_000, height: 720, width: 1280, video_codec: "H_264", frame_rate: 29.97 },
-      { id: "1625859001514-vvqfwj-output-540", url: "s3://output-bucket/active-encode-test/output-540.m3u8",
-        label: "output-540.m3u8", audio_bitrate: 96_000, audio_codec: "AAC", duration: 888_020,
+      { id: "1625859001514-vvqfwj--540", url: "s3://output-bucket/active-encode-test/output-540.m3u8",
+        label: "-540", audio_bitrate: 96_000, audio_codec: "AAC", duration: 888_020,
         video_bitrate: 3_500_000, height: 540, width: 960, video_codec: "H_264", frame_rate: 29.97 }
     ]
   end
@@ -226,6 +228,7 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
     it "contains all expected outputs" do
       completed_output.each do |expected_output|
         found_output = completed_job.output.find { |output| output.id == expected_output[:id] }
+        byebug if found_output == nil
         expected_output.each_pair do |key, value|
           expect(found_output.send(key)).to eq(value)
         end
@@ -268,6 +271,49 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
       expect(cloudwatch_logs).not_to receive(:get_query_results)
 
       completed_job
+    end
+
+    context 'file output type' do
+      let(:completed_job) do
+        mediaconvert.stub_responses(:get_job, reconstitute_response("media_convert/job_completed.file.json"))
+        mediaconvert.stub_responses(:probe, [reconstitute_response("media_convert/input_probe.json"), reconstitute_response("media_convert/output_probe.high.json"), reconstitute_response("media_convert/output_probe.medium.json"), reconstitute_response("media_convert/output_probe.low.json")])
+
+        ActiveEncode::Base.find(job_id)
+      end
+
+      let(:completed_output) do
+        [
+          { id: "1625859001514-vvqfwj--1080", url: "s3://output-bucket/active-encode-test/output-1080.mp4",
+            label: "-1080", audio_bitrate: 128_000, audio_codec: "AAC", duration: 888_020,
+            video_bitrate: 8_500_000, height: 1080, width: 1920, video_codec: "H_264", frame_rate: 29.97 },
+          { id: "1625859001514-vvqfwj--720", url: "s3://output-bucket/active-encode-test/output-720.mp4",
+            label: "-720", audio_bitrate: 96_000, audio_codec: "AAC", duration: 888_020,
+            video_bitrate: 5_000_000, height: 720, width: 1280, video_codec: "H_264", frame_rate: 29.97 },
+          { id: "1625859001514-vvqfwj--540", url: "s3://output-bucket/active-encode-test/output-540.mp4",
+            label: "-540", audio_bitrate: 96_000, audio_codec: "AAC", duration: 888_020,
+            video_bitrate: 3_500_000, height: 540, width: 960, video_codec: "H_264", frame_rate: 29.97 }
+        ]
+      end
+     
+      before do
+
+      end
+
+      it "contains all expected outputs" do
+        completed_output.each do |expected_output|
+          found_output = completed_job.output.find { |output| output.id == expected_output[:id] }
+          expected_output.each_pair do |key, value|
+            expect(found_output.send(key)).to eq(value)
+          end
+        end
+      end
+
+      it "does not make cloudwatch queries" do
+        expect(cloudwatch_logs).not_to receive(:start_query)
+        expect(cloudwatch_logs).not_to receive(:get_query_results)
+
+        completed_job
+      end
     end
   end
 
