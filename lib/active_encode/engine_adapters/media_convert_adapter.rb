@@ -613,21 +613,23 @@ module ActiveEncode
       end
 
       # TODO: expand this to run probe on input and outputs in one request?
+      # FIXME: certain audio files don't return any track information?!?
       def get_tech_metadata(url)
         probe_response = mediaconvert.probe({ input_files: [{ file_url: url }] })&.probe_results&.first
         return {} unless probe_response
 
-        # Need to determine which track has video/audio?
-        video_track = probe_response.container.tracks.find { |track| track.track_type == "video" }
-        audio_track = probe_response.container.tracks.find { |track| track.track_type == "audio" }
+        # Need to determine which track has video/audio
+        video_track = probe_response.container.tracks&.find { |track| track.track_type == "video" }
+        audio_track = probe_response.container.tracks&.find { |track| track.track_type == "audio" }
         frame_rate = (video_track&.video_properties&.frame_rate&.numerator / video_track&.video_properties&.frame_rate&.denominator&.to_f).round(2) if video_track
+        duration = probe_response.container.duration * 1000 if probe_response.container.duration.present?
 
         {
           url: url,
           width: video_track&.video_properties&.width,
           height: video_track&.video_properties&.height,
           frame_rate: frame_rate,
-          duration: probe_response.container.duration * 1000, # milliseconds
+          duration: duration, # milliseconds
           file_size: probe_response.metadata.file_size,
           audio_codec: audio_track&.codec,
           audio_bitrate: audio_track&.audio_properties&.bit_rate,

@@ -35,8 +35,8 @@ module ActiveEncode
         # @param output_detail_settings [Aws::MediaConvert::Types::OutputDetail]
         def tech_metadata_from_settings(output_url:, output_settings:, output_detail_settings:)
           {
-            width: output_detail_settings.video_details.width_in_px,
-            height: output_detail_settings.video_details.height_in_px,
+            width: output_detail_settings.video_details&.width_in_px,
+            height: output_detail_settings.video_details&.height_in_px,
             frame_rate: extract_video_frame_rate(output_settings),
             duration: output_detail_settings.duration_in_ms,
             audio_codec: extract_audio_codec(output_settings),
@@ -110,27 +110,27 @@ module ActiveEncode
         end
 
         def extract_audio_codec(settings)
-          settings.audio_descriptions.first.codec_settings.codec
-        rescue
-          nil
+          settings.audio_descriptions&.first&.codec_settings&.codec
         end
 
         def extract_audio_codec_settings(settings)
-          codec_key = AUDIO_SETTINGS[extract_audio_codec(settings)]
+          codec = extract_audio_codec(settings)
+          return nil if codec.nil?
+
+          codec_key = AUDIO_SETTINGS[codec]
           settings.audio_descriptions.first.codec_settings[codec_key]
         end
 
         def extract_video_codec(settings)
-          settings.video_description.codec_settings.codec
-        rescue
-          nil
+          settings.video_description&.codec_settings&.codec
         end
 
         def extract_video_codec_settings(settings)
-          codec_key = VIDEO_SETTINGS[extract_video_codec(settings)]
+          codec = extract_video_codec(settings)
+          return nil if codec.nil?
+
+          codec_key = VIDEO_SETTINGS[codec]
           settings.video_description.codec_settings[codec_key]
-        rescue
-          nil
         end
 
         def extract_audio_bitrate(settings)
