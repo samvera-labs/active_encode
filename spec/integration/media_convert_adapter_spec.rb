@@ -228,7 +228,6 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
     it "contains all expected outputs" do
       completed_output.each do |expected_output|
         found_output = completed_job.output.find { |output| output.id == expected_output[:id] }
-        byebug if found_output == nil
         expected_output.each_pair do |key, value|
           expect(found_output.send(key)).to eq(value)
         end
@@ -293,10 +292,6 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
             label: "-540", audio_bitrate: 96_000, audio_codec: "AAC", duration: 888_020,
             video_bitrate: 3_500_000, height: 540, width: 960, video_codec: "H_264", frame_rate: 29.97 }
         ]
-      end
-     
-      before do
-
       end
 
       it "contains all expected outputs" do
