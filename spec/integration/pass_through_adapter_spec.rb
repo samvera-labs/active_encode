@@ -279,6 +279,14 @@ describe ActiveEncode::EngineAdapters::PassThroughAdapter do
       end
     end
 
+    context 'when mp3 file' do
+      let(:file) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'fireworks.mp3').to_s }
+
+      it 'has correct audio codec' do
+        expect(created_job.input.audio_codec).to eq 'mp3'
+      end
+    end
+
     context 'when failed' do
       subject { created_job }
 
