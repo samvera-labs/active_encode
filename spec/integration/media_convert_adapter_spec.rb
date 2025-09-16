@@ -373,6 +373,38 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
         end
       end
     end
+
+    context "with file output group" do
+      let(:completed_job) do
+        mediaconvert.stub_responses(:get_job, reconstitute_response("media_convert/job_completed.file.json"))
+        mediaconvert.stub_responses(:probe, [reconstitute_response("media_convert/input_probe.json"), reconstitute_response("media_convert/output_probe.high.json"), reconstitute_response("media_convert/output_probe.medium.json"), reconstitute_response("media_convert/output_probe.low.json")])
+
+        ActiveEncode::Base.find(job_id)
+      end
+
+      let(:completed_output) do
+        [
+          { id: "1625859001514-vvqfwj-output-1080", url: "s3://output-bucket/active-encode-test/output-1080.mp4",
+            label: "output-1080.mp4", audio_bitrate: 128_000, audio_codec: "AAC", duration: 888_020,
+            video_bitrate: 8_500_000, height: 1080, width: 1920, video_codec: "H_264", frame_rate: 29.97 },
+          { id: "1625859001514-vvqfwj-output-720", url: "s3://output-bucket/active-encode-test/output-720.mp4",
+            label: "output-720.mp4", audio_bitrate: 96_000, audio_codec: "AAC", duration: 888_020,
+            video_bitrate: 5_000_000, height: 720, width: 1280, video_codec: "H_264", frame_rate: 29.97 },
+          { id: "1625859001514-vvqfwj-output-540", url: "s3://output-bucket/active-encode-test/output-540.mp4",
+            label: "output-540.mp4", audio_bitrate: 96_000, audio_codec: "AAC", duration: 888_020,
+            video_bitrate: 3_500_000, height: 540, width: 960, video_codec: "H_264", frame_rate: 29.97 }
+        ]
+      end
+
+      it "contains all expected outputs" do
+        completed_output.each do |expected_output|
+          found_output = completed_job.output.find { |output| output.id == expected_output[:id] }
+          expected_output.each_pair do |key, value|
+            expect(found_output.send(key)).to eq(value)
+          end
+        end
+      end
+    end
   end
 
   describe "#s3_uri" do
