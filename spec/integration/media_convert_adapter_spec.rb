@@ -44,6 +44,7 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
 
   before do
     mediaconvert.stub_responses(:describe_endpoints, reconstitute_response("media_convert/endpoints.json"))
+    mediaconvert.stub_responses(:probe, reconstitute_response("media_convert/input_probe.json"))
 
     allow(Aws::MediaConvert::Client).to receive(:new).and_return(mediaconvert)
     allow(Aws::CloudWatchEvents::Client).to receive(:new).and_return(cloudwatch_events)
@@ -86,6 +87,7 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
     mediaconvert.stub_responses(:get_job, reconstitute_response("media_convert/job_completed.json"))
     cloudwatch_logs.stub_responses(:start_query, reconstitute_response("media_convert/job_completed_detail_query.json"))
     cloudwatch_logs.stub_responses(:get_query_results, reconstitute_response("media_convert/job_completed_detail.json"))
+    mediaconvert.stub_responses(:probe, [reconstitute_response("media_convert/input_probe.json"), reconstitute_response("media_convert/output_probe.high.json"), reconstitute_response("media_convert/output_probe.medium.json"), reconstitute_response("media_convert/output_probe.low.json")])
 
     ActiveEncode::Base.find(job_id)
   end
@@ -120,6 +122,11 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
         label: "output-540.m3u8", audio_bitrate: 96_000, audio_codec: "AAC", duration: 888_020,
         video_bitrate: 3_500_000, height: 540, width: 960, video_codec: "H_264", frame_rate: 29.97 }
     ]
+  end
+
+  let(:input_tech_metadata) do
+    { width: 200, height: 110, frame_rate: 23.72, duration: 6314.666666666667, file_size: 199_160, audio_codec: "AAC",
+      video_codec: "AVC", audio_bitrate: 171_030, video_bitrate: 74_475 }
   end
   let(:completed_tech_metadata) { {} }
   let(:failed_tech_metadata) { {} }
@@ -277,6 +284,20 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
         expect(completed_job.output.map(&:label)).to contain_exactly(*expected_labels)
       end
     end
+
+    context "using probe endpoint" do
+      around(:example) do |example|
+        ActiveEncode::Base.engine_adapter.use_probe = true
+        example.run
+        ActiveEncode::Base.engine_adapter.use_probe = false
+      end
+
+      it "contains input technical metadata" do
+        input_tech_metadata.each_pair do |key, value|
+          expect(completed_job.input.send(key)).to eq(value)
+        end
+      end
+    end
   end
 
   describe "direct_output_lookup" do
@@ -327,6 +348,29 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
 
       it 'creates outputs with custom id format' do
         expect(completed_job.output.map(&:label)).to contain_exactly(*expected_labels)
+      end
+    end
+
+    context "using probe endpoint" do
+      around(:example) do |example|
+        ActiveEncode::Base.engine_adapter.use_probe = true
+        example.run
+        ActiveEncode::Base.engine_adapter.use_probe = false
+      end
+
+      it "contains input technical metadata" do
+        input_tech_metadata.each_pair do |key, value|
+          expect(completed_job.input.send(key)).to eq(value)
+        end
+      end
+
+      it "contains all expected outputs" do
+        completed_output.each do |expected_output|
+          found_output = completed_job.output.find { |output| output.id == expected_output[:id] }
+          expected_output.each_pair do |key, value|
+            expect(found_output.send(key)).to eq(value)
+          end
+        end
       end
     end
   end

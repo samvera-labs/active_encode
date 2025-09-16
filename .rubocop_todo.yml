@@ -8,6 +8,7 @@ Metrics/AbcSize:
 Metrics/BlockLength:
   Exclude:
     - 'lib/active_encode/spec/shared_specs/*'
+    - 'lib/active_encode/engine_adapters/media_convert_adapter.rb'
     - 'spec/**/*'
 
 Metrics/BlockNesting:
@@ -27,6 +28,7 @@ Metrics/CyclomaticComplexity:
     - 'lib/active_encode/engine_adapters/elastic_transcoder_adapter.rb'
     - 'lib/active_encode/engine_adapters/ffmpeg_adapter.rb'
     - 'lib/active_encode/engine_adapters/media_convert_adapter.rb'
+    - 'lib/active_encode/engine_adapters/media_convert_output.rb'
 
 Layout/LineLength:
   Exclude:
@@ -42,6 +44,7 @@ Metrics/PerceivedComplexity:
   Exclude:
     - 'lib/active_encode/engine_adapters/ffmpeg_adapter.rb'
     - 'lib/active_encode/engine_adapters/media_convert_adapter.rb'
+    - 'lib/active_encode/engine_adapters/media_convert_output.rb'
     - 'lib/file_locator.rb'
 
 RSpec/AnyInstance:

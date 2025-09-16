@@ -64,6 +64,29 @@ module ActiveEncode
           }
         end
 
+        def tech_metadata_from_probe(url:, probe_response:, output_settings: nil)
+          tech_md = { url: url, suffix: output_settings&.name_modifier }
+          return tech_md unless probe_response
+
+          # Need to determine which track has video/audio
+          video_track = probe_response.container.tracks&.find { |track| track.track_type == "video" }
+          audio_track = probe_response.container.tracks&.find { |track| track.track_type == "audio" }
+          frame_rate = (video_track.video_properties.frame_rate.numerator / video_track.video_properties.frame_rate.denominator.to_f).round(2) if video_track
+          duration = probe_response.container.duration * 1000 if probe_response.container.duration.present?
+
+          tech_md.merge({
+                          width: video_track&.video_properties&.width,
+                          height: video_track&.video_properties&.height,
+                          frame_rate: frame_rate,
+                          duration: duration, # milliseconds
+                          audio_codec: audio_track&.codec,
+                          video_codec: video_track&.codec,
+                          audio_bitrate: audio_track&.audio_properties&.bit_rate,
+                          video_bitrate: video_track&.video_properties&.bit_rate,
+                          file_size: probe_response.metadata.file_size
+                        })
+        end
+
         # constructs an `s3:` output URL  from the MediaConvert job params, the same
         # way MediaConvert will.
         #
