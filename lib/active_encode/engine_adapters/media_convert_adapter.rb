@@ -111,7 +111,12 @@ module ActiveEncode
 
       # @!attribute [w] log_group log_group_name that is being used to capture output
       # @!attribute [w] queue name of MediaConvert queue to use.
-      attr_writer :log_group, :queue
+      # @!attribute [w] output_id_format sprintf format for output ids (default: "%{job_id}-output%{suffix}")
+      #                  Available string variables are job_id and the keys in the MediaConvertOutput tech meatdata hash
+      # @!attribute [w] output_label_format sprintf format for output ids (default: "%{basename}" if output_url is preset
+      #                  otherwise "%{suffix}")
+      #                  Available string variables are job_id, basename, and the keys in the MediaConvertOutput tech metadata hash
+      attr_writer :log_group, :queue, :output_id_format, :output_label_format
 
       # Creates a [CloudWatch Logs]
       # (https://aws.amazon.com/cloudwatch/) log group and an EventBridge rule to forward status
@@ -365,10 +370,12 @@ module ActiveEncode
           output.updated_at = job.timing.finish_time || job.timing.start_time || output.created_at
 
           [:width, :height, :frame_rate, :duration, :checksum, :audio_codec, :video_codec,
-           :audio_bitrate, :video_bitrate, :file_size, :label, :url, :id].each do |field|
+           :audio_bitrate, :video_bitrate, :file_size, :url].each do |field|
             output.send("#{field}=", tech_md[field])
           end
-          output.id ||= "#{job.id}-output#{tech_md[:suffix]}"
+          output.id = format(output_id_format, tech_md.merge(job_id: job.id))
+          file_basename = File.basename(tech_md[:url])
+          output.label = format(output_label_format(file_basename), tech_md.merge(job_id: job.id, basename: file_basename))
           output
         end
 
@@ -386,12 +393,13 @@ module ActiveEncode
           output = ActiveEncode::Output.new
           output.created_at = job.timing.submit_time
           output.updated_at = job.timing.finish_time || job.timing.start_time || output.created_at
-          output.id = "#{job.id}-output-auto"
+          output.id = format(output_id_format, outputs.first.tech_metadata.merge(job_id: job.id, suffix: '-auto'))
 
           [:duration, :audio_codec, :video_codec].each do |field|
             output.send("#{field}=", outputs.first.send(field))
           end
-          output.label = File.basename(adaptive_playlist_url)
+          file_basename = File.basename(adaptive_playlist_url)
+          output.label = format(output_label_format(file_basename), outputs.first.tech_metadata.merge(job_id: job.id, suffix: '-auto', basename: file_basename))
           output.url = adaptive_playlist_url
           outputs << output
         end
@@ -418,10 +426,12 @@ module ActiveEncode
           output.updated_at = job.timing.finish_time || job.timing.start_time || output.created_at
 
           [:width, :height, :frame_rate, :duration, :checksum, :audio_codec, :video_codec,
-           :audio_bitrate, :video_bitrate, :file_size, :label, :url, :id].each do |field|
+           :audio_bitrate, :video_bitrate, :file_size, :url].each do |field|
             output.send("#{field}=", tech_md[field])
           end
-          output.id ||= "#{job.id}-output#{tech_md[:suffix]}"
+          output.id = format(output_id_format, tech_md.merge(job_id: job.id))
+          file_basename = File.basename(tech_md[:url])
+          output.label = format(output_label_format(file_basename), tech_md.merge(job_id: job.id, basename: file_basename))
           output
         end
 
@@ -430,12 +440,13 @@ module ActiveEncode
           output = ActiveEncode::Output.new
           output.created_at = job.timing.submit_time
           output.updated_at = job.timing.finish_time || job.timing.start_time || output.created_at
-          output.id = "#{job.id}-output-auto"
+          output.id = format(output_id_format, outputs.first.tech_metadata.merge(job_id: job.id, suffix: '-auto'))
 
           [:duration, :audio_codec, :video_codec].each do |field|
             output.send("#{field}=", outputs.first.send(field))
           end
-          output.label = File.basename(adaptive_playlist)
+          file_basename = File.basename(adaptive_playlist)
+          output.label = format(output_label_format(file_basename), outputs.first.tech_metadata.merge(job_id: job.id, suffix: '-auto', basename: file_basename))
           output.url = adaptive_playlist
           outputs << output
         end
@@ -482,6 +493,14 @@ module ActiveEncode
           endpoint = Aws::MediaConvert::Client.new.describe_endpoints.endpoints.first.url
           Aws::MediaConvert::Client.new(endpoint: endpoint)
         end
+      end
+
+      def output_id_format
+        @output_id_format || "%{job_id}-output%{suffix}"
+      end
+
+      def output_label_format(file_basename)
+        @output_label_format || (file_basename.present? ? "%{basename}" : "%{suffix}")
       end
 
       def s3client

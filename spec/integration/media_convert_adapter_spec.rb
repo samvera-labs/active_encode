@@ -247,6 +247,36 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
         expect(error.encode.state).to eq(:completed)
       end
     end
+
+    context "custom output id format" do
+      let(:expected_ids) do
+        ["1625859001514-vvqfwj-auto", "1625859001514-vvqfwj-1080", "1625859001514-vvqfwj-720", "1625859001514-vvqfwj-540"]
+      end
+      around(:example) do |example|
+        ActiveEncode::Base.engine_adapter.output_id_format = "%{job_id}%{suffix}"
+        example.run
+        ActiveEncode::Base.engine_adapter.output_id_format = nil
+      end
+
+      it 'creates outputs with custom id format' do
+        expect(completed_job.output.map(&:id)).to contain_exactly(*expected_ids)
+      end
+    end
+
+    context "custom output label format" do
+      let(:expected_labels) do
+        ["H_264-auto", "H_264-1080", "H_264-720", "H_264-540"]
+      end
+      around(:example) do |example|
+        ActiveEncode::Base.engine_adapter.output_label_format = "%{video_codec}%{suffix}"
+        example.run
+        ActiveEncode::Base.engine_adapter.output_label_format = nil
+      end
+
+      it 'creates outputs with custom id format' do
+        expect(completed_job.output.map(&:label)).to contain_exactly(*expected_labels)
+      end
+    end
   end
 
   describe "direct_output_lookup" do
@@ -268,6 +298,36 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
       expect(cloudwatch_logs).not_to receive(:get_query_results)
 
       completed_job
+    end
+
+    context "custom output id format" do
+      let(:expected_ids) do
+        ["1625859001514-vvqfwj-auto", "1625859001514-vvqfwj-1080", "1625859001514-vvqfwj-720", "1625859001514-vvqfwj-540"]
+      end
+      around(:example) do |example|
+        ActiveEncode::Base.engine_adapter.output_id_format = "%{job_id}%{suffix}"
+        example.run
+        ActiveEncode::Base.engine_adapter.output_id_format = nil
+      end
+
+      it 'creates outputs with custom id format' do
+        expect(completed_job.output.map(&:id)).to contain_exactly(*expected_ids)
+      end
+    end
+
+    context "custom output label format" do
+      let(:expected_labels) do
+        ["H_264-auto", "H_264-1080", "H_264-720", "H_264-540"]
+      end
+      around(:example) do |example|
+        ActiveEncode::Base.engine_adapter.output_label_format = "%{video_codec}%{suffix}"
+        example.run
+        ActiveEncode::Base.engine_adapter.output_label_format = nil
+      end
+
+      it 'creates outputs with custom id format' do
+        expect(completed_job.output.map(&:label)).to contain_exactly(*expected_labels)
+      end
     end
   end
 

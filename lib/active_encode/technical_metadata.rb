@@ -36,5 +36,11 @@ module ActiveEncode
         send("#{field}=", metadata[field]) if metadata.key?(field)
       end
     end
+
+    def tech_metadata
+      [:width, :height, :frame_rate, :duration, :file_size, :checksum,
+       :audio_codec, :video_codec, :audio_bitrate, :video_bitrate, :subtitles,
+       :format, :language].index_with { |field| send(field) }
+    end
   end
 end
