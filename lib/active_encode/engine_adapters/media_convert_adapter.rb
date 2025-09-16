@@ -338,16 +338,18 @@ module ActiveEncode
 
         output_group_details  = job.dig("output_group_details", 0, "output_details")
         file_input_url        = job.dig("settings", "inputs", 0, "file_input")
+        output_group_type     = output_group_settings.type.downcase.to_sym
+        output_destination    = output_group_settings[output_group_type].destination
 
         outputs = output_group_details.map.with_index do |output_group_detail, index|
           # Right now we only know how to get a URL for hls output, although
           # the others should be possible and very analagous, just not familiar with them.
           if output_group_settings.type == "HLS_GROUP_SETTINGS"
             output_url = MediaConvertOutput.construct_output_url(
-              destination: output_group_settings.hls_group_settings.destination,
+              destination: output_destination,
               file_input_url: file_input_url,
               name_modifier: output_settings[index].name_modifier,
-              file_suffix: "m3u8"
+              file_suffix: output_settings[index].container_settings.container.downcase
             )
           end
 
