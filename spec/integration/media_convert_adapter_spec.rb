@@ -404,6 +404,84 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
           end
         end
       end
+
+      context "with audio file" do
+        let(:completed_job) do
+          mediaconvert.stub_responses(:get_job, reconstitute_response("media_convert/job_completed.audio.file.json"))
+          ActiveEncode::Base.find(job_id)
+        end
+
+        let(:input_tech_metadata) do
+          {}
+        end
+
+        let(:completed_output) do
+          [
+            { id: "1756412134553-fgf5ku-outputquality-high", url: "s3://output-bucket/active-encode-test/output/meowquality-high.mp4",
+              label: "meowquality-high.mp4", audio_bitrate: 320_000, audio_codec: "AAC", duration: 1271 },
+            { id: "1756412134553-fgf5ku-outputquality-medium", url: "s3://output-bucket/active-encode-test/output/meowquality-medium.mp4",
+              label: "meowquality-medium.mp4", audio_bitrate: 128_000, audio_codec: "AAC", duration: 1271 }
+          ]
+        end
+
+        it "contains input technical metadata" do
+          input_tech_metadata.each_pair do |key, value|
+            expect(completed_job.input.send(key)).to eq(value)
+          end
+        end
+
+        it "contains all expected outputs" do
+          completed_output.each do |expected_output|
+            found_output = completed_job.output.find { |output| output.id == expected_output[:id] }
+            expected_output.each_pair do |key, value|
+              expect(found_output.send(key)).to eq(value)
+            end
+          end
+        end
+
+        context "with use_probe" do
+          let(:completed_job) do
+            mediaconvert.stub_responses(:get_job, reconstitute_response("media_convert/job_completed.audio.file.json"))
+            mediaconvert.stub_responses(:probe, [reconstitute_response("media_convert/input_probe.audio.json"), reconstitute_response("media_convert/output_probe.audio.high.json"), reconstitute_response("media_convert/output_probe.audio.medium.json")])
+
+            ActiveEncode::Base.find(job_id)
+          end
+
+          let(:input_tech_metadata) do
+            { file_size: 218_094 }
+          end
+
+          let(:completed_output) do
+            [
+              { id: "1756412134553-fgf5ku-outputquality-high", url: "s3://output-bucket/active-encode-test/output/meowquality-high.mp4",
+                label: "meowquality-high.mp4", audio_bitrate: 320_000, audio_codec: "AAC", duration: 1277.0975056689342 },
+              { id: "1756412134553-fgf5ku-outputquality-medium", url: "s3://output-bucket/active-encode-test/output/meowquality-medium.mp4",
+                label: "meowquality-medium.mp4", audio_bitrate: 128_000, audio_codec: "AAC", duration: 1277.0975056689342 }
+            ]
+          end
+
+          around(:example) do |example|
+            ActiveEncode::Base.engine_adapter.use_probe = true
+            example.run
+            ActiveEncode::Base.engine_adapter.use_probe = false
+          end
+
+          it "contains input technical metadata" do
+            input_tech_metadata.each_pair do |key, value|
+              expect(completed_job.input.send(key)).to eq(value)
+            end
+          end
+
+          it "contains all expected outputs" do
+            completed_output.each do |expected_output|
+              found_output = completed_job.output.find { |output| output.id == expected_output[:id] }
+              expected_output.each_pair do |key, value|
+                expect(found_output.send(key)).to eq(value)
+              end
+            end
+          end
+        end
+      end
     end
   end
 
