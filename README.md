@@ -1,8 +1,8 @@
 # ActiveEncode
 
 Code: [![Version](https://badge.fury.io/rb/active_encode.png)](http://badge.fury.io/rb/active_encode)
-[![Build Status](https://travis-ci.org/samvera-labs/active_encode.png?branch=master)](https://travis-ci.org/samvera-labs/active_encode)
-[![Coverage Status](https://coveralls.io/repos/github/samvera-labs/active_encode/badge.svg?branch=master)](https://coveralls.io/github/samvera-labs/active_encode?branch=master)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/samvera-labs/active_encode/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/samvera-labs/active_encode/tree/main)
+[![Coverage Status](https://coveralls.io/repos/github/samvera-labs/active_encode/badge.svg?branch=main)](https://coveralls.io/github/samvera-labs/active_encode?branch=main)
 
 Docs: [![Contribution Guidelines](http://img.shields.io/badge/CONTRIBUTING-Guidelines-blue.svg)](./CONTRIBUTING.md)
 [![Apache 2.0 License](http://img.shields.io/badge/APACHE2-license-blue.svg)](./LICENSE)
@@ -11,7 +11,7 @@ Jump in: [![Slack Status](http://slack.samvera.org/badge.svg)](http://slack.samv
 
 # What is ActiveEncode?
 
-ActiveEncode serves as the basis for the interface between a Ruby (Rails) application and a provider of encoding services such as [FFmpeg](https://www.ffmpeg.org/), [Amazon Elastic Transcoder](http://aws.amazon.com/elastictranscoder/), and [Zencoder](http://zencoder.com).
+ActiveEncode serves as the basis for the interface between a Ruby (Rails) application and a provider of encoding services such as [FFmpeg](https://www.ffmpeg.org/), [Amazon Elastic Transcoder](http://aws.amazon.com/elastictranscoder/), and [AWS Elemental MediaConvert](https://aws.amazon.com/mediaconvert/).
 
 # Help
 
@@ -39,31 +39,54 @@ FFmpeg (tested with version 4+) and mediainfo (version 17.10+) need to be instal
 
 ## Usage
 
-Set the engine adapter (default: test), configure it (if neccessary), then submit encoding jobs!
+Set the engine adapter (default: test), configure it (if neccessary), then submit encoding jobs. The outputs option specifies the output(s) to create in an adapter-specific way, see individual adapter documentation.
 
 ```ruby
 ActiveEncode::Base.engine_adapter = :ffmpeg
 file = "file://#{File.absolute_path "spec/fixtures/fireworks.mp4"}"
 ActiveEncode::Base.create(file, { outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: "mp4"}, { label: "high", ffmpeg_opt: "-s 1280x720", extension: "mp4"}] })
 ```
-Create returns an encoding job that has been submitted to the adapter for processing.  At this point it will have an id, a state, the input, and any additional information the adapter returns.
 
-```ruby
-#<ActiveEncode::Base:0x007f8ef3b2ae88 @input=#<ActiveEncode::Input:0x007f8ef3b23188 @url="file:///Users/cjcolvar/Documents/Code/samvera-labs/active_encode/spec/fixtures/fireworks.mp4", @width=960.0, @height=540.0, @frame_rate=29.671, @duration=6024, @file_size=1629578, @audio_codec="mp4a-40-2", @video_codec="avc1", @audio_bitrate=69737, @video_bitrate=2092780, @created_at=2018-12-03 14:22:05 -0500, @updated_at=2018-12-03 14:22:05 -0500, @id=7653>, @options={:outputs=>[{:label=>"low", :ffmpeg_opt=>"-s 640x480", :extension=>"mp4"}, {:label=>"high", :ffmpeg_opt=>"-s 1280x720", :extension=>"mp4"}]}, @id="1e4a907a-ccff-494f-ad70-b1c5072c2465", @created_at=2018-12-03 14:22:05 -0500, @updated_at=2018-12-03 14:22:05 -0500, @current_operations=[], @output=[], @state=:running, @percent_complete=1, @errors=[]>
-```
+Create returns an encoding job (which we sometimes call "an encode object") that has been submitted to the adapter for processing.  At this point it will have an id, a state, the input url, and possibly additional adapter-specific metadata.
+
 ```ruby
 encode.id  # "1e4a907a-ccff-494f-ad70-b1c5072c2465"
 encode.state  # :running
+encode.input.url
 ```
 
-This encode can be looked back up later using #find.  Alternatively, use #reload to refresh an instance with the latest information from the adapter:
+At this point the encode is not complete. You can check on status by looking up the encode by id, or by calling #reload on an existing encode object to refresh it:
 
 ```ruby
 encode = ActiveEncode::Base.find("1e4a907a-ccff-494f-ad70-b1c5072c2465")
+# or
 encode.reload
+
+encode.percent_complete
+encode.status # running, cancelled, failed, completed
+encode.errors # array of errors in case of status `failed`
 ```
 
-Progress of a running encode is shown with current operations (multiple are possible when outputs are generated in parallel) and percent complete.  Technical metadata about the input file may be added by the adapter.  This should include a mime type, checksum, duration, and basic technical details of the audio and video content of the file (codec, audio channels, bitrate, frame rate, and dimensions).  Outputs are added once they are created and should include the same technical metadata along with an id, label, and url.
+Progress of a running encode is shown with current operations (multiple are possible when outputs are generated in parallel) and percent complete.
+
+Technical metadata about the input file may be added by some adapters, and may be available before completion.  This should include a mime type, checksum, duration, and basic technical details of the audio and video content of the file (codec, audio channels, bitrate, frame rate, and dimensions).
+
+```ruby
+encode.input.url
+encode.input.height
+encode.input.width
+encode.input.checksum
+# etc
+```
+
+Outputs are added once they are created and should include the same technical metadata along with an id, label, and url.
+
+```ruby
+output = encode.outputs.first
+output.url
+output.id
+output.width
+```
 
 If you want to stop the encoding job call cancel:
 
@@ -72,7 +95,7 @@ encode.cancel!
 encode.cancelled?  # true
 ```
 
-An encoding job is meant to be the record of the work of the encoding engine and not the current state of the outputs.  Therefore moved or deleted outputs will not be reflected in the encoding job.
+An encode object is meant to be the record of the work of the encoding engine and not the current state of the outputs.  Therefore moved or deleted outputs will not be reflected in the encode object.
 
 ### AWS ElasticTranscoder
 
@@ -103,6 +126,37 @@ Create the job:
 file = 'file:///path/to/file/fireworks.mp4' # or 's3://my-bucket/fireworks.mp4'
 encode = ActiveEncode::Base.create(file, options)
 ```
+
+### AWS Elemental MediaCovert
+
+[MediaConvert](https://aws.amazon.com/mediaconvert/) is a newer AWS service than Elastic Transcoder. The MediaConvert adapter works using [output presets]((https://docs.aws.amazon.com/mediaconvert/latest/ug/creating-preset-from-scratch.html)) defined in the MediaConvert service for your account. Some additional dependencies will need to be added to your project, see [Guide](./guides/media_convert_adapter.md).
+
+```ruby
+ActiveEncode::Base.engine_adapter = :media_convert
+ActiveEncode::Base.engine_adapter.role = 'arn:aws:iam::111111111111:role/name-of-role'
+ActiveEncode::Base.engine_adapter.output_bucket = 'name-of-bucket'
+
+# will create CloudWatch/EventBridge resources necessary to capture outputs,
+# only needs to be called once although is safe to call redundantly.
+ActiveEncode::Base.engine_adapter.setup!
+
+encode = ActiveEncode::Base.create(
+  "file://path/to/file.mp4",
+  {
+    masterfile_bucket: "name-of-my-masterfile_bucket"
+    output_prefix: "path/to/output/base_name_of_outputs",
+    use_original_url: true,
+    outputs: [
+      { preset: "my-hls-preset-high", modifier: "_high" },
+      { preset: "my-hls-preset-medium", modifier: "_medium" },
+      { preset: "my-hls-preset-low", modifier: "_low" },
+    ]
+  }
+)
+```
+
+See more details and guidance in our [longer guide](./guides/media_convert_adapter.md), or in comment docs in [adapter class](./lib/active_encode/engine_adapters/media_convert_adapter.rb).
+
 
 ### Custom jobs
 
@@ -136,7 +190,7 @@ module ActiveEncode
         # locally queued job.
 
         # Return an instance ActiveEncode::Base (or subclass) that represents
-        # the encoding job that was just started.        
+        # the encoding job that was just started.
       end
 
       def find(id, opts = {})
@@ -192,6 +246,12 @@ RSpec.describe MyCustomAdapter do
   it_behaves_like 'an ActiveEncode::EngineAdapter'
 end
 ```
+
+## Contributing 
+
+If you're working on PR for this project, create a feature branch off of `main`. 
+
+This repository follows the [Samvera Community Code of Conduct](https://samvera.atlassian.net/wiki/spaces/samvera/pages/405212316/Code+of+Conduct) and [language recommendations](https://github.com/samvera/maintenance/blob/main/templates/CONTRIBUTING.md#language).  Please ***do not*** create a branch called `master` for this repository or as part of your pull request; the branch will either need to be removed or renamed before it can be considered for inclusion in the code base and history of this repository.
 
 # Acknowledgments
 

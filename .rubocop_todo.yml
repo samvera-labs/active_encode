@@ -8,6 +8,7 @@ Metrics/AbcSize:
 Metrics/BlockLength:
   Exclude:
     - 'lib/active_encode/spec/shared_specs/*'
+    - 'lib/active_encode/engine_adapters/media_convert_adapter.rb'
     - 'spec/**/*'
 
 Metrics/BlockNesting:
@@ -18,24 +19,32 @@ Metrics/ClassLength:
   Exclude:
     - 'lib/active_encode/engine_adapters/*'
 
+Metrics/ModuleLength:
+  Exclude:
+    - 'lib/active_encode/engine_adapters/*'
+
 Metrics/CyclomaticComplexity:
   Exclude:
+    - 'lib/active_encode/engine_adapters/elastic_transcoder_adapter.rb'
     - 'lib/active_encode/engine_adapters/ffmpeg_adapter.rb'
-    - 'lib/active_encode/engine_adapters/zencoder_adapter.rb'
+    - 'lib/active_encode/engine_adapters/media_convert_adapter.rb'
+    - 'lib/active_encode/engine_adapters/media_convert_output.rb'
 
-Metrics/LineLength:
+Layout/LineLength:
   Exclude:
-    - 'lib/active_encode/engine_adapters/matterhorn_adapter.rb'
     - 'spec/**/*'
 
 Metrics/MethodLength:
   Exclude:
     - 'lib/active_encode/engine_adapters/*'
+    - 'lib/active_encode/engine_adapters/ffmpeg_adapter/*'
     - 'lib/file_locator.rb'
 
 Metrics/PerceivedComplexity:
   Exclude:
     - 'lib/active_encode/engine_adapters/ffmpeg_adapter.rb'
+    - 'lib/active_encode/engine_adapters/media_convert_adapter.rb'
+    - 'lib/active_encode/engine_adapters/media_convert_output.rb'
     - 'lib/file_locator.rb'
 
 RSpec/AnyInstance:
@@ -53,7 +62,6 @@ RSpec/InstanceVariable:
 
 RSpec/MessageSpies:
   Exclude:
-    - 'spec/integration/matterhorn_adapter_spec.rb'
     - 'spec/integration/ffmpeg_adapter_spec.rb'
 
 RSpec/NamedSubject:

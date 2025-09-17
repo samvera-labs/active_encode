@@ -1,4 +1,4 @@
 # frozen_string_literal: true
 module ActiveEncode
-  VERSION = '0.8.2'
+  VERSION = '1.3.0'
 end

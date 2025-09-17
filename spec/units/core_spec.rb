@@ -128,6 +128,7 @@ describe ActiveEncode::Core do
   end
 
   describe '#new' do
+    subject { encode.options }
     before do
       class DefaultOptionsEncode < ActiveEncode::Base
         def self.default_options(_input_url)
@@ -139,7 +140,6 @@ describe ActiveEncode::Core do
       Object.send(:remove_const, :DefaultOptionsEncode)
     end
 
-    subject { encode.options }
     let(:encode_class) { DefaultOptionsEncode }
     let(:default_options) { { preset: 'video' } }
     let(:options) { { output: [{ label: 'high', ffmpeg_opt: "640x480" }] } }

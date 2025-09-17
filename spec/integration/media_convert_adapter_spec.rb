@@ -40,12 +40,16 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
   let(:cloudwatch_events) { Aws::CloudWatchEvents::Client.new(stub_responses: true) }
   let(:cloudwatch_logs) { Aws::CloudWatchLogs::Client.new(stub_responses: true) }
 
+  let(:s3client) { Aws::S3::Client.new(stub_responses: true) }
+
   before do
     mediaconvert.stub_responses(:describe_endpoints, reconstitute_response("media_convert/endpoints.json"))
+    mediaconvert.stub_responses(:probe, reconstitute_response("media_convert/input_probe.json"))
 
     allow(Aws::MediaConvert::Client).to receive(:new).and_return(mediaconvert)
     allow(Aws::CloudWatchEvents::Client).to receive(:new).and_return(cloudwatch_events)
     allow(Aws::CloudWatchLogs::Client).to receive(:new).and_return(cloudwatch_logs)
+    allow(Aws::S3::Client).to receive(:new).and_return(s3client)
   end
 
   let(:created_job) do
@@ -83,6 +87,7 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
     mediaconvert.stub_responses(:get_job, reconstitute_response("media_convert/job_completed.json"))
     cloudwatch_logs.stub_responses(:start_query, reconstitute_response("media_convert/job_completed_detail_query.json"))
     cloudwatch_logs.stub_responses(:get_query_results, reconstitute_response("media_convert/job_completed_detail.json"))
+    mediaconvert.stub_responses(:probe, [reconstitute_response("media_convert/input_probe.json"), reconstitute_response("media_convert/output_probe.high.json"), reconstitute_response("media_convert/output_probe.medium.json"), reconstitute_response("media_convert/output_probe.low.json")])
 
     ActiveEncode::Base.find(job_id)
   end
@@ -118,10 +123,84 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
         video_bitrate: 3_500_000, height: 540, width: 960, video_codec: "H_264", frame_rate: 29.97 }
     ]
   end
+
+  let(:input_tech_metadata) do
+    { width: 200, height: 110, frame_rate: 23.72, duration: 6314.666666666667, file_size: 199_160, audio_codec: "AAC",
+      video_codec: "AVC", audio_bitrate: 171_030, video_bitrate: 74_475 }
+  end
   let(:completed_tech_metadata) { {} }
   let(:failed_tech_metadata) { {} }
 
   it_behaves_like "an ActiveEncode::EngineAdapter"
+
+  describe "output location specification" do
+    let(:operations) { mediaconvert.api_requests(exclude_presign: true) }
+    before do
+      mediaconvert.stub_responses(:create_job, reconstitute_response("media_convert/job_created.json"))
+    end
+
+    it "can use output_bucket and output_prefix" do
+      ActiveEncode::Base.create(
+        "s3://input-bucket/test_files/source_file.mp4",
+        output_prefix: "active-encode-test/output",
+        outputs: [],
+        use_original_url: true
+      )
+      create_job_operation = operations.find { |o| o[:operation_name] == :create_job }
+      expect(create_job_operation).to be_present
+
+      destination = create_job_operation.dig(:params, :settings, :output_groups, 0,
+        :output_group_settings, :hls_group_settings, :destination)
+
+      expect(destination).to eq("s3://output-bucket/active-encode-test/output")
+    end
+
+    it "can use destination arg" do
+      ActiveEncode::Base.create(
+        "s3://input-bucket/test_files/source_file.mp4",
+        destination: "s3://alternate-output-bucket/my-path/output",
+        outputs: [],
+        use_original_url: true
+      )
+      create_job_operation = operations.find { |o| o[:operation_name] == :create_job }
+      expect(create_job_operation).to be_present
+
+      destination = create_job_operation.dig(:params, :settings, :output_groups, 0,
+        :output_group_settings, :hls_group_settings, :destination)
+
+      expect(destination).to eq("s3://alternate-output-bucket/my-path/output")
+    end
+  end
+
+  describe "output_group_destination_settings" do
+    let(:operations) { mediaconvert.api_requests(exclude_presign: true) }
+    before do
+      mediaconvert.stub_responses(:create_job, reconstitute_response("media_convert/job_created.json"))
+    end
+
+    it "are sent to MediaConvert" do
+      ActiveEncode::Base.create(
+        "s3://input-bucket/test_files/source_file.mp4",
+        destination: "s3://alternate-output-bucket/my-path/output",
+        outputs: [],
+        use_original_url: true,
+        output_group_destination_settings: {
+          s3_settings: {
+            access_control: {
+              canned_acl: "PUBLIC_READ"
+            }
+          }
+        }
+      )
+
+      create_job_operation = operations.find { |o| o[:operation_name] == :create_job }
+      expect(create_job_operation).to be_present
+
+      destination_settings = create_job_operation.dig(:params, :settings, :output_groups, 0,
+        :output_group_settings, :hls_group_settings, :destination_settings)
+      expect(destination_settings).to eq({ s3_settings: { access_control: { canned_acl: "PUBLIC_READ" } } })
+    end
+  end
 
   describe "queue" do
     let(:operations) { mediaconvert.api_requests(exclude_presign: true) }
@@ -173,6 +252,283 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
         expect(error).to be_a(ActiveEncode::EngineAdapters::MediaConvertAdapter::ResultsNotAvailable)
         expect(error.encode).to be_a(ActiveEncode::Base)
         expect(error.encode.state).to eq(:completed)
+      end
+    end
+
+    context "custom output id format" do
+      let(:expected_ids) do
+        ["1625859001514-vvqfwj-auto", "1625859001514-vvqfwj-1080", "1625859001514-vvqfwj-720", "1625859001514-vvqfwj-540"]
+      end
+      around(:example) do |example|
+        ActiveEncode::Base.engine_adapter.output_id_format = "%{job_id}%{suffix}"
+        example.run
+        ActiveEncode::Base.engine_adapter.output_id_format = nil
+      end
+
+      it 'creates outputs with custom id format' do
+        expect(completed_job.output.map(&:id)).to contain_exactly(*expected_ids)
+      end
+    end
+
+    context "custom output label format" do
+      let(:expected_labels) do
+        ["H_264-auto", "H_264-1080", "H_264-720", "H_264-540"]
+      end
+      around(:example) do |example|
+        ActiveEncode::Base.engine_adapter.output_label_format = "%{video_codec}%{suffix}"
+        example.run
+        ActiveEncode::Base.engine_adapter.output_label_format = nil
+      end
+
+      it 'creates outputs with custom id format' do
+        expect(completed_job.output.map(&:label)).to contain_exactly(*expected_labels)
+      end
+    end
+
+    context "using probe endpoint" do
+      around(:example) do |example|
+        ActiveEncode::Base.engine_adapter.use_probe = true
+        example.run
+        ActiveEncode::Base.engine_adapter.use_probe = false
+      end
+
+      it "contains input technical metadata" do
+        input_tech_metadata.each_pair do |key, value|
+          expect(completed_job.input.send(key)).to eq(value)
+        end
+      end
+    end
+  end
+
+  describe "direct_output_lookup" do
+    before do
+      ActiveEncode::Base.engine_adapter.direct_output_lookup = true
+    end
+
+    it "contains all expected outputs" do
+      completed_output.each do |expected_output|
+        found_output = completed_job.output.find { |output| output.id == expected_output[:id] }
+        expected_output.each_pair do |key, value|
+          expect(found_output.send(key)).to eq(value)
+        end
+      end
+    end
+
+    it "does not make cloudwatch queries" do
+      expect(cloudwatch_logs).not_to receive(:start_query)
+      expect(cloudwatch_logs).not_to receive(:get_query_results)
+
+      completed_job
+    end
+
+    context "custom output id format" do
+      let(:expected_ids) do
+        ["1625859001514-vvqfwj-auto", "1625859001514-vvqfwj-1080", "1625859001514-vvqfwj-720", "1625859001514-vvqfwj-540"]
+      end
+      around(:example) do |example|
+        ActiveEncode::Base.engine_adapter.output_id_format = "%{job_id}%{suffix}"
+        example.run
+        ActiveEncode::Base.engine_adapter.output_id_format = nil
+      end
+
+      it 'creates outputs with custom id format' do
+        expect(completed_job.output.map(&:id)).to contain_exactly(*expected_ids)
+      end
+    end
+
+    context "custom output label format" do
+      let(:expected_labels) do
+        ["H_264-auto", "H_264-1080", "H_264-720", "H_264-540"]
+      end
+      around(:example) do |example|
+        ActiveEncode::Base.engine_adapter.output_label_format = "%{video_codec}%{suffix}"
+        example.run
+        ActiveEncode::Base.engine_adapter.output_label_format = nil
+      end
+
+      it 'creates outputs with custom id format' do
+        expect(completed_job.output.map(&:label)).to contain_exactly(*expected_labels)
+      end
+    end
+
+    context "using probe endpoint" do
+      around(:example) do |example|
+        ActiveEncode::Base.engine_adapter.use_probe = true
+        example.run
+        ActiveEncode::Base.engine_adapter.use_probe = false
+      end
+
+      it "contains input technical metadata" do
+        input_tech_metadata.each_pair do |key, value|
+          expect(completed_job.input.send(key)).to eq(value)
+        end
+      end
+
+      it "contains all expected outputs" do
+        completed_output.each do |expected_output|
+          found_output = completed_job.output.find { |output| output.id == expected_output[:id] }
+          expected_output.each_pair do |key, value|
+            expect(found_output.send(key)).to eq(value)
+          end
+        end
+      end
+    end
+
+    context "with file output group" do
+      let(:completed_job) do
+        mediaconvert.stub_responses(:get_job, reconstitute_response("media_convert/job_completed.file.json"))
+        mediaconvert.stub_responses(:probe, [reconstitute_response("media_convert/input_probe.json"), reconstitute_response("media_convert/output_probe.high.json"), reconstitute_response("media_convert/output_probe.medium.json"), reconstitute_response("media_convert/output_probe.low.json")])
+
+        ActiveEncode::Base.find(job_id)
+      end
+
+      let(:completed_output) do
+        [
+          { id: "1625859001514-vvqfwj-output-1080", url: "s3://output-bucket/active-encode-test/output-1080.mp4",
+            label: "output-1080.mp4", audio_bitrate: 128_000, audio_codec: "AAC", duration: 888_020,
+            video_bitrate: 8_500_000, height: 1080, width: 1920, video_codec: "H_264", frame_rate: 29.97 },
+          { id: "1625859001514-vvqfwj-output-720", url: "s3://output-bucket/active-encode-test/output-720.mp4",
+            label: "output-720.mp4", audio_bitrate: 96_000, audio_codec: "AAC", duration: 888_020,
+            video_bitrate: 5_000_000, height: 720, width: 1280, video_codec: "H_264", frame_rate: 29.97 },
+          { id: "1625859001514-vvqfwj-output-540", url: "s3://output-bucket/active-encode-test/output-540.mp4",
+            label: "output-540.mp4", audio_bitrate: 96_000, audio_codec: "AAC", duration: 888_020,
+            video_bitrate: 3_500_000, height: 540, width: 960, video_codec: "H_264", frame_rate: 29.97 }
+        ]
+      end
+
+      it "contains all expected outputs" do
+        completed_output.each do |expected_output|
+          found_output = completed_job.output.find { |output| output.id == expected_output[:id] }
+          expected_output.each_pair do |key, value|
+            expect(found_output.send(key)).to eq(value)
+          end
+        end
+      end
+
+      context "with audio file" do
+        let(:completed_job) do
+          mediaconvert.stub_responses(:get_job, reconstitute_response("media_convert/job_completed.audio.file.json"))
+          ActiveEncode::Base.find(job_id)
+        end
+
+        let(:input_tech_metadata) do
+          {}
+        end
+
+        let(:completed_output) do
+          [
+            { id: "1756412134553-fgf5ku-outputquality-high", url: "s3://output-bucket/active-encode-test/output/meowquality-high.mp4",
+              label: "meowquality-high.mp4", audio_bitrate: 320_000, audio_codec: "AAC", duration: 1271 },
+            { id: "1756412134553-fgf5ku-outputquality-medium", url: "s3://output-bucket/active-encode-test/output/meowquality-medium.mp4",
+              label: "meowquality-medium.mp4", audio_bitrate: 128_000, audio_codec: "AAC", duration: 1271 }
+          ]
+        end
+
+        it "contains input technical metadata" do
+          input_tech_metadata.each_pair do |key, value|
+            expect(completed_job.input.send(key)).to eq(value)
+          end
+        end
+
+        it "contains all expected outputs" do
+          completed_output.each do |expected_output|
+            found_output = completed_job.output.find { |output| output.id == expected_output[:id] }
+            expected_output.each_pair do |key, value|
+              expect(found_output.send(key)).to eq(value)
+            end
+          end
+        end
+
+        context "with use_probe" do
+          let(:completed_job) do
+            mediaconvert.stub_responses(:get_job, reconstitute_response("media_convert/job_completed.audio.file.json"))
+            mediaconvert.stub_responses(:probe, [reconstitute_response("media_convert/input_probe.audio.json"), reconstitute_response("media_convert/output_probe.audio.high.json"), reconstitute_response("media_convert/output_probe.audio.medium.json")])
+
+            ActiveEncode::Base.find(job_id)
+          end
+
+          let(:input_tech_metadata) do
+            { file_size: 218_094 }
+          end
+
+          let(:completed_output) do
+            [
+              { id: "1756412134553-fgf5ku-outputquality-high", url: "s3://output-bucket/active-encode-test/output/meowquality-high.mp4",
+                label: "meowquality-high.mp4", audio_bitrate: 320_000, audio_codec: "AAC", duration: 1277.0975056689342 },
+              { id: "1756412134553-fgf5ku-outputquality-medium", url: "s3://output-bucket/active-encode-test/output/meowquality-medium.mp4",
+                label: "meowquality-medium.mp4", audio_bitrate: 128_000, audio_codec: "AAC", duration: 1277.0975056689342 }
+            ]
+          end
+
+          around(:example) do |example|
+            ActiveEncode::Base.engine_adapter.use_probe = true
+            example.run
+            ActiveEncode::Base.engine_adapter.use_probe = false
+          end
+
+          it "contains input technical metadata" do
+            input_tech_metadata.each_pair do |key, value|
+              expect(completed_job.input.send(key)).to eq(value)
+            end
+          end
+
+          it "contains all expected outputs" do
+            completed_output.each do |expected_output|
+              found_output = completed_job.output.find { |output| output.id == expected_output[:id] }
+              expected_output.each_pair do |key, value|
+                expect(found_output.send(key)).to eq(value)
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+
+  describe "#s3_uri" do
+    context "when filename has no special characters" do
+      context "non-s3 file" do
+        let(:input_url) { "spec/fixtures/fireworks.mp4" }
+        let(:source_bucket) { "bucket1" }
+
+        it "calls the #upload_to_s3 method" do
+          allow(SecureRandom).to receive(:uuid).and_return("randomstring")
+          expect(described_class.new.send(:s3_uri, input_url, { masterfile_bucket: source_bucket })).to eq "randomstring/fireworks.mp4"
+        end
+      end
+      context "s3 file" do
+        let(:input_url) { "s3://bucket1/file.mp4" }
+        let(:source_bucket) { "bucket1" }
+
+        it "calls the #check_s3_bucket method" do
+          expect(described_class.new.send(:s3_uri, input_url, { masterfile_bucket: source_bucket })).to eq "file.mp4"
+        end
+      end
+    end
+    context "when filename has special characters" do
+      context "non-s3 file" do
+        let(:input) { ["'file_with_single_quote'.mp4", '"file_with_double_quote".mp4', "file with space.mp4", "file.with...periods.mp4", "file.with :=+%sp3c!l-ch4cts().mp4", '@ወዳጅህ ማር ቢ. ሆን ጨርስ. ህ አትላሰ!@#$^^&$%&.mp4'] }
+        let(:clean) { ["_file_with_single_quote_.mp4", "_file_with_double_quote_.mp4", "file_with_space.mp4", "filewithperiods.mp4", "filewith_____sp3c_l-ch4cts__.mp4", '__________________________________.mp4'] }
+        let(:source_bucket) { "bucket1" }
+
+        it "calls the #upload_to_s3 method" do
+          allow(SecureRandom).to receive(:uuid).and_return("randomstring")
+          input.each_with_index do |url, index|
+            expect(described_class.new.send(:s3_uri, "spec/fixtures/#{url}", { masterfile_bucket: source_bucket })).to eq "randomstring/#{clean[index]}"
+          end
+        end
+      end
+      context "s3 file" do
+        let(:input_urls) { ["s3://bucket1/'file_with_single_quote'.mp4", 's3://bucket1/"file_with_double_quote".mp4', "s3://bucket1/file with space.mp4", "s3://bucket1/file.with...periods.mp4", "s3://bucket1/file.with :=+%sp3c!l-ch4cts().mp4", 's3://bucket1/@ወዳጅህ ማር ቢ. ሆን ጨርስ. ህ አትላሰ!@#$^^&$%&.mp4'] }
+        let(:clean) { ["_file_with_single_quote_.mp4", "_file_with_double_quote_.mp4", "file_with_space.mp4", "filewithperiods.mp4", "filewith_____sp3c_l-ch4cts__.mp4", '__________________________________.mp4'] }
+        let(:source_bucket) { "bucket2" }
+
+        it "calls the #check_s3_bucket method" do
+          allow(SecureRandom).to receive(:uuid).and_return("randomstring")
+          input_urls.each_with_index do |url, index|
+            expect(described_class.new.send(:s3_uri, url, { masterfile_bucket: source_bucket })).to eq "randomstring/#{clean[index]}"
+          end
+        end
       end
     end
   end

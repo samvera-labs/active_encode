@@ -10,8 +10,8 @@ class FileLocator
 
     def initialize(uri)
       uri = Addressable::URI.parse(uri)
-      @bucket = URI.decode(uri.host)
-      @key = URI.decode(uri.path).sub(%r{^/*(.+)/*$}, '\1')
+      @bucket = Addressable::URI.unencode(uri.host)
+      @key = Addressable::URI.unencode(ActiveEncode.sanitize_uri(uri)).sub(%r{^/*(.+)/*$}, '\1')
     end
 
     def object
@@ -26,21 +26,21 @@ class FileLocator
   def uri
     if @uri.nil?
       if source.is_a? File
-        @uri = Addressable::URI.parse("file://#{URI.encode(File.expand_path(source))}")
+        @uri = Addressable::URI.parse("file://#{Addressable::URI.encode(File.expand_path(source))}")
       else
         encoded_source = source
         begin
           @uri = Addressable::URI.parse(encoded_source)
         rescue URI::InvalidURIError
           if encoded_source == source
-            encoded_source = URI.encode(encoded_source)
+            encoded_source = Addressable::URI.encode(encoded_source)
             retry
           else
             raise
           end
         end
 
-        @uri = Addressable::URI.parse("file://#{URI.encode(File.expand_path(source))}") if @uri.scheme.nil?
+        @uri = Addressable::URI.parse("file://#{Addressable::URI.encode(File.expand_path(source))}") if @uri.scheme.nil?
       end
     end
     @uri
@@ -51,7 +51,7 @@ class FileLocator
     when 's3'
       S3File.new(uri).object.presigned_url(:get)
     when 'file'
-      URI.decode(uri.path)
+      Addressable::URI.unencode(ActiveEncode.sanitize_uri(uri))
     else
       @uri.to_s
     end

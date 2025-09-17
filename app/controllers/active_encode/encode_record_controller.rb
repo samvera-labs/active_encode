@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 module ActiveEncode
-  class EncodeRecordController < ActionController::Base
+  class EncodeRecordController < ApplicationController
     rescue_from ActiveRecord::RecordNotFound do |e|
       render json: { message: e.message }, status: :not_found
     end

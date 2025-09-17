@@ -21,7 +21,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
   let!(:work_dir) { stub_const "ActiveEncode::EngineAdapters::FfmpegAdapter::WORK_DIR", @dir }
   let(:file) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'fireworks.mp4').to_s }
   let(:created_job) do
-    ActiveEncode::Base.create(file, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: "mp4" }, { label: "high", ffmpeg_opt: "-s 1280x720", extension: "mp4" }])
+    ActiveEncode::Base.create(file, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: "mp4" }, { label: "high", ffmpeg_opt: "-s 1280x720", extension: "mp4" }], extract_subtitles: true)
   end
   let(:running_job) do
     allow(Process).to receive(:getpgid).and_return 8888
@@ -37,6 +37,8 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
     encode
   end
   let(:completed_job) { find_encode "completed-id" }
+  let(:completed_with_warnings_job) { find_encode "completed-with-warnings-id" }
+  let(:incomplete_job) { find_encode "incomplete-id" }
   let(:failed_job) { find_encode 'failed-id' }
   let(:completed_tech_metadata) do
     {
@@ -110,6 +112,62 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       end
     end
 
+    context "input file format does not match extension" do
+      let(:improper_format_file) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_without_metadata.mp4').to_s }
+      let(:improper_format_job) { ActiveEncode::Base.create(improper_format_file, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }
+
+      it "returns the encode with correct error" do
+        expect(improper_format_job.errors).to include("Error inspecting input: #{improper_format_file}")
+        expect(improper_format_job.percent_complete).to be 1
+      end
+    end
+
+    context "input file with missing metadata" do
+      let(:file_without_metadata) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_without_metadata.webm').to_s }
+      let!(:create_without_metadata_job) { ActiveEncode::Base.create(file_without_metadata, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }
+      let(:find_without_metadata_job) { ActiveEncode::Base.find create_without_metadata_job.id }
+
+      it "does not have errors" do
+        sleep 2
+        expect(find_without_metadata_job.errors).to be_empty
+      end
+
+      it "has the input technical metadata in a file" do
+        expect(File.read("#{work_dir}/#{create_without_metadata_job.id}/input_metadata")).not_to be_empty
+      end
+
+      it "has the pid in a file" do
+        expect(File.read("#{work_dir}/#{create_without_metadata_job.id}/pid")).not_to be_empty
+      end
+
+      it "assigns the correct duration to the encode" do
+        expect(create_without_metadata_job.input.duration).to eq 4_640
+        expect(find_without_metadata_job.input.duration).to eq 4_640
+      end
+
+      context 'when uri encoded' do
+        let(:file_without_metadata) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_without_metadata.webm').to_s) }
+
+        it "does not have errors" do
+          sleep 2
+          expect(find_without_metadata_job.errors).to be_empty
+        end
+
+        it "has the input technical metadata in a file" do
+          expect(File.read("#{work_dir}/#{create_without_metadata_job.id}/input_metadata")).not_to be_empty
+        end
+
+        it "has the pid in a file" do
+          expect(File.read("#{work_dir}/#{create_without_metadata_job.id}/pid")).not_to be_empty
+        end
+
+        it "assigns the correct duration to the encode" do
+          expect(create_without_metadata_job.input.duration).to eq 4_640
+          expect(find_without_metadata_job.input.duration).to eq 4_640
+        end
+      end
+    end
+
     context "input filename with spaces" do
       let(:file_with_space) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file with space.mp4').to_s }
       let!(:create_space_job) { ActiveEncode::Base.create(file_with_space, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }
@@ -129,7 +187,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       end
 
       context 'when uri encoded' do
-        let(:file_with_space) { URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file with space.mp4').to_s) }
+        let(:file_with_space) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file with space.mp4').to_s) }
 
         it "does not have errors" do
           sleep 2
@@ -146,6 +204,184 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       end
     end
 
+    context "input filename with single quotes" do
+      let(:file_with_single_quote) { "file://" + Rails.root.join('..', 'spec', 'fixtures', "'file_with_single_quote'.mp4").to_s }
+      let!(:create_single_quote_job) { ActiveEncode::Base.create(file_with_single_quote, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }
+      let(:find_single_quote_job) { ActiveEncode::Base.find create_single_quote_job.id }
+
+      it "does not have errors" do
+        sleep 2
+        expect(find_single_quote_job.errors).to be_empty
+      end
+
+      it "has the input technical metadata in a file" do
+        expect(File.read("#{work_dir}/#{create_single_quote_job.id}/input_metadata")).not_to be_empty
+      end
+
+      it "has the pid in a file" do
+        expect(File.read("#{work_dir}/#{create_single_quote_job.id}/pid")).not_to be_empty
+      end
+
+      context 'when uri encoded' do
+        let(:file_with_single_quote) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', "'file_with_single_quote'.mp4").to_s) }
+
+        it "does not have errors" do
+          sleep 2
+          expect(find_single_quote_job.errors).to be_empty
+        end
+
+        it "has the input technical metadata in a file" do
+          expect(File.read("#{work_dir}/#{create_single_quote_job.id}/input_metadata")).not_to be_empty
+        end
+
+        it "has the pid in a file" do
+          expect(File.read("#{work_dir}/#{create_single_quote_job.id}/pid")).not_to be_empty
+        end
+      end
+    end
+
+    context "input filename with double quotes" do
+      let(:file_with_double_quote) { "file://" + Rails.root.join('..', 'spec', 'fixtures', '"file_with_double_quote".mp4').to_s }
+      let!(:create_double_quote_job) { ActiveEncode::Base.create(file_with_double_quote, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }
+      let(:find_double_quote_job) { ActiveEncode::Base.find create_double_quote_job.id }
+
+      it "does not have errors" do
+        sleep 2
+        expect(find_double_quote_job.errors).to be_empty
+      end
+
+      it "has the input technical metadata in a file" do
+        expect(File.read("#{work_dir}/#{create_double_quote_job.id}/input_metadata")).not_to be_empty
+      end
+
+      it "has the pid in a file" do
+        expect(File.read("#{work_dir}/#{create_double_quote_job.id}/pid")).not_to be_empty
+      end
+
+      context 'when uri encoded' do
+        let(:file_with_double_quote) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', '"file_with_double_quote".mp4').to_s) }
+
+        it "does not have errors" do
+          sleep 2
+          expect(find_double_quote_job.errors).to be_empty
+        end
+
+        it "has the input technical metadata in a file" do
+          expect(File.read("#{work_dir}/#{create_double_quote_job.id}/input_metadata")).not_to be_empty
+        end
+
+        it "has the pid in a file" do
+          expect(File.read("#{work_dir}/#{create_double_quote_job.id}/pid")).not_to be_empty
+        end
+      end
+    end
+
+    context "input filename with other special characters" do
+      let(:file_with_special_characters) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file.with :=+%sp3c!l-ch4cts().mp4').to_s }
+      let!(:create_special_characters_job) { ActiveEncode::Base.create(file_with_special_characters, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }
+      let(:find_special_characters_job) { ActiveEncode::Base.find create_special_characters_job.id }
+      let(:file_with_more_special_characters) { "file://" + Rails.root.join('..', 'spec', 'fixtures', '@ወዳጅህ ማር ቢ. ሆን ጨርስ. ህ አትላሰ!@#$^^&$%&.mp4').to_s }
+      let!(:create_more_special_characters_job) { ActiveEncode::Base.create(file_with_more_special_characters, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }
+      let(:find_more_special_characters_job) { ActiveEncode::Base.find create_more_special_characters_job.id }
+
+      it "does not have errors" do
+        sleep 2
+        expect(find_special_characters_job.errors).to be_empty
+        expect(find_more_special_characters_job.errors).to be_empty
+      end
+
+      it "has the input technical metadata in a file" do
+        expect(File.read("#{work_dir}/#{create_special_characters_job.id}/input_metadata")).not_to be_empty
+        expect(File.read("#{work_dir}/#{create_more_special_characters_job.id}/input_metadata")).not_to be_empty
+      end
+
+      it "has the pid in a file" do
+        expect(File.read("#{work_dir}/#{create_special_characters_job.id}/pid")).not_to be_empty
+        expect(File.read("#{work_dir}/#{create_more_special_characters_job.id}/pid")).not_to be_empty
+      end
+
+      context 'when uri encoded' do
+        let(:file_with_special_characters) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file.with :=+%sp3c!l-ch4cts().mp4').to_s) }
+        let(:file_with_more_special_characters) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', '@ወዳጅህ ማር ቢ. ሆን ጨርስ. ህ አትላሰ!@#$^^&$%&.mp4').to_s) }
+
+        it "does not have errors" do
+          sleep 2
+          expect(find_special_characters_job.errors).to be_empty
+          expect(find_more_special_characters_job.errors).to be_empty
+        end
+
+        it "has the input technical metadata in a file" do
+          expect(File.read("#{work_dir}/#{create_special_characters_job.id}/input_metadata")).not_to be_empty
+          expect(File.read("#{work_dir}/#{create_more_special_characters_job.id}/input_metadata")).not_to be_empty
+        end
+
+        it "has the pid in a file" do
+          expect(File.read("#{work_dir}/#{create_special_characters_job.id}/pid")).not_to be_empty
+          expect(File.read("#{work_dir}/#{create_more_special_characters_job.id}/pid")).not_to be_empty
+        end
+      end
+    end
+
+    context 'file with embedded captions' do
+      let(:file_with_embedded_captions) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_with_embedded_captions.mp4').to_s }
+      let!(:create_embedded_captions_job) { ActiveEncode::Base.create(file_with_embedded_captions, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }
+      let(:find_embedded_captions_job) { ActiveEncode::Base.find create_embedded_captions_job.id }
+      let(:subtitle_metadata) do
+        [
+          {
+            format: 'tx3g',
+            label: 'Test / Test',
+            language: 'en'
+          },
+          {
+            format: 'tx3g',
+            label: 'English / English',
+            language: 'en'
+          }
+        ]
+      end
+
+      it "does not have errors" do
+        sleep 2
+        expect(find_embedded_captions_job.errors).to be_empty
+      end
+
+      it "has the input technical metadata in a file" do
+        expect(File.read("#{work_dir}/#{create_embedded_captions_job.id}/input_metadata")).not_to be_empty
+      end
+
+      it "has the pid in a file" do
+        expect(File.read("#{work_dir}/#{create_embedded_captions_job.id}/pid")).not_to be_empty
+      end
+
+      it "assigns the subtitles to the encode" do
+        expect(create_embedded_captions_job.input.subtitles).to eq subtitle_metadata
+        expect(find_embedded_captions_job.input.subtitles).to eq subtitle_metadata
+      end
+
+      context 'when uri encoded' do
+        let(:file_with_embedded_captions) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_with_embedded_captions.mp4').to_s) }
+
+        it "does not have errors" do
+          sleep 2
+          expect(find_embedded_captions_job.errors).to be_empty
+        end
+
+        it "has the input technical metadata in a file" do
+          expect(File.read("#{work_dir}/#{create_embedded_captions_job.id}/input_metadata")).not_to be_empty
+        end
+
+        it "has the pid in a file" do
+          expect(File.read("#{work_dir}/#{create_embedded_captions_job.id}/pid")).not_to be_empty
+        end
+
+        it "assigns the subtitles to the encode" do
+          expect(create_embedded_captions_job.input.subtitles).to eq subtitle_metadata
+          expect(find_embedded_captions_job.input.subtitles).to eq subtitle_metadata
+        end
+      end
+    end
+
     context 'when failed' do
       subject { created_job }
 
@@ -155,6 +391,10 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
 
       it { is_expected.to be_failed }
       it { expect(subject.errors).to be_present }
+      # The exception is triggered by the ffmpeg command at ln 81 in the adapter.
+      # This conveniently bypasses the standard exit_status.code creation at the end of #create
+      # allowing us to test the fallback file creation in #write_errors.
+      it { expect(File.read("#{work_dir}/#{subject.id}/exit_status.code")).to_not be_empty }
     end
   end
 
@@ -163,6 +403,69 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
 
     it "has a progress file" do
       expect(File).to exist("#{work_dir}/#{subject.id}/progress")
+    end
+
+    it "does not have an exit code file" do
+      expect(File).not_to exist("#{work_dir}/#{subject.id}/exit_status.code")
+    end
+
+    context "completed job" do
+      subject { completed_job }
+
+      it { is_expected.to be_completed }
+      it "has an exit code of 0" do
+        expect(File).to exist("#{work_dir}/#{subject.id}/exit_status.code")
+        expect(File.read("#{work_dir}/#{subject.id}/exit_status.code").to_i).to eq 0
+      end
+    end
+
+    context "completed with warnings job" do
+      subject { completed_with_warnings_job }
+
+      it { is_expected.to be_completed }
+      it "has an exit code of 0" do
+        expect(File).to exist("#{work_dir}/#{subject.id}/exit_status.code")
+        expect(File.read("#{work_dir}/#{subject.id}/exit_status.code").to_i).to eq 0
+      end
+      it "has warnings in the error log" do
+        expect(File).to exist("#{work_dir}/#{subject.id}/error.log")
+        expect(File.read("#{work_dir}/#{subject.id}/error.log")).not_to be_empty
+      end
+    end
+
+    context "cancelled job" do
+      subject { canceled_job }
+
+      it { is_expected.to be_cancelled }
+      it "has an exit code of 143" do
+        expect(File).to exist("#{work_dir}/#{subject.id}/exit_status.code")
+        expect(File.read("#{work_dir}/#{subject.id}/exit_status.code").to_i).to eq 143
+      end
+    end
+
+    context "failed job" do
+      subject { failed_job }
+
+      it { is_expected.to be_failed }
+      it "has an exit code of -22" do
+        expect(File).to exist("#{work_dir}/#{subject.id}/exit_status.code")
+        expect(File.read("#{work_dir}/#{subject.id}/exit_status.code").to_i).to eq(-22)
+      end
+
+      context 'with less than 100 percent completeness' do
+        subject { incomplete_job }
+
+        it { is_expected.to be_failed }
+        it 'has an error' do
+          expect(incomplete_job.errors).to include "Encoding has completed but the output duration is shorter than the input"
+        end
+
+        it 'succeeds with a configured completeness threshold' do
+          allow(ActiveEncode::EngineAdapters::FfmpegAdapter).to receive(:completeness_threshold).and_return(95)
+          expect(incomplete_job).not_to be_failed
+          expect(incomplete_job.errors).to be_empty
+        end
+      end
     end
   end
 
@@ -187,6 +490,114 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
     it "raises an error" do
       expect(Process).to receive(:kill).with('SIGTERM', running_job.input.id.to_i).and_raise(Errno::EPERM)
       expect { running_job.cancel! }.to raise_error(ActiveEncode::CancelError)
+    end
+  end
+
+  describe "#remove_old_files!" do
+    subject { created_job }
+    # 'exit_status.code' and 'progress' seem to be hidden files so rspec does not see them.
+    # That is why they are not explicitly included in the tests even though they are in the filenames list.
+    # If they were not being deleted they would cause other tests to fail.
+    let(:base_path) { "#{work_dir}/#{subject.id}" }
+    let(:input_metadata_file) { "#{base_path}/input_metadata" }
+    let(:error_log_file) { "#{base_path}/error.log" }
+    let(:pid_file) { "#{base_path}/pid" }
+    let(:exit_status_file) { "#{base_path}/exit_status.code" }
+    let(:progress_file) { "#{base_path}/progress" }
+    let(:pathnames) { [input_metadata_file, error_log_file, pid_file, exit_status_file, progress_file] }
+
+    # There was some flaky behavior with the file creation for created_job that
+    # would cause tests to fail. This ensures the files are created.
+    before :each do
+      FileUtils.touch(pathnames)
+    end
+
+    context ":no_outputs" do
+      it "deletes files created from encode process older than 2 weeks" do
+        # Another measure to give files time to be created.
+        sleep 1
+        travel 3.weeks do
+          expect { described_class.remove_old_files! }
+            .to change { File.exist?(input_metadata_file) }.from(true).to(false)
+            .and change { File.exist?(error_log_file) }.from(true).to(false)
+            .and change { File.exist?(pid_file) }.from(true).to(false)
+            .and not_change { Dir.children("#{work_dir}/#{subject.id}/outputs").count }.from(2)
+        end
+      end
+
+      it "does not delete files younger than 2 weeks" do
+        sleep 1
+        expect { described_class.remove_old_files! }
+          .to not_change { File.exist?(input_metadata_file) }.from(true)
+          .and not_change { File.exist?(error_log_file) }.from(true)
+          .and not_change { File.exist?(pid_file) }.from(true)
+          .and not_change { Dir.children("#{work_dir}/#{subject.id}/outputs").count }.from(2)
+      end
+    end
+
+    context ":outputs" do
+      it "deletes outputs created from encode process older than 2 weeks" do
+        sleep 1
+        travel 3.weeks do
+          expect { described_class.remove_old_files!(outputs: true) }
+            .to not_change { File.exist?(input_metadata_file) }.from(true)
+            .and not_change { File.exist?(error_log_file) }.from(true)
+            .and not_change { File.exist?(pid_file) }.from(true)
+            .and change { Dir.exist?("#{work_dir}/#{subject.id}/outputs") }.from(true).to(false)
+        end
+      end
+
+      it "does not delete outputs younger than 2 weeks" do
+        sleep 1
+        expect { described_class.remove_old_files!(outputs: true) }
+          .to not_change { File.exist?(input_metadata_file) }.from(true)
+          .and not_change { File.exist?(error_log_file) }.from(true)
+          .and not_change { File.exist?(pid_file) }.from(true)
+          .and not_change { Dir.children("#{work_dir}/#{subject.id}/outputs").count }.from(2)
+      end
+
+      it "does not delete outputs directory containing files younger than 2 weeks" do
+        sleep 1
+        travel 3.weeks do
+          allow(File).to receive(:mtime).and_call_original
+          allow(File).to receive(:mtime).with("#{work_dir}/#{subject.id}/outputs/fireworks-low.mp4").and_return(DateTime.now)
+          expect { described_class.remove_old_files!(outputs: true) }
+            .to not_change { Dir.exist?("#{work_dir}/#{subject.id}/outputs") }.from(true)
+          expect(Dir.children("#{work_dir}/#{subject.id}/outputs")).to eq(["fireworks-low.mp4"])
+        end
+      end
+    end
+
+    context ":all" do
+      # The cleaner removes empty directories even if they are younger than the defined :older_than param.
+      # We need to use a file that will populate the supplemental files directory for proper testing of :all behavior.
+      let(:file) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_with_embedded_captions.mp4').to_s }
+
+      it "deletes all files and directories older than 2 weeks" do
+        sleep 1
+        travel 3.weeks do
+          expect { described_class.remove_old_files!(all: true) }
+            .to change { Dir.exist?("#{work_dir}/#{subject.id}") }.from(true).to(false)
+        end
+      end
+
+      it "does not delete files and directories younger than 2 weeks" do
+        sleep 1
+        expect { described_class.remove_old_files!(all: true) }
+          .to not_change { Dir.exist?("#{work_dir}/#{subject.id}") }.from(true)
+          .and not_change { Dir.children("#{work_dir}/#{subject.id}").count }
+      end
+
+      it "does not delete directories containing files younger than 2 weeks" do
+        sleep 1
+        travel 3.weeks do
+          allow(File).to receive(:mtime).and_call_original
+          allow(File).to receive(:mtime).with("#{work_dir}/#{subject.id}/input_metadata").and_return(DateTime.now)
+          expect { described_class.remove_old_files!(all: true) }
+            .to not_change { Dir.exist?("#{work_dir}/#{subject.id}") }.from(true)
+          expect(Dir.children("#{work_dir}/#{subject.id}")).to eq(["input_metadata"])
+        end
+      end
     end
   end
 end

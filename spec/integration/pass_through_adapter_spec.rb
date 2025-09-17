@@ -109,6 +109,54 @@ describe ActiveEncode::EngineAdapters::PassThroughAdapter do
       end
     end
 
+    context "input file format does not match extension" do
+      let(:improper_format_file) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_without_metadata.mp4').to_s }
+      let(:improper_format_job) { ActiveEncode::Base.create(improper_format_file, outputs: [{ label: "low", url: improper_format_file }]) }
+
+      it "returns the encode with correct error" do
+        expect(improper_format_job.errors).to include("Error inspecting input: #{improper_format_file}")
+        expect(improper_format_job.percent_complete).to be 1
+      end
+    end
+
+    context "input file without metadata" do
+      let(:file_without_metadata) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_without_metadata.webm').to_s }
+      let(:file_without_metadata_derivative) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_without_metadata.low.webm').to_s }
+      let(:create_without_metadata_job) { ActiveEncode::Base.create(file_without_metadata, outputs: [{ label: "low", url: file_without_metadata_derivative }]) }
+      let(:find_without_metadata_job) { ActiveEncode::Base.find create_without_metadata_job.id }
+
+      it "does not have errors" do
+        expect(find_without_metadata_job.errors).to be_empty
+      end
+
+      it "has the input technical metadata in a file" do
+        expect(File.read("#{work_dir}/#{create_without_metadata_job.id}/input_metadata")).not_to be_empty
+      end
+
+      it "assigns the correct duration to the encode" do
+        expect(create_without_metadata_job.input.duration).to eq 4_640
+        expect(find_without_metadata_job.input.duration).to eq 4_640
+      end
+
+      context 'when uri encoded' do
+        let(:file_without_metadata) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_without_metadata.webm').to_s) }
+        let(:file_without_metadata_derivative) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file_without_metadata.low.webm').to_s) }
+
+        it "does not have errors" do
+          expect(find_without_metadata_job.errors).to be_empty
+        end
+
+        it "has the input technical metadata in a file" do
+          expect(File.read("#{work_dir}/#{create_without_metadata_job.id}/input_metadata")).not_to be_empty
+        end
+
+        it "assigns the correct duration to the encode" do
+          expect(create_without_metadata_job.input.duration).to eq 4_640
+          expect(find_without_metadata_job.input.duration).to eq 4_640
+        end
+      end
+    end
+
     context "input filename with spaces" do
       let(:file_with_space) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file with space.mp4').to_s }
       let(:file_with_space_derivative) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file with space.low.mp4').to_s }
@@ -124,8 +172,8 @@ describe ActiveEncode::EngineAdapters::PassThroughAdapter do
       end
 
       context 'when uri encoded' do
-        let(:file_with_space) { URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file with space.mp4').to_s) }
-        let(:file_with_space_derivative) { URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file with space.low.mp4').to_s) }
+        let(:file_with_space) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file with space.mp4').to_s) }
+        let(:file_with_space_derivative) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file with space.low.mp4').to_s) }
 
         it "does not have errors" do
           expect(find_space_job.errors).to be_empty
@@ -133,6 +181,100 @@ describe ActiveEncode::EngineAdapters::PassThroughAdapter do
 
         it "has the input technical metadata in a file" do
           expect(File.read("#{work_dir}/#{create_space_job.id}/input_metadata")).not_to be_empty
+        end
+      end
+    end
+
+    context "input filename with single quotes" do
+      let(:file_with_single_quote) { "file://" + Rails.root.join('..', 'spec', 'fixtures', "'file_with_single_quote'.mp4").to_s }
+      let(:file_with_single_quote_derivative) { "file://" + Rails.root.join('..', 'spec', 'fixtures', "'file_with_single_quote'.low.mp4").to_s }
+      let!(:create_single_quote_job) { ActiveEncode::Base.create(file_with_single_quote, outputs: [{ label: "low", url: file_with_single_quote_derivative }]) }
+      let(:find_single_quote_job) { ActiveEncode::Base.find create_single_quote_job.id }
+
+      it "does not have errors" do
+        expect(find_single_quote_job.errors).to be_empty
+      end
+
+      it "has the input technical metadata in a file" do
+        expect(File.read("#{work_dir}/#{create_single_quote_job.id}/input_metadata")).not_to be_empty
+      end
+
+      context 'when uri encoded' do
+        let(:file_with_single_quote) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', "'file_with_single_quote'.mp4").to_s) }
+        let(:file_with_single_quote_derivative) { "file://" + Rails.root.join('..', 'spec', 'fixtures', "'file_with_single_quote'.low.mp4").to_s }
+
+        it "does not have errors" do
+          expect(find_single_quote_job.errors).to be_empty
+        end
+
+        it "has the input technical metadata in a file" do
+          expect(File.read("#{work_dir}/#{create_single_quote_job.id}/input_metadata")).not_to be_empty
+        end
+      end
+    end
+
+    context "input filename with double quotes" do
+      let(:file_with_double_quote) { "file://" + Rails.root.join('..', 'spec', 'fixtures', '"file_with_double_quote".mp4').to_s }
+      let(:file_with_double_quote_derivative) { "file://" + Rails.root.join('..', 'spec', 'fixtures', '"file_with_double_quote".mp4').to_s }
+      let!(:create_double_quote_job) { ActiveEncode::Base.create(file_with_double_quote, outputs: [{ label: "low", url: file_with_double_quote_derivative }]) }
+      let(:find_double_quote_job) { ActiveEncode::Base.find create_double_quote_job.id }
+
+      it "does not have errors" do
+        expect(find_double_quote_job.errors).to be_empty
+      end
+
+      it "has the input technical metadata in a file" do
+        expect(File.read("#{work_dir}/#{create_double_quote_job.id}/input_metadata")).not_to be_empty
+      end
+
+      context 'when uri encoded' do
+        let(:file_with_double_quote) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', '"file_with_double_quote".mp4').to_s) }
+        let(:file_with_double_quote_derivative) { "file://" + Rails.root.join('..', 'spec', 'fixtures', '"file_with_double_quote".mp4').to_s }
+
+        it "does not have errors" do
+          expect(find_double_quote_job.errors).to be_empty
+        end
+
+        it "has the input technical metadata in a file" do
+          expect(File.read("#{work_dir}/#{create_double_quote_job.id}/input_metadata")).not_to be_empty
+        end
+      end
+    end
+
+    context "input filename with other special characters" do
+      let(:file_with_special_characters) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file.with :=+%sp3c!l-ch4cts().mp4').to_s }
+      let(:file_with_special_characters_derivative) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file.with :=+%sp3c!l-ch4cts().mp4').to_s }
+      let!(:create_special_characters_job) { ActiveEncode::Base.create(file_with_special_characters, outputs: [{ label: "low", url: file_with_special_characters_derivative }]) }
+      let(:find_special_characters_job) { ActiveEncode::Base.find create_special_characters_job.id }
+      let(:file_with_more_special_characters) { "file://" + Rails.root.join('..', 'spec', 'fixtures', '@ወዳጅህ ማር ቢ. ሆን ጨርስ. ህ አትላሰ!@#$^^&$%&.mp4').to_s }
+      let(:file_with_more_special_characters_derivative) { "file://" + Rails.root.join('..', 'spec', 'fixtures', '@ወዳጅህ ማር ቢ. ሆን ጨርስ. ህ አትላሰ!@#$^^&$%&.mp4').to_s }
+      let!(:create_more_special_characters_job) { ActiveEncode::Base.create(file_with_more_special_characters, outputs: [{ label: "low", url: file_with_more_special_characters_derivative }]) }
+      let(:find_more_special_characters_job) { ActiveEncode::Base.find create_more_special_characters_job.id }
+
+      it "does not have errors" do
+        expect(find_special_characters_job.errors).to be_empty
+        expect(find_more_special_characters_job.errors).to be_empty
+      end
+
+      it "has the input technical metadata in a file" do
+        expect(File.read("#{work_dir}/#{create_special_characters_job.id}/input_metadata")).not_to be_empty
+        expect(File.read("#{work_dir}/#{create_more_special_characters_job.id}/input_metadata")).not_to be_empty
+      end
+
+      context 'when uri encoded' do
+        let(:file_with_special_characters) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file.with :=+%sp3c!l-ch4cts().mp4').to_s) }
+        let(:file_with_special_characters_derivative) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file.with :=+%sp3c!l-ch4cts().mp4').to_s }
+        let(:file_with_more_special_characters) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', '@ወዳጅህ ማር ቢ. ሆን ጨርስ. ህ አትላሰ!@#$^^&$%&.mp4').to_s) }
+        let(:file_with_more_special_characters_derivative) { "file://" + Rails.root.join('..', 'spec', 'fixtures', '@ወዳጅህ ማር ቢ. ሆን ጨርስ. ህ አትላሰ!@#$^^&$%&.mp4').to_s }
+
+        it "does not have errors" do
+          expect(find_special_characters_job.errors).to be_empty
+          expect(find_more_special_characters_job.errors).to be_empty
+        end
+
+        it "has the input technical metadata in a file" do
+          expect(File.read("#{work_dir}/#{create_special_characters_job.id}/input_metadata")).not_to be_empty
+          expect(File.read("#{work_dir}/#{create_more_special_characters_job.id}/input_metadata")).not_to be_empty
         end
       end
     end

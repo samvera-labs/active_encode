@@ -5,10 +5,14 @@ inherit_from: .rubocop_todo.yml
 
 
 AllCops:
-  TargetRubyVersion: 2.4
+  TargetRubyVersion: 2.6
   DisplayCopNames: true
   Exclude:
     - 'active_encode.gemspec'
     - 'vendor/**/*'
-  Include:
-    - '**/Rakefile'
+
+Rails/RakeEnvironment:
+  Enabled: false
+
+Style/IfUnlessModifier:
+  Enabled: false

@@ -41,7 +41,7 @@ describe FileLocator, type: :service do
   describe "Local file" do
     let(:path) { "/path/to/file.mp4" }
     let(:source) { "file://#{path}" }
-    let(:locator) { FileLocator.new(source) }
+    let(:locator) { described_class.new(source) }
 
     it "returns the correct uri" do
       expect(locator.uri).to eq Addressable::URI.parse(source)
@@ -76,7 +76,7 @@ describe FileLocator, type: :service do
     let(:bucket) { "mybucket" }
     let(:key) { "mykey.mp4" }
     let(:source) { "s3://#{bucket}/#{key}" }
-    let(:locator) { FileLocator.new(source) }
+    let(:locator) { described_class.new(source) }
 
     it "returns the correct uri" do
       expect(locator.uri).to eq Addressable::URI.parse(source)
@@ -102,7 +102,7 @@ describe FileLocator, type: :service do
   describe "Other file" do
     let(:path) { "/path/to/file.mp4" }
     let(:source) { "bogus://#{path}" }
-    let(:locator) { FileLocator.new(source) }
+    let(:locator) { described_class.new(source) }
 
     it "returns the correct uri" do
       expect(locator.uri).to eq Addressable::URI.parse(source)
