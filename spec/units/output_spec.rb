@@ -12,6 +12,7 @@ describe ActiveEncode::Output do
                                 :audio_codec, :video_codec, :audio_bitrate, :video_bitrate,
                                 :subtitles, :format, :language)
     }
+    it { is_expected.to respond_to(:tech_metadata) }
   end
 
   describe '#valid?' do

@@ -35,8 +35,8 @@ module ActiveEncode
         # @param output_detail_settings [Aws::MediaConvert::Types::OutputDetail]
         def tech_metadata_from_settings(output_url:, output_settings:, output_detail_settings:)
           {
-            width: output_detail_settings.video_details.width_in_px,
-            height: output_detail_settings.video_details.height_in_px,
+            width: output_detail_settings.video_details&.width_in_px,
+            height: output_detail_settings.video_details&.height_in_px,
             frame_rate: extract_video_frame_rate(output_settings),
             duration: output_detail_settings.duration_in_ms,
             audio_codec: extract_audio_codec(output_settings),
@@ -44,7 +44,6 @@ module ActiveEncode
             audio_bitrate: extract_audio_bitrate(output_settings),
             video_bitrate: extract_video_bitrate(output_settings),
             url: output_url,
-            label: (output_url ? File.basename(output_url) : output_settings.name_modifier),
             suffix: output_settings.name_modifier
           }
         end
@@ -61,9 +60,31 @@ module ActiveEncode
             audio_bitrate: extract_audio_bitrate(settings),
             video_bitrate: extract_video_bitrate(settings),
             url: url,
-            label: File.basename(url),
             suffix: settings.name_modifier
           }
+        end
+
+        def tech_metadata_from_probe(url:, probe_response:, output_settings: nil)
+          tech_md = { url: url, suffix: output_settings&.name_modifier }
+          return tech_md unless probe_response
+
+          # Need to determine which track has video/audio
+          video_track = probe_response.container.tracks&.find { |track| track.track_type == "video" }
+          audio_track = probe_response.container.tracks&.find { |track| track.track_type == "audio" }
+          frame_rate = (video_track.video_properties.frame_rate.numerator / video_track.video_properties.frame_rate.denominator.to_f).round(2) if video_track
+          duration = probe_response.container.duration * 1000 if probe_response.container.duration.present?
+
+          tech_md.merge({
+                          width: video_track&.video_properties&.width,
+                          height: video_track&.video_properties&.height,
+                          frame_rate: frame_rate,
+                          duration: duration, # milliseconds
+                          audio_codec: audio_track&.codec,
+                          video_codec: video_track&.codec,
+                          audio_bitrate: audio_track&.audio_properties&.bit_rate,
+                          video_bitrate: video_track&.video_properties&.bit_rate,
+                          file_size: probe_response.metadata.file_size
+                        })
         end
 
         # constructs an `s3:` output URL  from the MediaConvert job params, the same
@@ -110,27 +131,27 @@ module ActiveEncode
         end
 
         def extract_audio_codec(settings)
-          settings.audio_descriptions.first.codec_settings.codec
-        rescue
-          nil
+          settings.audio_descriptions&.first&.codec_settings&.codec
         end
 
         def extract_audio_codec_settings(settings)
-          codec_key = AUDIO_SETTINGS[extract_audio_codec(settings)]
+          codec = extract_audio_codec(settings)
+          return nil if codec.nil?
+
+          codec_key = AUDIO_SETTINGS[codec]
           settings.audio_descriptions.first.codec_settings[codec_key]
         end
 
         def extract_video_codec(settings)
-          settings.video_description.codec_settings.codec
-        rescue
-          nil
+          settings.video_description&.codec_settings&.codec
         end
 
         def extract_video_codec_settings(settings)
-          codec_key = VIDEO_SETTINGS[extract_video_codec(settings)]
+          codec = extract_video_codec(settings)
+          return nil if codec.nil?
+
+          codec_key = VIDEO_SETTINGS[codec]
           settings.video_description.codec_settings[codec_key]
-        rescue
-          nil
         end
 
         def extract_audio_bitrate(settings)

@@ -46,11 +46,15 @@ module ActiveEncode
     #
     #      ActiveEncode::Base.engine_adapter.setup!
     #
-    # **OR**, there is experimental functionality to get what we can directly from the job without
-    # requiring a CloudWatch log -- this is expected to be complete only for  HLS output at present.
-    # It seems to work well for HLS output. To opt-in, and not require CloudWatch logs:
+    # **OR** There is functionality to get what we can directly from the job without requiring
+    # a CloudWatch log -- this only works for HLS and file outputs at present.
+    # To opt-in, and not require CloudWatch logs:
     #
     #     ActiveEncode::Base.engine_adapter.direct_output_lookup = true
+    #
+    # MediaConvert also provides a probe endpoint to extract technical metadata about a file stored
+    # in s3.  This can be used to gather output metadata when using direct_output_lookup instead of
+    # having to look in the CloudWatch logs.
     #
     # ## Example
     #
@@ -106,12 +110,18 @@ module ActiveEncode
       # @!attribute [rw] output_bucket simple bucket name to write output to
       # @!attribute [rw] direct_output_lookup if true, do NOT get output information from cloudwatch,
       #                  instead retrieve and construct it only from job itself. Currently
-      #                  working only for HLS output. default false.
-      attr_accessor :role, :output_bucket, :direct_output_lookup
+      #                  working only for HLS output. (default: false)
+      # @!attribute [rw] use_probe if true use probe endpoint to get technical metadata about input and outputs (default: false)
+      attr_accessor :role, :output_bucket, :direct_output_lookup, :use_probe
 
       # @!attribute [w] log_group log_group_name that is being used to capture output
       # @!attribute [w] queue name of MediaConvert queue to use.
-      attr_writer :log_group, :queue
+      # @!attribute [w] output_id_format sprintf format for output ids (default: "%{job_id}-output%{suffix}")
+      #                  Available string variables are job_id and the keys in the MediaConvertOutput tech meatdata hash
+      # @!attribute [w] output_label_format sprintf format for output ids (default: "%{basename}" if output_url is preset
+      #                  otherwise "%{suffix}")
+      #                  Available string variables are job_id, basename, and the keys in the MediaConvertOutput tech metadata hash
+      attr_writer :log_group, :queue, :output_id_format, :output_label_format
 
       # Creates a [CloudWatch Logs]
       # (https://aws.amazon.com/cloudwatch/) log group and an EventBridge rule to forward status
@@ -274,6 +284,10 @@ module ActiveEncode
 
         encode.input.created_at = encode.created_at
         encode.input.updated_at = encode.updated_at
+        if use_probe
+          tech_md = MediaConvertOutput.tech_metadata_from_probe(url: encode.input.url, probe_response: probe(encode.input.url))
+          encode.input.assign_tech_metadata(tech_md)
+        end
 
         encode = complete_encode(encode, job) if encode.state == :completed
         encode
@@ -338,35 +352,42 @@ module ActiveEncode
 
         output_group_details  = job.dig("output_group_details", 0, "output_details")
         file_input_url        = job.dig("settings", "inputs", 0, "file_input")
+        output_group_type     = output_group_settings.type.downcase.to_sym
+        output_destination    = output_group_settings[output_group_type].destination
 
         outputs = output_group_details.map.with_index do |output_group_detail, index|
-          # Right now we only know how to get a URL for hls output, although
-          # the others should be possible and very analagous, just not familiar with them.
-          if output_group_settings.type == "HLS_GROUP_SETTINGS"
+          # Only HLS and file output groups have been tested with this approach
+          if [:hls_group_settings, :file_group_settings].include? output_group_type
             output_url = MediaConvertOutput.construct_output_url(
-              destination: output_group_settings.hls_group_settings.destination,
+              destination: output_destination,
               file_input_url: file_input_url,
               name_modifier: output_settings[index].name_modifier,
-              file_suffix: "m3u8"
+              file_suffix: output_settings[index].container_settings.container.downcase
             )
           end
 
-          tech_md = MediaConvertOutput.tech_metadata_from_settings(
-            output_url: output_url,
-            output_settings: output_settings[index],
-            output_detail_settings: output_group_detail
-          )
+          tech_md = if use_probe
+                      MediaConvertOutput.tech_metadata_from_probe(
+                        url: output_url,
+                        output_settings: output_settings[index],
+                        probe_response: probe(output_url)
+                      )
+                    else
+                      MediaConvertOutput.tech_metadata_from_settings(
+                        output_url: output_url,
+                        output_settings: output_settings[index],
+                        output_detail_settings: output_group_detail
+                      )
+                    end
 
           output = ActiveEncode::Output.new
-
+          output.url = output_url
           output.created_at = job.timing.submit_time
           output.updated_at = job.timing.finish_time || job.timing.start_time || output.created_at
-
-          [:width, :height, :frame_rate, :duration, :checksum, :audio_codec, :video_codec,
-           :audio_bitrate, :video_bitrate, :file_size, :label, :url, :id].each do |field|
-            output.send("#{field}=", tech_md[field])
-          end
-          output.id ||= "#{job.id}-output#{tech_md[:suffix]}"
+          output.assign_tech_metadata(tech_md)
+          file_basename = File.basename(output.url)
+          output.id = format(output_id_format, tech_md.merge(job_id: job.id))
+          output.label = format(output_label_format(file_basename), tech_md.merge(job_id: job.id, basename: file_basename))
           output
         end
 
@@ -382,15 +403,13 @@ module ActiveEncode
           )
 
           output = ActiveEncode::Output.new
+          output.url = adaptive_playlist_url
           output.created_at = job.timing.submit_time
           output.updated_at = job.timing.finish_time || job.timing.start_time || output.created_at
-          output.id = "#{job.id}-output-auto"
-
-          [:duration, :audio_codec, :video_codec].each do |field|
-            output.send("#{field}=", outputs.first.send(field))
-          end
-          output.label = File.basename(adaptive_playlist_url)
-          output.url = adaptive_playlist_url
+          output.assign_tech_metadata(outputs.first.tech_metadata)
+          file_basename = File.basename(output.url)
+          output.id = format(output_id_format, output.tech_metadata.merge(job_id: job.id, suffix: '-auto'))
+          output.label = format(output_label_format(file_basename), output.tech_metadata.merge(job_id: job.id, suffix: '-auto', basename: file_basename))
           outputs << output
         end
 
@@ -411,30 +430,26 @@ module ActiveEncode
         outputs = logged_results.dig('detail', 'outputGroupDetails', 0, 'outputDetails').map.with_index do |logged_detail, index|
           tech_md = MediaConvertOutput.tech_metadata_from_logged(output_settings[index], logged_detail)
           output = ActiveEncode::Output.new
-
+          output.url = tech_md[:url]
           output.created_at = job.timing.submit_time
           output.updated_at = job.timing.finish_time || job.timing.start_time || output.created_at
-
-          [:width, :height, :frame_rate, :duration, :checksum, :audio_codec, :video_codec,
-           :audio_bitrate, :video_bitrate, :file_size, :label, :url, :id].each do |field|
-            output.send("#{field}=", tech_md[field])
-          end
-          output.id ||= "#{job.id}-output#{tech_md[:suffix]}"
+          output.assign_tech_metadata(tech_md)
+          file_basename = File.basename(output.url)
+          output.id = format(output_id_format, tech_md.merge(job_id: job.id))
+          output.label = format(output_label_format(file_basename), tech_md.merge(job_id: job.id, basename: file_basename))
           output
         end
 
         adaptive_playlist = logged_results.dig('detail', 'outputGroupDetails', 0, 'playlistFilePaths', 0)
         unless adaptive_playlist.nil?
           output = ActiveEncode::Output.new
+          output.url = adaptive_playlist
           output.created_at = job.timing.submit_time
           output.updated_at = job.timing.finish_time || job.timing.start_time || output.created_at
-          output.id = "#{job.id}-output-auto"
-
-          [:duration, :audio_codec, :video_codec].each do |field|
-            output.send("#{field}=", outputs.first.send(field))
-          end
-          output.label = File.basename(adaptive_playlist)
-          output.url = adaptive_playlist
+          output.assign_tech_metadata(outputs.first.tech_metadata)
+          file_basename = File.basename(output.url)
+          output.id = format(output_id_format, output.tech_metadata.merge(job_id: job.id, suffix: '-auto'))
+          output.label = format(output_label_format(file_basename), output.tech_metadata.merge(job_id: job.id, suffix: '-auto', basename: file_basename))
           outputs << output
         end
         outputs
@@ -480,6 +495,20 @@ module ActiveEncode
           endpoint = Aws::MediaConvert::Client.new.describe_endpoints.endpoints.first.url
           Aws::MediaConvert::Client.new(endpoint: endpoint)
         end
+      end
+
+      def probe(url)
+        # NOTE: certain audio files don't return any track information
+        @probe_cache ||= {}
+        @probe_cache[url] ||= mediaconvert.probe({ input_files: [{ file_url: url }] })&.probe_results&.first
+      end
+
+      def output_id_format
+        @output_id_format || "%{job_id}-output%{suffix}"
+      end
+
+      def output_label_format(file_basename)
+        @output_label_format || (file_basename.present? ? "%{basename}" : "%{suffix}")
       end
 
       def s3client
