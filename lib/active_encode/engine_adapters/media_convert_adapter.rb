@@ -109,7 +109,7 @@ module ActiveEncode
 
       class RetriableClient
         def initialize
-          @retry_params = {on: Aws::MediaConvert::Errors::ServiceError, base_interval: 1}
+          @retry_params = { on: Aws::MediaConvert::Errors::ServiceError, base_interval: 1 }
           endpoint = Retriable.retriable(@retry_params) { Aws::MediaConvert::Client.new.describe_endpoints.endpoints.first.url }
           @client = Aws::MediaConvert::Client.new(endpoint: endpoint)
         end
@@ -122,8 +122,8 @@ module ActiveEncode
           end
         end
 
-        def respond_to?(method)
-          @client.respond_to?(method)
+        def respond_to_missing?(method_name, include_private = false)
+          @client.respond_to?(method_name) || super
         end
       end
 
