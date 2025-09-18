@@ -6,6 +6,7 @@ require 'aws-sdk-cloudwatchevents'
 require 'aws-sdk-cloudwatchlogs'
 require 'aws-sdk-mediaconvert'
 require 'file_locator'
+require 'retriable'
 
 require 'active_support/json'
 require 'active_support/time'
@@ -103,6 +104,26 @@ module ActiveEncode
         def initialize(msg = nil, encode = nil)
           @encode = encode
           super(msg)
+        end
+      end
+
+      class RetriableClient
+        def initialize
+          @retry_params = { on: Aws::MediaConvert::Errors::ServiceError, base_interval: 1 }
+          endpoint = Retriable.retriable(@retry_params) { Aws::MediaConvert::Client.new.describe_endpoints.endpoints.first.url }
+          @client = Aws::MediaConvert::Client.new(endpoint: endpoint)
+        end
+
+        def method_missing(method, *args, &block)
+          if @client.respond_to?(method)
+            Retriable.retriable(@retry_params) { @client.send(method, *args, &block) }
+          else
+            super
+          end
+        end
+
+        def respond_to_missing?(method_name, include_private = false)
+          @client.respond_to?(method_name) || super
         end
       end
 
@@ -491,10 +512,7 @@ module ActiveEncode
       end
 
       def mediaconvert
-        @mediaconvert ||= begin
-          endpoint = Aws::MediaConvert::Client.new.describe_endpoints.endpoints.first.url
-          Aws::MediaConvert::Client.new(endpoint: endpoint)
-        end
+        @mediaconvert ||= RetriableClient.new
       end
 
       def probe(url)

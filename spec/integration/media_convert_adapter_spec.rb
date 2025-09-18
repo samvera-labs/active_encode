@@ -532,4 +532,27 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
       end
     end
   end
+
+  describe "retry" do
+    it "recovers from Aws::MediaConvert errors" do
+      mediaconvert.stub_responses(:get_job, [
+                                    Aws::MediaConvert::Errors::TooManyRequestsException.new(nil, 'Too Many Requests'),
+                                    reconstitute_response("media_convert/job_progressing.json")
+                                  ])
+      expect(ActiveEncode::Base.find(job_id)).to eq(running_job)
+    end
+
+    it "raises when the retries run out" do
+      mediaconvert.stub_responses(:get_job, [
+                                    Aws::MediaConvert::Errors::TooManyRequestsException.new(nil, 'Too Many Requests 1'),
+                                    Aws::MediaConvert::Errors::TooManyRequestsException.new(nil, 'Too Many Requests 2'),
+                                    Aws::MediaConvert::Errors::TooManyRequestsException.new(nil, 'Too Many Requests 3'),
+                                    reconstitute_response("media_convert/job_progressing.json")
+                                  ])
+      expect { ActiveEncode::Base.find(job_id) }.to raise_error do |error|
+        expect(error).to be_a(Aws::MediaConvert::Errors::TooManyRequestsException)
+        expect(error.message).to eq('Too Many Requests 3')
+      end
+    end
+  end
 end

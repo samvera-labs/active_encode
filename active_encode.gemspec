@@ -22,6 +22,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "rails"
   spec.add_dependency "addressable", "~> 2.8"
+  spec.add_dependency "retriable"
 
   spec.add_development_dependency "aws-sdk-cloudwatchevents"
   spec.add_development_dependency "aws-sdk-cloudwatchlogs"
