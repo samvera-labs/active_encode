@@ -355,13 +355,19 @@ module ActiveEncode
         doc.remove_namespaces!
         duration = get_xpath_text(doc, '//Duration/text()', :to_f)
         duration *= 1000 unless duration.nil? # Convert to milliseconds
+        audio_codec = get_xpath_text(doc, '//track[@type="Audio"]/CodecID/text()', :to_s)
+        if get_xpath_text(doc, '//track[@type="Audio"]/Format/text()', :to_s) == "MPEG Audio" &&
+           get_xpath_text(doc, '//track[@type="Audio"]/Format_Profile/text()', :to_s) == "Layer 3"
+          audio_codec ||= "mp3"
+        end
+
         { url: get_xpath_text(doc, '//media/@ref', :to_s),
           width: get_xpath_text(doc, '//Width/text()', :to_f),
           height: get_xpath_text(doc, '//Height/text()', :to_f),
           frame_rate: get_xpath_text(doc, '//FrameRate/text()', :to_f),
           duration: duration,
           file_size: get_xpath_text(doc, '//FileSize/text()', :to_i),
-          audio_codec: get_xpath_text(doc, '//track[@type="Audio"]/CodecID/text()', :to_s),
+          audio_codec: audio_codec,
           audio_bitrate: get_xpath_text(doc, '//track[@type="Audio"]/BitRate/text()', :to_i),
           video_codec: get_xpath_text(doc, '//track[@type="Video"]/CodecID/text()', :to_s),
           video_bitrate: get_xpath_text(doc, '//track[@type="Video"]/BitRate/text()', :to_i),
