@@ -201,7 +201,7 @@ module ActiveEncode
       end
 
       def write_errors(encode)
-        File.write(working_path("error.log", encode.id), encode.errors.join("\n"))
+        File.write(working_path("error.log", encode.id), encode.errors.join("\n"), mode: 'a')
         File.write(working_path("exit_status.code", encode.id), "1") unless File.exist?(working_path("exit_status.code", encode.id))
       end
 
@@ -290,7 +290,7 @@ module ActiveEncode
           "#{k}: #{v}\r\n"
         end.join
         header_opt = "-headers '#{header_opt}'" if header_opt.present?
-        "#{FFMPEG_PATH} #{header_opt} -y -loglevel level+fatal -progress #{working_path('progress', id)} -i \"#{input_url}\" #{supplemental_file_opt} #{output_opt}"
+        "#{FFMPEG_PATH} #{header_opt} -y -loglevel level+error -progress #{working_path('progress', id)} -i \"#{input_url}\" #{supplemental_file_opt} #{output_opt}"
       end
 
       def caption_extraction_options(filename, count, id)
