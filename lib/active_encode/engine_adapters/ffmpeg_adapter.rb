@@ -290,7 +290,7 @@ module ActiveEncode
           "#{k}: #{v}\r\n"
         end.join
         header_opt = "-headers '#{header_opt}'" if header_opt.present?
-        "#{FFMPEG_PATH} #{header_opt} -y -loglevel level+error -progress #{working_path('progress', id)} -i \"#{input_url}\" #{supplemental_file_opt} #{output_opt}"
+        "#{FFMPEG_PATH} #{header_opt} -y -loglevel level+error -progress #{working_path('progress', id)} -i \"#{input_url}\" -max_muxing_queue_size 1024 #{supplemental_file_opt} #{output_opt}"
       end
 
       def caption_extraction_options(filename, count, id)
