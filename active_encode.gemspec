@@ -30,6 +30,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "aws-sdk-elastictranscoder"
   spec.add_development_dependency "aws-sdk-mediaconvert", ">= 1.157.0"
   spec.add_development_dependency "aws-sdk-s3"
+  spec.add_development_dependency "benchmark" # Needed for bixby/rubocop with ruby 4+
   spec.add_development_dependency "bixby", '~> 5.0', '>= 5.0.2'
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "coveralls"

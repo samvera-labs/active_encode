@@ -46,7 +46,7 @@ describe ActiveEncode::EncodeRecordController, type: :controller, db_clean: true
       end
 
       it "returns the encode record's raw json object" do
-        expect(response.body).to eq "{\"message\":\"Couldn't find ActiveEncode::EncodeRecord with 'id'=#{record_id}\"}"
+        expect(response.body).to eq "{\"message\":\"Couldn't find ActiveEncode::EncodeRecord with 'id'=\\\"#{record_id}\\\"\"}"
       end
     end
   end
