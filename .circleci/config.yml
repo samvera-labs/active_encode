@@ -37,7 +37,7 @@ jobs:
           keys:
             - v1-ffmpeg-<< parameters.ffmpeg_version >>
 
-      - run: curl https://www.johnvansickle.com/ffmpeg/old-releases/ffmpeg-<< parameters.ffmpeg_version >>-amd64-static.tar.xz | tar xJ -C /tmp/ --strip-components=1
+      - run: if [ ! -f /tmp/ffmpeg ]; then curl https://www.johnvansickle.com/ffmpeg/old-releases/ffmpeg-<< parameters.ffmpeg_version >>-amd64-static.tar.xz | tar xJ -C /tmp/ --strip-components=1; fi
 
       - save_cache:
           key: v1-ffmpeg-<< parameters.ffmpeg_version >>`
