@@ -17,6 +17,7 @@ jobs:
     executor:
       name: 'samvera/ruby'
       ruby_version: << parameters.ruby_version >>
+    resource_class: large
     environment:
       ENGINE_CART_RAILS_OPTIONS: --skip-git --skip-bundle --skip-listen --skip-spring --skip-yarn --skip-keeps --skip-coffee --skip-puma --skip-test
       RAILS_VERSION: << parameters.rails_version >>
@@ -37,12 +38,13 @@ jobs:
           keys:
             - v1-ffmpeg-<< parameters.ffmpeg_version >>
 
-      - run: curl https://www.johnvansickle.com/ffmpeg/old-releases/ffmpeg-<< parameters.ffmpeg_version >>-amd64-static.tar.xz | tar xJ -C /tmp/ --strip-components=1
+      - run: if [ ! -f /tmp/ffmpeg ]; then curl https://www.johnvansickle.com/ffmpeg/old-releases/ffmpeg-<< parameters.ffmpeg_version >>-amd64-static.tar.xz | tar xJ -C /tmp/ --strip-components=1; fi
 
       - save_cache:
           key: v1-ffmpeg-<< parameters.ffmpeg_version >>`
           paths:
             - /tmp/ffmpeg
+            - /tmp/ffprobe
 
       - samvera/cached_checkout
 
