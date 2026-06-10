@@ -302,8 +302,7 @@ module ActiveEncode
       def add_label_to_url(url, label)
         return url if url.match?(/\-#{label}$/)
 
-        url.gsub!(/#{label}$/, '')
-        url + "-#{label}"
+        url.gsub(/#{label}$/, '') + "-#{label}"
       end
     end
   end
