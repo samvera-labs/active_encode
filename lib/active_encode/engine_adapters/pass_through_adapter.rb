@@ -74,7 +74,7 @@ module ActiveEncode
 
         # Copy derivatives to work directory
         options[:outputs].each do |opt|
-          output_path = copy_derivative_to_working_path(opt[:url], new_encode.id)
+          output_path = copy_derivative_to_working_path(opt[:url], opt[:label], new_encode.id)
           filename_label_hash[output_path] = opt[:label]
         end
 
@@ -286,8 +286,9 @@ module ActiveEncode
         ActiveEncode.sanitize_input(input_url)
       end
 
-      def copy_derivative_to_working_path(url, id)
-        output_path = working_path("outputs/#{ActiveEncode.sanitize_base url}#{File.extname url}", id)
+      def copy_derivative_to_working_path(url, label, id)
+        label_url = add_label_to_url(ActiveEncode.sanitize_base(url), label)
+        output_path = working_path("outputs/#{label_url}#{File.extname url}", id)
         if url.start_with? "s3://"
           # Use aws-sdk-s3 download_file method
           # Single request mode needed for compatibility with minio
@@ -296,6 +297,13 @@ module ActiveEncode
           FileUtils.cp FileLocator.new(url).location, output_path
         end
         output_path
+      end
+
+      def add_label_to_url(url, label)
+        return url if url.match?(/\-#{label}$/)
+
+        url.gsub!(/#{label}$/, '')
+        url + "-#{label}"
       end
     end
   end
