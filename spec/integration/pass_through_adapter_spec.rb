@@ -297,5 +297,12 @@ describe ActiveEncode::EngineAdapters::PassThroughAdapter do
       it { is_expected.to be_failed }
       it { expect(subject.errors).to be_present }
     end
+
+    context 'output url' do
+      it 'adds `-#{label}` to end of output url' do
+        created_job
+        expect(File).to exist("#{work_dir}/#{created_job.id}/outputs/fireworks-low.mp4")
+      end
+    end
   end
 end
