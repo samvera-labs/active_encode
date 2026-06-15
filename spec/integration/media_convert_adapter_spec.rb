@@ -447,6 +447,14 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
             ActiveEncode::Base.find(job_id)
           end
 
+          let(:completed_mp3_job) do
+            mediaconvert.stub_responses(:get_job, reconstitute_response("media_convert/job_completed.audio.mp3_file.json"))
+            # AWS API requests are retried 3 times before really failing
+            mediaconvert.stub_responses(:probe, ['BadRequest', 'BadRequest', 'BadRequest', reconstitute_response("media_convert/output_probe.audio.high.json"), reconstitute_response("media_convert/output_probe.audio.medium.json")])
+
+            ActiveEncode::Base.find(job_id)
+          end
+
           let(:input_tech_metadata) do
             { file_size: 218_094 }
           end
@@ -479,6 +487,10 @@ describe ActiveEncode::EngineAdapters::MediaConvertAdapter do
                 expect(found_output.send(key)).to eq(value)
               end
             end
+          end
+
+          it "contains minimal input technical metadata for mp3 input" do
+            expect(completed_mp3_job.input.url).to eq("s3://input_bucket/test_files/meow.mp3")
           end
         end
       end
