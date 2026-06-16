@@ -519,6 +519,8 @@ module ActiveEncode
         # NOTE: certain audio files don't return any track information
         @probe_cache ||= {}
         @probe_cache[url] ||= mediaconvert.probe({ input_files: [{ file_url: url }] })&.probe_results&.first
+      rescue Aws::MediaConvert::Errors::ServiceError
+        nil
       end
 
       def output_id_format
