@@ -283,7 +283,7 @@ module ActiveEncode
         end.join(" ")
 
         supplemental_file_opt = if opts[:extract_subtitles] && subtitle_count.present?
-                                  caption_extraction_options(sanitized_filename, subtitle_count, id)
+                                  ActiveEncode.caption_extraction_options(sanitized_filename, subtitle_count, id).join(' ')
                                 end
 
         header_opt = Array(opts[:headers]).map do |k, v|
@@ -291,16 +291,6 @@ module ActiveEncode
         end.join
         header_opt = "-headers '#{header_opt}'" if header_opt.present?
         "#{FFMPEG_PATH} #{header_opt} -y -loglevel level+error -progress #{working_path('progress', id)} -i \"#{input_url}\" -max_muxing_queue_size 1024 #{supplemental_file_opt} #{output_opt}"
-      end
-
-      def caption_extraction_options(filename, count, id)
-        opts = ""
-        (0..count - 1).each do |i|
-          subtitle_filename = "supplemental_files/#{filename}-caption#{i}.vtt"
-          opts += " -map 0:s:#{i} -c:s webvtt #{working_path(subtitle_filename, id)}"
-        end
-
-        opts
       end
 
       def get_pid(id)
