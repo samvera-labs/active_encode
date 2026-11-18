@@ -39,6 +39,7 @@ Metrics/MethodLength:
     - 'lib/active_encode/engine_adapters/*'
     - 'lib/active_encode/engine_adapters/ffmpeg_adapter/*'
     - 'lib/file_locator.rb'
+    - 'lib/active_encode/ffmpeg_subtitle_extractor.rb'
 
 Metrics/PerceivedComplexity:
   Exclude:
